@@ -1,21 +1,26 @@
 """Menu items for the vpn models."""
 
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.apps.ui import NavMenuAddButton, NavMenuGroup, NavMenuItem, NavMenuTab
 from nautobot.core.ui.choices import NavigationIconChoices, NavigationWeightChoices
 
 menu_items = (
     NavMenuTab(
         name="VPN",
+        label=_("VPN"),
         icon=NavigationIconChoices.VPN,
         weight=NavigationWeightChoices.VPN,
         groups=(
             NavMenuGroup(
                 name="VPNs",
+                label=_("VPNs"),
                 weight=100,
                 items=(
                     NavMenuItem(
                         link="vpn:vpn_list",
                         name="VPNs",
+                        label=_("VPNs"),
                         weight=100,
                         permissions=["vpn.view_vpn"],
                         buttons=(
@@ -28,6 +33,7 @@ menu_items = (
                     NavMenuItem(
                         link="vpn:vpntunnel_list",
                         name="VPN Tunnels",
+                        label=_("VPN Tunnels"),
                         weight=100,
                         permissions=["vpn.view_vpntunnel"],
                         buttons=(
@@ -40,6 +46,7 @@ menu_items = (
                     NavMenuItem(
                         link="vpn:vpntunnelendpoint_list",
                         name="VPN Tunnel Endpoints",
+                        label=_("VPN Tunnel Endpoints"),
                         weight=100,
                         permissions=["vpn.view_vpntunnelendpoint"],
                         buttons=(
@@ -53,11 +60,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="Profiles & Policies",
+                label=_("Profiles & Policies"),
                 weight=100,
                 items=(
                     NavMenuItem(
                         link="vpn:vpnprofile_list",
                         name="VPN Profiles",
+                        label=_("VPN Profiles"),
                         weight=100,
                         permissions=["vpn.view_vpnprofile"],
                         buttons=(
@@ -70,6 +79,7 @@ menu_items = (
                     NavMenuItem(
                         link="vpn:vpnphase1policy_list",
                         name="VPN Phase 1 Policies",
+                        label=_("VPN Phase 1 Policies"),
                         weight=100,
                         permissions=["vpn.view_vpnphase1policy"],
                         buttons=(
@@ -82,6 +92,7 @@ menu_items = (
                     NavMenuItem(
                         link="vpn:vpnphase2policy_list",
                         name="VPN Phase 2 Policies",
+                        label=_("VPN Phase 2 Policies"),
                         weight=100,
                         permissions=["vpn.view_vpnphase2policy"],
                         buttons=(
@@ -95,11 +106,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="Terminations",
+                label=_("Terminations"),
                 weight=200,
                 items=(
                     NavMenuItem(
                         link="vpn:vpntermination_list",
                         name="VPN Terminations",
+                        label=_("VPN Terminations"),
                         weight=100,
                         permissions=["vpn.view_vpntermination"],
                     ),

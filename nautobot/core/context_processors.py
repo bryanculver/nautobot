@@ -97,12 +97,23 @@ def nav_menu(request):
 
     for tab_name, tab_details in registry["nav_menu"]["tabs"].items():
         if not tab_details["permissions"] or has_one_or_more_perms(request.user, tab_details["permissions"]):
-            nav_menu_object["tabs"][tab_name] = {"groups": {}, "icon": tab_details["icon"]}
+            # This is the one place the nav menu is rebuilt per request, and therefore the one place
+            # where a lazily-translated label can be resolved under the requesting user's language.
+            # Registry keys stay plain English `name`s: they are cross-app merge keys, they are
+            # persisted in user favorites, and lazy objects cannot be dict keys in JSON at all.
+            nav_menu_object["tabs"][tab_name] = {
+                "groups": {},
+                "icon": tab_details["icon"],
+                "label": str(tab_details.get("label", tab_name)),
+            }
             for group_name, group_details in tab_details["groups"].items():
                 if not group_details["permissions"] or has_one_or_more_perms(
                     request.user, group_details["permissions"]
                 ):
-                    nav_menu_object["tabs"][tab_name]["groups"][group_name] = {"items": {}}
+                    nav_menu_object["tabs"][tab_name]["groups"][group_name] = {
+                        "items": {},
+                        "label": str(group_details.get("label", group_name)),
+                    }
                     for item_link, item_details in group_details["items"].items():
                         if not item_details["permissions"] or has_one_or_more_perms(
                             request.user, item_details["permissions"]
@@ -114,7 +125,10 @@ def nav_menu(request):
 
                             nav_menu_object["tabs"][tab_name]["groups"][group_name]["items"][item_link] = {
                                 "is_active": False,
+                                # Stable English key; what favorites are stored against.
                                 "name": item_details["name"],
+                                # Localized display text.
+                                "label": str(item_details.get("label", item_details["name"])),
                                 "weight": item_details["weight"],
                             }
                     if len(nav_menu_object["tabs"][tab_name]["groups"][group_name]["items"]) == 0:

@@ -133,7 +133,9 @@ class LocaleFormatsTestCase(TestCase):
     def test_english_keeps_nautobot_defaults(self):
         """English is Nautobot's opinionated default experience, not Django's `en` locale."""
         with translation.override("en"):
-            self.assertEqual(date(SAMPLE_DATE, "DATE_FORMAT"), date(SAMPLE_DATE, NAUTOBOT_FORMAT_DEFAULTS["DATE_FORMAT"]))
+            self.assertEqual(
+                date(SAMPLE_DATE, "DATE_FORMAT"), date(SAMPLE_DATE, NAUTOBOT_FORMAT_DEFAULTS["DATE_FORMAT"])
+            )
 
     def test_operator_format_overrides_raises_for_unknown_and_default_values(self):
         """Unit-level check of the fall-through contract that the stubs depend on."""

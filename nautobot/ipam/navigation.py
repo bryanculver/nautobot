@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.core.apps import (
     NavMenuAddButton,
     NavMenuGroup,
@@ -9,16 +11,19 @@ from nautobot.core.ui.choices import NavigationIconChoices, NavigationWeightChoi
 menu_items = (
     NavMenuTab(
         name="IPAM",
+        label=_("IPAM"),
         icon=NavigationIconChoices.IPAM,
         weight=NavigationWeightChoices.IPAM,
         groups=(
             NavMenuGroup(
                 name="IP Addresses",
+                label=_("IP Addresses"),
                 weight=100,
                 items=(
                     NavMenuItem(
                         link="ipam:ipaddress_list",
                         name="IP Addresses",
+                        label=_("IP Addresses"),
                         weight=100,
                         permissions=[
                             "ipam.view_ipaddress",
@@ -35,6 +40,7 @@ menu_items = (
                     NavMenuItem(
                         link="ipam:ipaddresstointerface_import",
                         name="IP Address Assignments",
+                        label=_("IP Address Assignments"),
                         weight=200,
                         permissions=[
                             "ipam.add_ipaddresstointerface",
@@ -44,6 +50,7 @@ menu_items = (
                     NavMenuItem(
                         link="ipam:ipaddressrange_list",
                         name="IP Address Ranges",
+                        label=_("IP Address Ranges"),
                         weight=300,
                         permissions=[
                             "ipam.view_ipaddressrange",
@@ -61,11 +68,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="Prefixes",
+                label=_("Prefixes"),
                 weight=200,
                 items=(
                     NavMenuItem(
                         link="ipam:prefix_list",
                         name="Prefixes",
+                        label=_("Prefixes"),
                         weight=100,
                         permissions=[
                             "ipam.view_prefix",
@@ -83,11 +92,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="RIRs",
+                label=_("RIRs"),
                 weight=300,
                 items=(
                     NavMenuItem(
                         link="ipam:rir_list",
                         name="RIRs",
+                        label=_("RIRs"),
                         weight=200,
                         permissions=[
                             "ipam.view_rir",
@@ -105,11 +116,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="VRFs",
+                label=_("VRFs"),
                 weight=400,
                 items=(
                     NavMenuItem(
                         link="ipam:namespace_list",
                         name="Namespaces",
+                        label=_("Namespaces"),
                         weight=100,
                         permissions=[
                             "ipam.view_namespace",
@@ -126,6 +139,7 @@ menu_items = (
                     NavMenuItem(
                         link="ipam:vrf_list",
                         name="VRFs",
+                        label=_("VRFs"),
                         weight=100,
                         permissions=[
                             "ipam.view_vrf",
@@ -142,6 +156,7 @@ menu_items = (
                     NavMenuItem(
                         link="ipam:routetarget_list",
                         name="Route Targets",
+                        label=_("Route Targets"),
                         weight=200,
                         permissions=[
                             "ipam.view_routetarget",
@@ -159,11 +174,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="VLANs",
+                label=_("VLANs"),
                 weight=500,
                 items=(
                     NavMenuItem(
                         link="ipam:vlan_list",
                         name="VLANs",
+                        label=_("VLANs"),
                         weight=100,
                         permissions=[
                             "ipam.view_vlan",
@@ -180,6 +197,7 @@ menu_items = (
                     NavMenuItem(
                         link="ipam:vlangroup_list",
                         name="VLAN Groups",
+                        label=_("VLAN Groups"),
                         weight=200,
                         permissions=[
                             "ipam.view_vlangroup",
@@ -197,11 +215,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="Services",
+                label=_("Services"),
                 weight=600,
                 items=(
                     NavMenuItem(
                         link="ipam:service_list",
                         name="Services",
+                        label=_("Services"),
                         weight=100,
                         permissions=[
                             "ipam.view_service",

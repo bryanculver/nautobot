@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.core.apps import (
     NavMenuAddButton,
     NavMenuGroup,
@@ -9,16 +11,19 @@ from nautobot.core.ui.choices import NavigationIconChoices, NavigationWeightChoi
 menu_items = (
     NavMenuTab(
         name="Virtualization",
+        label=_("Virtualization"),
         icon=NavigationIconChoices.VIRTUALIZATION,
         weight=NavigationWeightChoices.VIRTUALIZATION,
         groups=(
             NavMenuGroup(
                 name="Virtual Machines",
+                label=_("Virtual Machines"),
                 weight=100,
                 items=(
                     NavMenuItem(
                         link="virtualization:virtualmachine_list",
                         name="Virtual Machines",
+                        label=_("Virtual Machines"),
                         weight=100,
                         permissions=[
                             "virtualization.view_virtualmachine",
@@ -35,6 +40,7 @@ menu_items = (
                     NavMenuItem(
                         link="virtualization:vminterface_list",
                         name="Interfaces",
+                        label=_("Interfaces"),
                         weight=200,
                         permissions=[
                             "virtualization.view_vminterface",
@@ -45,11 +51,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="Clusters",
+                label=_("Clusters"),
                 weight=200,
                 items=(
                     NavMenuItem(
                         link="virtualization:cluster_list",
                         name="Clusters",
+                        label=_("Clusters"),
                         weight=100,
                         permissions=[
                             "virtualization.view_cluster",
@@ -66,6 +74,7 @@ menu_items = (
                     NavMenuItem(
                         link="virtualization:clustertype_list",
                         name="Cluster Types",
+                        label=_("Cluster Types"),
                         weight=200,
                         permissions=[
                             "virtualization.view_clustertype",
@@ -82,6 +91,7 @@ menu_items = (
                     NavMenuItem(
                         link="virtualization:clustergroup_list",
                         name="Cluster Groups",
+                        label=_("Cluster Groups"),
                         weight=300,
                         permissions=[
                             "virtualization.view_clustergroup",

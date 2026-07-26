@@ -745,7 +745,8 @@ LANGUAGES = [
     ("de", "Deutsch"),
     ("es", "Español"),
     ("fr", "Français"),
-    ("zh-hans", "中文（简体）"),
+    # Full-width parentheses are the correct punctuation in Chinese text; ASCII parens would look wrong.
+    ("zh-hans", "中文（简体）"),  # noqa: RUF001  # ambiguous-unicode-character-string
 ]
 LOCALE_PATHS = [os.path.join(BASE_DIR, "locale")]
 USE_I18N = True

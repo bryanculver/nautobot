@@ -1,0 +1,1 @@
+Fixed detail-view panels whose label does not slugify to ASCII (for example a label in Chinese or Japanese) rendering an empty `id` attribute, which broke the collapse/expand state for those panels.

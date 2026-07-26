@@ -141,15 +141,15 @@
                             >
                                 {% if '/' in tab_details.icon %}
                                     {% comment %}If there is a `'/'` in the `icon`, consider it a file URL, not icon name.{% endcomment %}
-                                    <img alt="{{ tab_name }} icon" src="{% static tab_details.icon %}">
+                                    <img alt="{{ tab_details.label }} icon" src="{% static tab_details.icon %}">
                                 {% elif tab_details.icon %}
                                     {% comment %}If `icon` is given, treat it as icon name to be fetched from nautobot-icons library.{% endcomment %}
                                     <img alt="{{ tab_details.icon }} icon" src="{% static 'nautobot-icons/'|add:tab_details.icon|add:'.svg' %}">
                                 {% else %}
                                     {% comment %}If `icon` is missing, generate an "icon" depicting the first nav menu tab name letter inside a rounded rectangle.{% endcomment %}
-                                    <span class="nb-letter-icon">{{ tab_name|first|upper }}</span>
+                                    <span class="nb-letter-icon">{{ tab_details.label|first|upper }}</span>
                                 {% endif %}
-                                <span>{{ tab_name }}</span>
+                                <span>{{ tab_details.label }}</span>
                             </button>
 
                             <div class="nb-sidenav-flyout" id="sidenav-flyout-{{ forloop.counter }}"
@@ -159,14 +159,14 @@
                                 {% for group_name, group_details in tab_details.groups.items %}
                                     <ul class="list-unstyled">
                                         <li class="nb-sidenav-link-group" data-group-weight="{{ group_details.weight }}">
-                                            {{ group_name }}
+                                            {{ group_details.label }}
                                         </li>
                                         {% for item_link, item_details in group_details.items.items %}
                                             <li class="nb-sidenav-link-wrapper{% if item_details.permissions and not request.user|has_perms:item_details.permissions %} disabled{% endif %}">
                                                 <a class="nb-sidenav-link{% if item_details.is_active %} nb-sidenav-link-active{% endif %}"
                                                    data-item-weight="{{ item_details.weight }}"
                                                    href="{{ item_link }}">
-                                                    {{ item_details.name }}
+                                                    {{ item_details.label }}
                                                 </a>
                                                 <button
                                                     class="nb-sidenav-favorite{% if item_link in navbar_favorites_link_list %} active{% endif %}"

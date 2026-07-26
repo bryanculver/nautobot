@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.core.apps import (
     NavMenuAddButton,
     NavMenuGroup,
@@ -9,16 +11,19 @@ from nautobot.core.ui.choices import NavigationIconChoices, NavigationWeightChoi
 menu_items = (
     NavMenuTab(
         name="Approvals",
+        label=_("Approvals"),
         icon=NavigationIconChoices.APPROVAL_WORKFLOWS,
         weight=NavigationWeightChoices.APPROVAL_WORKFLOWS,
         groups=(
             NavMenuGroup(
                 name="Approval Workflows",
+                label=_("Approval Workflows"),
                 weight=50,
                 items=(
                     NavMenuItem(
                         link="extras:approvalworkflowdefinition_list",
                         name="Workflow Definitions",
+                        label=_("Workflow Definitions"),
                         weight=100,
                         permissions=["extras.view_approvalworkflowdefinition"],
                         buttons=(
@@ -31,6 +36,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:approver_dashboard",
                         name="Approval Dashboard",
+                        label=_("Approval Dashboard"),
                         weight=200,
                         permissions=["extras.view_approvalworkflow"],
                     ),
@@ -40,16 +46,19 @@ menu_items = (
     ),
     NavMenuTab(
         name="Organization",
+        label=_("Organization"),
         icon=NavigationIconChoices.ORGANIZATION,
         weight=NavigationWeightChoices.ORGANIZATION,
         groups=(
             NavMenuGroup(
                 name="Contacts",
+                label=_("Contacts"),
                 weight=400,
                 items=(
                     NavMenuItem(
                         link="extras:contact_list",
                         name="Contacts",
+                        label=_("Contacts"),
                         weight=100,
                         permissions=["extras.view_contact"],
                         buttons=[NavMenuAddButton(link="extras:contact_add", permissions=["extras.add_contact"])],
@@ -57,6 +66,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:team_list",
                         name="Teams",
+                        label=_("Teams"),
                         weight=200,
                         permissions=["extras.view_team"],
                         buttons=[NavMenuAddButton(link="extras:team_add", permissions=["extras.add_team"])],
@@ -65,11 +75,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="Groups",
+                label=_("Groups"),
                 weight=500,
                 items=(
                     NavMenuItem(
                         link="extras:dynamicgroup_list",
                         name="Dynamic Groups",
+                        label=_("Dynamic Groups"),
                         weight=100,
                         permissions=[
                             "extras.view_dynamicgroup",
@@ -87,11 +99,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="Metadata",  # TODO: is there a better name for this grouping?
+                label=_("Metadata"),
                 weight=600,
                 items=(
                     NavMenuItem(
                         link="extras:tag_list",
                         name="Tags",
+                        label=_("Tags"),
                         weight=100,
                         permissions=[
                             "extras.view_tag",
@@ -108,6 +122,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:status_list",
                         name="Statuses",
+                        label=_("Statuses"),
                         weight=200,
                         permissions=[
                             "extras.view_status",
@@ -124,6 +139,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:role_list",
                         name="Roles",
+                        label=_("Roles"),
                         weight=300,
                         permissions=[
                             "extras.view_role",
@@ -143,16 +159,19 @@ menu_items = (
     ),
     NavMenuTab(
         name="Secrets",
+        label=_("Secrets"),
         icon=NavigationIconChoices.SECRETS,
         weight=NavigationWeightChoices.SECRETS,
         groups=(
             NavMenuGroup(
                 name="Secrets",
+                label=_("Secrets"),
                 weight=100,
                 items=(
                     NavMenuItem(
                         link="extras:secret_list",
                         name="Secrets",
+                        label=_("Secrets"),
                         weight=100,
                         permissions=["extras.view_secret"],
                         buttons=(NavMenuAddButton(link="extras:secret_add", permissions=["extras.add_secret"]),),
@@ -160,6 +179,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:secretsgroup_list",
                         name="Secrets Groups",
+                        label=_("Secrets Groups"),
                         weight=200,
                         permissions=["extras.view_secretsgroup"],
                         buttons=(
@@ -172,16 +192,19 @@ menu_items = (
     ),
     NavMenuTab(
         name="Jobs",
+        label=_("Jobs"),
         icon=NavigationIconChoices.JOBS,
         weight=NavigationWeightChoices.JOBS,
         groups=(
             NavMenuGroup(
                 name="Jobs",
+                label=_("Jobs"),
                 weight=100,
                 items=(
                     NavMenuItem(
                         link="extras:job_list",
                         name="Jobs",
+                        label=_("Jobs"),
                         weight=100,
                         permissions=[
                             "extras.view_job",
@@ -191,6 +214,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:scheduledjob_list",
                         name="Scheduled Jobs",
+                        label=_("Scheduled Jobs"),
                         weight=300,
                         permissions=[
                             "extras.view_job",
@@ -201,6 +225,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:jobresult_list",
                         name="Job Results",
+                        label=_("Job Results"),
                         weight=400,
                         permissions=[
                             "extras.view_jobresult",
@@ -210,6 +235,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:jobhook_list",
                         name="Job Hooks",
+                        label=_("Job Hooks"),
                         weight=500,
                         permissions=[
                             "extras.view_jobhook",
@@ -226,6 +252,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:jobbutton_list",
                         name="Job Buttons",
+                        label=_("Job Buttons"),
                         weight=600,
                         permissions=[
                             "extras.view_jobbutton",
@@ -242,6 +269,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:jobqueue_list",
                         name="Job Queues",
+                        label=_("Job Queues"),
                         weight=700,
                         permissions=[
                             "extras.view_jobqueue",
@@ -261,16 +289,19 @@ menu_items = (
     ),
     NavMenuTab(
         name="Extensibility",
+        label=_("Extensibility"),
         icon=NavigationIconChoices.EXTENSIBILITY,
         weight=NavigationWeightChoices.EXTENSIBILITY,
         groups=(
             NavMenuGroup(
                 name="Logging",
+                label=_("Logging"),
                 weight=100,
                 items=(
                     NavMenuItem(
                         link="extras:objectchange_list",
                         name="Change Log",
+                        label=_("Change Log"),
                         weight=100,
                         permissions=[
                             "extras.view_objectchange",
@@ -281,11 +312,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="Users",
+                label=_("Users"),
                 weight=150,
                 items=(
                     NavMenuItem(
                         link="extras:savedview_list",
                         name="Saved Views",
+                        label=_("Saved Views"),
                         weight=100,
                         permissions=[
                             "extras.view_savedview",
@@ -295,11 +328,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="Data Sources",
+                label=_("Data Sources"),
                 weight=200,
                 items=(
                     NavMenuItem(
                         link="extras:gitrepository_list",
                         name="Git Repositories",
+                        label=_("Git Repositories"),
                         weight=100,
                         permissions=[
                             "extras.view_gitrepository",
@@ -317,11 +352,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="Data Management",
+                label=_("Data Management"),
                 weight=300,
                 items=(
                     NavMenuItem(
                         link="extras:graphqlquery_list",
                         name="GraphQL Queries",
+                        label=_("GraphQL Queries"),
                         weight=100,
                         permissions=[
                             "extras.view_graphqlquery",
@@ -338,6 +375,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:note_list",
                         name="Notes",
+                        label=_("Notes"),
                         weight=300,
                         permissions=[
                             "extras.view_note",
@@ -347,11 +385,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="Automation",
+                label=_("Automation"),
                 weight=500,
                 items=(
                     NavMenuItem(
                         link="extras:configcontext_list",
                         name="Config Contexts",
+                        label=_("Config Contexts"),
                         weight=100,
                         permissions=[
                             "extras.view_configcontext",
@@ -368,6 +408,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:configcontextschema_list",
                         name="Config Context Schemas",
+                        label=_("Config Context Schemas"),
                         weight=100,
                         permissions=[
                             "extras.view_configcontextschema",
@@ -384,6 +425,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:exporttemplate_list",
                         name="Export Templates",
+                        label=_("Export Templates"),
                         weight=200,
                         permissions=[
                             "extras.view_exporttemplate",
@@ -400,6 +442,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:externalintegration_list",
                         name="External Integrations",
+                        label=_("External Integrations"),
                         weight=300,
                         permissions=[
                             "extras.view_externalintegration",
@@ -416,6 +459,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:webhook_list",
                         name="Webhooks",
+                        label=_("Webhooks"),
                         weight=400,
                         permissions=[
                             "extras.view_webhook",
@@ -433,11 +477,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="Data Model",
+                label=_("Data Model"),
                 weight=600,
                 items=(
                     NavMenuItem(
                         link="extras:customfield_list",
                         name="Custom Fields",
+                        label=_("Custom Fields"),
                         weight=100,
                         permissions=[
                             "extras.view_customfield",
@@ -454,6 +500,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:relationship_list",
                         name="Relationships",
+                        label=_("Relationships"),
                         weight=200,
                         permissions=[
                             "extras.view_relationship",
@@ -470,6 +517,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:computedfield_list",
                         name="Computed Fields",
+                        label=_("Computed Fields"),
                         weight=300,
                         permissions=[
                             "extras.view_computedfield",
@@ -486,6 +534,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:customlink_list",
                         name="Custom Links",
+                        label=_("Custom Links"),
                         weight=400,
                         permissions=[
                             "extras.view_customlink",
@@ -503,11 +552,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="Metadata",
+                label=_("Metadata"),
                 weight=700,
                 items=(
                     NavMenuItem(
                         link="extras:metadatatype_list",
                         name="Metadata Types",
+                        label=_("Metadata Types"),
                         weight=100,
                         permissions=[
                             "extras.view_metadatatype",
@@ -524,6 +575,7 @@ menu_items = (
                     NavMenuItem(
                         link="extras:objectmetadata_list",
                         name="Object Metadata",
+                        label=_("Object Metadata"),
                         weight=200,
                         permissions=[
                             "extras.view_objectmetadata",
@@ -536,21 +588,25 @@ menu_items = (
     ),
     NavMenuTab(
         name="Apps",
+        label=_("Apps"),
         icon=NavigationIconChoices.APPS,
         weight=NavigationWeightChoices.APPS,
         groups=(
             NavMenuGroup(
                 name="General",
+                label=_("General"),
                 weight=100,
                 items=(
                     NavMenuItem(
                         link="apps:apps_marketplace",
                         name="Apps Marketplace",
+                        label=_("Apps Marketplace"),
                         weight=100,
                     ),
                     NavMenuItem(
                         link="apps:apps_list",
                         name="Installed Apps",
+                        label=_("Installed Apps"),
                         weight=200,
                     ),
                 ),

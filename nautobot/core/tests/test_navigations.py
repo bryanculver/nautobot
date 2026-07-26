@@ -1,3 +1,4 @@
+import json
 import os
 from unittest.mock import patch
 
@@ -5,8 +6,11 @@ from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.test import override_settings, RequestFactory, tag, TestCase
 from django.urls import resolve
+from django.utils import translation
+from django.utils.functional import Promise
+from django.utils.translation import gettext_lazy
 
-from nautobot.core.apps import NavMenuTab
+from nautobot.core.apps import NavMenuGroup, NavMenuItem, NavMenuTab, register_menu_items
 from nautobot.core.choices import ButtonActionColorChoices, ButtonActionIconChoices
 from nautobot.core.context_processors import nav_menu
 from nautobot.core.testing.utils import get_expected_menu_item_name
@@ -232,3 +236,128 @@ class NavMenuTestCase(TestCase):
 
             # Assert that the menu item for the requested URL is active
             self.assertTrue(nav["tabs"]["Devices"]["groups"]["Devices"]["items"]["/dcim/devices/"]["is_active"])
+
+
+@tag("unit")
+class NavMenuLabelTestCase(TestCase):
+    """
+    Verify the `name` (stable key) / `label` (translatable display text) split.
+
+    The registry stays keyed by English `name`s: they are how apps attach groups to core tabs, how
+    favorites are persisted into `user.config_data`, and what Selenium helpers select on. Only
+    `label` is ever translated, and only in the context processor, under the request's language.
+    """
+
+    def _request(self):
+        user = get_user_model().objects.create(username="Nav label user", is_active=True, is_superuser=True)
+        request = RequestFactory().get("/dcim/devices/")
+        request.resolver_match = resolve("/dcim/devices/")
+        request.user = user
+        return request
+
+    def test_every_registry_entry_has_a_label(self):
+        for tab_name, tab_details in registry["nav_menu"]["tabs"].items():
+            with self.subTest(tab_name):
+                self.assertIn("label", tab_details)
+            for group_name, group_details in tab_details["groups"].items():
+                with self.subTest(f"{tab_name} > {group_name}"):
+                    self.assertIn("label", group_details)
+                for item_link, item_details in group_details["items"].items():
+                    with self.subTest(f"{tab_name} > {group_name} > {item_link}"):
+                        self.assertIn("label", item_details)
+
+    def test_label_defaults_to_name_for_registrations_without_one(self):
+        """
+        The zero-app-changes guarantee: an app that passes only `name` renders exactly as before.
+
+        If this breaks, every community app's nav menu breaks with it.
+        """
+        tab = NavMenuTab(
+            name="App Compat Tab",
+            groups=(
+                NavMenuGroup(
+                    name="App Compat Group",
+                    items=(NavMenuItem(link="dcim:device_list", name="App Compat Item"),),
+                ),
+            ),
+        )
+        self.assertEqual(tab.initial_dict["label"], "App Compat Tab")
+        self.assertEqual(tab.groups[0].initial_dict["label"], "App Compat Group")
+        self.assertEqual(tab.groups[0].items[0].initial_dict["label"], "App Compat Item")
+
+    def test_explicit_label_is_kept_distinct_from_name(self):
+        item = NavMenuItem(link="dcim:device_list", name="Devices", label="Geräte")
+        self.assertEqual(item.initial_dict["name"], "Devices")
+        self.assertEqual(item.initial_dict["label"], "Geräte")
+
+    @override_settings(EXEMPT_VIEW_PERMISSIONS=["*"])
+    def test_context_processor_emits_plain_strings_and_is_json_serializable(self):
+        """
+        The nav payload is JSON-serialized wholesale for the Fuse.js search index.
+
+        `DjangoJSONEncoder` coerces lazy *values*, but lazy dict *keys* raise, and the plain
+        `json.dumps` path has no coercion at all -- so labels must already be `str` by this point.
+        """
+        nav = nav_menu(self._request())["nav_menu"]
+
+        for tab_name, tab_details in nav["tabs"].items():
+            self.assertIsInstance(tab_details["label"], str)
+            self.assertNotIsInstance(tab_details["label"], Promise)
+            self.assertIsInstance(tab_name, str)
+            for group_name, group_details in tab_details["groups"].items():
+                self.assertIsInstance(group_details["label"], str)
+                self.assertIsInstance(group_name, str)
+                for item_details in group_details["items"].values():
+                    self.assertIsInstance(item_details["label"], str)
+                    self.assertIsInstance(item_details["name"], str)
+
+        json.dumps(nav)
+
+    @override_settings(EXEMPT_VIEW_PERMISSIONS=["*"])
+    def test_labels_are_resolved_under_the_request_language(self):
+        """
+        Resolution happens per request, not at import time.
+
+        Uses a label from Django's own bundled catalogs so this does not depend on Nautobot's.
+        """
+        register_menu_items(
+            (
+                NavMenuTab(
+                    name="Locale Test Tab",
+                    label=gettext_lazy("Yes"),
+                    weight=9999,
+                    groups=(
+                        NavMenuGroup(
+                            name="Locale Test Group",
+                            label=gettext_lazy("Yes"),
+                            items=(
+                                NavMenuItem(
+                                    link="dcim:device_list",
+                                    name="Locale Test Item",
+                                    label=gettext_lazy("Yes"),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            )
+        )
+        self.addCleanup(registry["nav_menu"]["tabs"].pop, "Locale Test Tab", None)
+
+        request = self._request()
+        for language, expected in (("en", "Yes"), ("de", "Ja"), ("fr", "Oui")):
+            with self.subTest(language), translation.override(language):
+                tab = nav_menu(request)["nav_menu"]["tabs"]["Locale Test Tab"]
+                group = tab["groups"]["Locale Test Group"]
+                self.assertEqual(tab["label"], expected)
+                self.assertEqual(group["label"], expected)
+                self.assertEqual(group["items"]["/dcim/devices/"]["label"], expected)
+                # The stable keys must not move with the language.
+                self.assertEqual(group["items"]["/dcim/devices/"]["name"], "Locale Test Item")
+
+    @override_settings(EXEMPT_VIEW_PERMISSIONS=["*"])
+    def test_core_nav_labels_are_translatable_but_keys_are_not(self):
+        """Core nav entries now carry lazy labels; their registry keys stay plain English."""
+        devices_tab = registry["nav_menu"]["tabs"]["Devices"]
+        self.assertIsInstance(devices_tab["label"], Promise)
+        self.assertEqual(str(devices_tab["label"]), "Devices")

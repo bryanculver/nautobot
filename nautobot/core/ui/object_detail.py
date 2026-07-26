@@ -12,6 +12,7 @@ from typing import Callable
 from urllib.parse import urlencode
 import uuid
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
 from django.db import models
@@ -23,7 +24,8 @@ from django.template.defaultfilters import date as format_date, truncatechars
 from django.template.loader import render_to_string
 from django.templatetags.l10n import localize
 from django.urls import NoReverseMatch, reverse
-from django.utils import timezone
+from django.utils import timezone, translation
+from django.utils.functional import Promise
 from django.utils.html import format_html, format_html_join
 from django_tables2 import RequestConfig
 
@@ -205,13 +207,34 @@ class Component:
     def _generate_component_id(self):
         """Generate a deterministic ID based on an MD5 hash of the JSON representation of suitable attributes."""
 
+        def resolve(value):
+            """
+            Coerce a lazy translation proxy to its string value, leaving everything else alone.
+
+            Without this, a `gettext_lazy` label is silently dropped from the fingerprint below --
+            not an error, just a missing input -- so two components in the same view that differ
+            only by their label hash identically. That collides their DOM ids and makes HTMX
+            deferred rendering resolve to the wrong component.
+
+            Resolution is done under the default language so that component ids stay stable across
+            users: they are compared against a `component_id` GET parameter, and an id that changed
+            with the viewer's language would break deferred rendering for non-English users.
+            Class-level declarations are constructed at import time, so this is deterministic.
+            """
+            if isinstance(value, Promise):
+                with translation.override(settings.LANGUAGE_CODE):
+                    return str(value)
+            return value
+
         def filter_dict(dict_):
             filtered_dict = {}
             for key, value in dict_.items():
+                key = resolve(key)
                 if not isinstance(key, (str, int, bool)) and key is not None:
                     continue
                 if key == "component_id" or (isinstance(key, str) and key.startswith("_")):
                     continue
+                value = resolve(value)
                 if isinstance(value, (str, int, bool)) or value is None:
                     filtered_dict[key] = value
                 elif isinstance(value, (list, tuple)):
@@ -223,6 +246,7 @@ class Component:
         def filter_list(list_):
             filtered_list = []
             for item in list_:
+                item = resolve(item)
                 if isinstance(item, (str, int, bool)) or item is None:
                     filtered_list.append(item)
                 elif isinstance(item, (list, tuple)):
@@ -836,7 +860,15 @@ class Panel(Component):
         if self.body_id:
             return self.body_id
         if self.label:
-            return slugify(self.label)
+            # Slugify under the default language, for two reasons. The result is cached onto the
+            # shared component instance, so whichever request rendered first would otherwise decide
+            # the id for everyone; and the id is persisted in each user's collapse-state preferences,
+            # which must not be keyed by the language they happened to be using.
+            with translation.override(settings.LANGUAGE_CODE):
+                # Django's slugify is ASCII-destructive, so a label in a non-Latin script slugifies
+                # to the empty string; fall back rather than emit `id=""` on every such panel.
+                if body_id := slugify(self.label):
+                    return body_id
 
         return self.component_id
 
