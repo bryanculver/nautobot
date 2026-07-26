@@ -1,3 +1,4 @@
+import codecs
 import csv
 from io import StringIO
 import json
@@ -8,6 +9,7 @@ from rest_framework.renderers import BaseRenderer, BrowsableAPIRenderer, JSONRen
 
 from nautobot.core.celery import NautobotKombuJSONEncoder
 from nautobot.core.constants import COMPOSITE_KEY_SEPARATOR
+from nautobot.core.settings_funcs import is_truthy
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +72,26 @@ class NautobotCSVRenderer(BaseRenderer):
                 )
             )
 
+        # Optionally prepend a UTF-8 byte-order mark. Excel guesses the local ANSI code page for a
+        # BOM-less CSV and mojibakes every non-ASCII character, so a BOM is what a human downloading
+        # a spreadsheet wants -- but it corrupts the first header for any client that decodes plain
+        # utf-8, and REST API responses are consumed programmatically far more often than they are
+        # opened in Excel. So this is opt-in per request rather than unconditional.
+        #
+        # The UI's own export path adds the BOM itself, and `NautobotCSVParser` now decodes
+        # utf-8-sig either way, so a BOM-prefixed file always round-trips back in cleanly.
+        if self._bom_requested(renderer_context):
+            return codecs.BOM_UTF8.decode("utf-8") + buffer.getvalue()
+
         return buffer.getvalue()
+
+    @staticmethod
+    def _bom_requested(renderer_context):
+        """Whether the caller asked for a UTF-8 BOM via `?bom=true`."""
+        request = (renderer_context or {}).get("request")
+        if request is None:
+            return False
+        return is_truthy(request.GET.get("bom", "false"))
 
     @classmethod
     def get_headers(cls, data):

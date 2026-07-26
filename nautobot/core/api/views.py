@@ -15,6 +15,7 @@ from django.db.models.fields.related import ForeignKey, ManyToManyField, Related
 from django.db.models.fields.reverse_related import ManyToManyRel, ManyToOneRel
 from django.http.response import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect
+from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.views.decorators.gzip import gzip_page
 from drf_spectacular.plumbing import get_relative_url, set_query_parameters
@@ -669,7 +670,14 @@ class NautobotSpectacularAPIView(SpectacularAPIView):
         schema = cache.get(cache_key)
         if not schema:
             generator = self.generator_class(urlconf=self.urlconf, api_version=version, patterns=self.patterns)
-            schema = generator.get_schema(request=request, public=self.serve_public)
+            # Generate under the default language rather than the requesting user's. Model and
+            # serializer metadata is translatable, so the generated `description` values would
+            # otherwise depend on whoever happened to warm this cache -- and it is cached for a
+            # week, shared across all users, and served with `Cache-Control: public`. The schema is
+            # a contract artifact consumed by code generators; it should not change language based
+            # on who fetched it.
+            with translation.override(settings.LANGUAGE_CODE):
+                schema = generator.get_schema(request=request, public=self.serve_public)
             cache.set(cache_key, schema, timeout=60 * 60 * 24 * 7)
 
         return Response(

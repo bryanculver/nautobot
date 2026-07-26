@@ -1,6 +1,7 @@
 # Query parameters that are *not* filterset filters
 NON_FILTER_QUERY_PARAMS = (
     "api_version",  # used to select the Nautobot API version
+    "bom",  # request a UTF-8 byte-order mark on CSV export, for opening the file in Excel
     "depth",  # nested levels of the serializers default to depth=0
     "exclude_m2m",  # used to exclude many-to-many fields from the REST API
     "format",  # "json" or "api", used in the interactive HTML REST API views
