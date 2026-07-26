@@ -4,6 +4,7 @@ import logging
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import URLValidator
 from django.db.models import Model
+from django.utils.translation import gettext, gettext_lazy as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -63,20 +64,22 @@ class ChoiceField(serializers.Field):
         if data == "":
             if self.allow_blank:
                 return data
-            raise ValidationError("This field may not be blank.")
+            raise ValidationError(_("This field may not be blank."))
 
         if isinstance(data, dict):
             if "value" in data:
                 data = data["value"]
             else:
                 raise ValidationError(
-                    'Value must be passed directly (e.g. "foo": 123) '
-                    'or as a dict with key "value" (e.g. "foo": {"value": 123}).'
+                    _(
+                        'Value must be passed directly (e.g. "foo": 123) '
+                        'or as a dict with key "value" (e.g. "foo": {"value": 123}).'
+                    )
                 )
 
         # Provide an explicit error message if the request is trying to write a dict or list
         if isinstance(data, list):
-            raise ValidationError('Value must be passed directly (e.g. "foo": 123); do not use a list.')
+            raise ValidationError(_('Value must be passed directly (e.g. "foo": 123); do not use a list.'))
 
         # Check for string representations of boolean/integer values
         if hasattr(data, "lower"):
@@ -96,7 +99,7 @@ class ChoiceField(serializers.Field):
         except TypeError:  # Input is an unhashable type
             pass
 
-        raise ValidationError(f"{data} is not a valid choice.")
+        raise ValidationError(gettext("%(data)s is not a valid choice.") % {"data": data})
 
     @property
     def choices(self):
@@ -239,7 +242,9 @@ class NautobotHyperlinkedRelatedField(WritableSerializerMixin, serializers.Hyper
                     data = related_model.natural_key_args_to_kwargs(deconstruct_composite_key(data))
                 except ValueError as err:
                     # Not a correctly constructed composite key?
-                    raise ValidationError(f"Related object not found using provided composite-key: {data}") from err
+                    raise ValidationError(
+                        gettext("Related object not found using provided composite-key: %(data)s") % {"data": data}
+                    ) from err
             elif related_model is not None and related_model.label_lower == "auth.group":
                 # auth.Group is a base Django model and so doesn't implement our natural_key_args_to_kwargs() method
                 data = {"name": deconstruct_composite_key(data)}

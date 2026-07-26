@@ -1,0 +1,1 @@
+Marked table column headers that are derived from an accessor rather than a model field as translatable, such as Last run, Duration and Start address.

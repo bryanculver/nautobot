@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import django_tables2 as tables
 
 from nautobot.core.tables import (
@@ -50,13 +51,13 @@ class CloudNetworkTable(BaseTable):
     assigned_prefix_count = LinkedCountColumn(
         viewname="ipam:prefix_list",
         url_params={"cloud_networks": "name"},
-        verbose_name="Assigned Prefixes",
+        verbose_name=_("Assigned Prefixes"),
     )
     circuit_count = LinkedCountColumn(
         viewname="circuits:circuit_list",
         url_params={"cloud_network": "name"},
         lookup="circuit_terminations__circuit",
-        verbose_name="Circuits",
+        verbose_name=_("Circuits"),
         reverse_lookup="circuit_terminations__cloud_network",
         distinct=True,
         display_field="cid",
@@ -64,7 +65,7 @@ class CloudNetworkTable(BaseTable):
     cloud_service_count = LinkedCountColumn(
         viewname="cloud:cloudservice_list",
         url_params={"cloud_networks": "name"},
-        verbose_name="Cloud Services",
+        verbose_name=_("Cloud Services"),
     )
     tags = TagColumn(url_name="cloud:cloudnetwork_list")
 
@@ -134,7 +135,7 @@ class CloudServiceTable(BaseTable):
     cloud_network_count = LinkedCountColumn(
         viewname="cloud:cloudnetwork_list",
         url_params={"cloud_services": "name"},
-        verbose_name="Cloud Networks",
+        verbose_name=_("Cloud Networks"),
     )
     tags = TagColumn(url_name="cloud:cloudservice_list")
     actions = ButtonsColumn(CloudService)

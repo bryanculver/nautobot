@@ -1,6 +1,7 @@
-from django.db import models  # noqa: I001
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
+from django.db import models
+from django.utils.translation import gettext, gettext_lazy as _
 from jsonschema.exceptions import ValidationError as JSONSchemaValidationError
 from jsonschema.validators import Draft7Validator
 
@@ -8,7 +9,7 @@ from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.models import BaseManager, BaseModel, ContentTypeRelatedQuerySet
 from nautobot.core.models.fields import ForeignKeyLimitedByContentTypes
 from nautobot.core.models.generics import PrimaryModel
-from nautobot.extras.utils import FeatureQuery, extras_features
+from nautobot.extras.utils import extras_features, FeatureQuery
 
 
 @extras_features(
@@ -19,16 +20,24 @@ from nautobot.extras.utils import FeatureQuery, extras_features
     "webhooks",
 )
 class CloudAccount(PrimaryModel):
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, help_text="The name of this Cloud Account.", unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(
+        max_length=CHARFIELD_MAX_LENGTH,
+        help_text=_("The name of this Cloud Account."),
+        unique=True,
+        verbose_name=_("name"),
+    )
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     account_number = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH, help_text="The account identifier of this Cloud Account."
+        max_length=CHARFIELD_MAX_LENGTH,
+        help_text=_("The account identifier of this Cloud Account."),
+        verbose_name=_("account number"),
     )
     provider = models.ForeignKey(
         to="dcim.Manufacturer",
         on_delete=models.PROTECT,
         related_name="cloud_accounts",
-        help_text="The Manufacturer instance which represents the Cloud Provider",
+        help_text=_("The Manufacturer instance which represents the Cloud Provider"),
+        verbose_name=_("provider"),
     )
     secrets_group = models.ForeignKey(
         to="extras.SecretsGroup",
@@ -36,6 +45,7 @@ class CloudAccount(PrimaryModel):
         default=None,
         blank=True,
         null=True,
+        verbose_name=_("secrets group"),
     )
     clone_fields = [
         "provider",
@@ -61,20 +71,24 @@ class CloudAccount(PrimaryModel):
     "webhooks",
 )
 class CloudResourceType(PrimaryModel):
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, help_text="Type of cloud objects", unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(
+        max_length=CHARFIELD_MAX_LENGTH, help_text=_("Type of cloud objects"), unique=True, verbose_name=_("name")
+    )
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     provider = models.ForeignKey(
         to="dcim.Manufacturer",
         on_delete=models.PROTECT,
         related_name="cloud_resource_types",
-        help_text="The Manufacturer instance which represents the Cloud Provider",
+        help_text=_("The Manufacturer instance which represents the Cloud Provider"),
+        verbose_name=_("provider"),
     )
-    config_schema = models.JSONField(null=True, blank=True)
+    config_schema = models.JSONField(null=True, blank=True, verbose_name=_("config schema"))
     content_types = models.ManyToManyField(
         to=ContentType,
-        help_text="The content type(s) to which this model applies.",
+        help_text=_("The content type(s) to which this model applies."),
         related_name="cloud_resource_types",
         limit_choices_to=FeatureQuery("cloud_resource_types"),
+        verbose_name=_("content types"),
     )
     clone_fields = [
         "provider",
@@ -97,8 +111,10 @@ class CloudResourceType(PrimaryModel):
 class CloudResourceTypeMixin(models.Model):
     """Mixin that designates a model as compatible with CloudResourceType content_types selections."""
 
-    cloud_resource_type = ForeignKeyLimitedByContentTypes(to=CloudResourceType, on_delete=models.PROTECT)
-    extra_config = models.JSONField(null=True, blank=True)
+    cloud_resource_type = ForeignKeyLimitedByContentTypes(
+        to=CloudResourceType, on_delete=models.PROTECT, verbose_name=_("cloud resource type")
+    )
+    extra_config = models.JSONField(null=True, blank=True, verbose_name=_("extra config"))
 
     is_cloud_resource_type_model = True
 
@@ -117,7 +133,10 @@ class CloudResourceTypeMixin(models.Model):
                 raise ValidationError(
                     {
                         "extra_config": [
-                            f"Validation according to CloudResourceType {self.cloud_resource_type} config_schema failed.",
+                            gettext(
+                                "Validation according to CloudResourceType %(cloud_resource_type)s config_schema failed."
+                            )
+                            % {"cloud_resource_type": self.cloud_resource_type},
                             e.message,
                         ]
                     }
@@ -132,17 +151,25 @@ class CloudResourceTypeMixin(models.Model):
     "webhooks",
 )
 class CloudNetwork(CloudResourceTypeMixin, PrimaryModel):
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    cloud_account = models.ForeignKey(to=CloudAccount, on_delete=models.PROTECT, related_name="cloud_networks")
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
+    cloud_account = models.ForeignKey(
+        to=CloudAccount, on_delete=models.PROTECT, related_name="cloud_networks", verbose_name=_("cloud account")
+    )
     parent = models.ForeignKey(
-        to="cloud.CloudNetwork", on_delete=models.PROTECT, blank=True, null=True, related_name="children"
+        to="cloud.CloudNetwork",
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
+        related_name="children",
+        verbose_name=_("parent"),
     )
     prefixes = models.ManyToManyField(
         blank=True,
         related_name="cloud_networks",
         to="ipam.Prefix",
         through="cloud.CloudNetworkPrefixAssignment",
+        verbose_name=_("prefixes"),
     )
     clone_fields = [
         "cloud_resource_type",
@@ -162,10 +189,10 @@ class CloudNetwork(CloudResourceTypeMixin, PrimaryModel):
         if self.parent is not None:
             if self.parent.parent is not None:
                 raise ValidationError(
-                    {"parent": "A CloudNetwork may not be the child of a CloudNetwork that itself has a parent."}
+                    {"parent": _("A CloudNetwork may not be the child of a CloudNetwork that itself has a parent.")}
                 )
             if self.parent == self:
-                raise ValidationError({"parent": "A CloudNetwork may not be its own parent."})
+                raise ValidationError({"parent": _("A CloudNetwork may not be its own parent.")})
 
         # TODO: should we enforce that self.cloud_resource_type.provider == self.cloud_account.provider?
 
@@ -177,8 +204,12 @@ class CloudNetwork(CloudResourceTypeMixin, PrimaryModel):
     "graphql",
 )
 class CloudNetworkPrefixAssignment(BaseModel):
-    cloud_network = models.ForeignKey(CloudNetwork, on_delete=models.CASCADE, related_name="prefix_assignments")
-    prefix = models.ForeignKey("ipam.Prefix", on_delete=models.CASCADE, related_name="cloud_network_assignments")
+    cloud_network = models.ForeignKey(
+        CloudNetwork, on_delete=models.CASCADE, related_name="prefix_assignments", verbose_name=_("cloud network")
+    )
+    prefix = models.ForeignKey(
+        "ipam.Prefix", on_delete=models.CASCADE, related_name="cloud_network_assignments", verbose_name=_("prefix")
+    )
     is_metadata_associable_model = False
 
     class Meta:
@@ -197,8 +228,8 @@ class CloudNetworkPrefixAssignment(BaseModel):
     "webhooks",
 )
 class CloudService(CloudResourceTypeMixin, PrimaryModel):
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     cloud_account = models.ForeignKey(
         to=CloudAccount,
         related_name="cloud_services",
@@ -206,6 +237,7 @@ class CloudService(CloudResourceTypeMixin, PrimaryModel):
         default=None,
         blank=True,
         null=True,
+        verbose_name=_("cloud account"),
     )
     cloud_networks = models.ManyToManyField(
         to=CloudNetwork,
@@ -213,6 +245,7 @@ class CloudService(CloudResourceTypeMixin, PrimaryModel):
         related_name="cloud_services",
         through_fields=("cloud_service", "cloud_network"),
         blank=True,
+        verbose_name=_("cloud networks"),
     )
     clone_fields = [
         "cloud_account",
@@ -234,8 +267,18 @@ class CloudService(CloudResourceTypeMixin, PrimaryModel):
     "graphql",
 )
 class CloudServiceNetworkAssignment(BaseModel):
-    cloud_network = models.ForeignKey(CloudNetwork, on_delete=models.CASCADE, related_name="cloud_service_assignments")
-    cloud_service = models.ForeignKey(CloudService, on_delete=models.CASCADE, related_name="cloud_network_assignments")
+    cloud_network = models.ForeignKey(
+        CloudNetwork,
+        on_delete=models.CASCADE,
+        related_name="cloud_service_assignments",
+        verbose_name=_("cloud network"),
+    )
+    cloud_service = models.ForeignKey(
+        CloudService,
+        on_delete=models.CASCADE,
+        related_name="cloud_network_assignments",
+        verbose_name=_("cloud service"),
+    )
     is_metadata_associable_model = False
 
     class Meta:

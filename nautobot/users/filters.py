@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.filters import (
     BaseFilterSet,
@@ -42,7 +43,7 @@ class UserFilterSet(BaseFilterSet):
     groups_id = ModelMultipleChoiceFilter(
         field_name="groups",
         queryset=Group.objects.all(),
-        label="Group (ID)",
+        label=_("Group (ID)"),
     )
     groups = ModelMultipleChoiceFilter(
         field_name="groups__name",
@@ -51,16 +52,16 @@ class UserFilterSet(BaseFilterSet):
     )
     has_object_changes = RelatedMembershipBooleanFilter(
         field_name="object_changes",
-        label="Has Changes",
+        label=_("Has Changes"),
     )
     object_changes = ModelMultipleChoiceFilter(
         field_name="object_changes",
         queryset=ObjectChange.objects.all(),
-        label="Object Changes (ID)",
+        label=_("Object Changes (ID)"),
     )
     has_object_permissions = RelatedMembershipBooleanFilter(
         field_name="object_permissions",
-        label="Has object permissions",
+        label=_("Has object permissions"),
     )
     object_permissions = NaturalKeyOrPKMultipleChoiceFilter(
         to_field_name="name",
@@ -68,7 +69,7 @@ class UserFilterSet(BaseFilterSet):
     )
     has_rack_reservations = RelatedMembershipBooleanFilter(
         field_name="rack_reservations",
-        label="Has Rack Reservations",
+        label=_("Has Rack Reservations"),
     )
     # TODO(timizuo): Since RackReservation has no natural-key field, NaturalKeyOrPKMultipleChoiceFilter can't be used
     rack_reservations_id = ModelMultipleChoiceFilter(
@@ -107,13 +108,13 @@ class ObjectPermissionFilterSet(BaseFilterSet, NameSearchFilterSet):
     groups_id = ModelMultipleChoiceFilter(
         field_name="groups",
         queryset=Group.objects.all(),
-        label="Group (ID)",
+        label=_("Group (ID)"),
     )
     groups = ModelMultipleChoiceFilter(
         field_name="groups__name",
         queryset=Group.objects.all(),
         to_field_name="name",
-        label="Group (name)",
+        label=_("Group (name)"),
     )
 
     class Meta:

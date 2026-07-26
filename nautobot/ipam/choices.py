@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.core.choices import ChoiceSet
 
 
@@ -22,9 +24,9 @@ class PrefixStatusChoices(ChoiceSet):
     STATUS_DEPRECATED = "deprecated"
 
     CHOICES = (
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_RESERVED, "Reserved"),
-        (STATUS_DEPRECATED, "Deprecated"),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_RESERVED, _("Reserved")),
+        (STATUS_DEPRECATED, _("Deprecated")),
     )
 
 
@@ -34,9 +36,9 @@ class PrefixTypeChoices(ChoiceSet):
     TYPE_POOL = "pool"
 
     CHOICES = (
-        (TYPE_CONTAINER, "Container"),
-        (TYPE_NETWORK, "Network"),
-        (TYPE_POOL, "Pool"),
+        (TYPE_CONTAINER, _("Container")),
+        (TYPE_NETWORK, _("Network")),
+        (TYPE_POOL, _("Pool")),
     )
 
 
@@ -51,9 +53,9 @@ class IPAddressStatusChoices(ChoiceSet):
     STATUS_DEPRECATED = "deprecated"
 
     CHOICES = (
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_RESERVED, "Reserved"),
-        (STATUS_DEPRECATED, "Deprecated"),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_RESERVED, _("Reserved")),
+        (STATUS_DEPRECATED, _("Deprecated")),
     )
 
 
@@ -96,9 +98,9 @@ class IPAddressTypeChoices(ChoiceSet):
     TYPE_SLAAC = "slaac"
 
     CHOICES = (
-        (TYPE_DHCP, "DHCP"),
-        (TYPE_HOST, "Host"),
-        (TYPE_SLAAC, "SLAAC"),
+        (TYPE_DHCP, _("DHCP")),
+        (TYPE_HOST, _("Host")),
+        (TYPE_SLAAC, _("SLAAC")),
     )
 
 
@@ -113,9 +115,9 @@ class IPAddressRangeStatusChoices(ChoiceSet):
     STATUS_DEPRECATED = "deprecated"
 
     CHOICES = (
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_RESERVED, "Reserved"),
-        (STATUS_DEPRECATED, "Deprecated"),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_RESERVED, _("Reserved")),
+        (STATUS_DEPRECATED, _("Deprecated")),
     )
 
 
@@ -129,11 +131,11 @@ class IPAddressRangeRoleChoices(ChoiceSet):
     ROLE_RESERVED = "reserved"
 
     CHOICES = (
-        (ROLE_DHCP, "DHCP"),
-        (ROLE_FIREWALL_OBJECT, "Firewall Object"),
-        (ROLE_NAT_POOL, "NAT Pool"),
-        (ROLE_LOAD_BALANCER_POOL, "Load Balancer Pool"),
-        (ROLE_RESERVED, "Reserved"),
+        (ROLE_DHCP, _("DHCP")),
+        (ROLE_FIREWALL_OBJECT, _("Firewall Object")),
+        (ROLE_NAT_POOL, _("NAT Pool")),
+        (ROLE_LOAD_BALANCER_POOL, _("Load Balancer Pool")),
+        (ROLE_RESERVED, _("Reserved")),
     )
 
 
@@ -148,9 +150,9 @@ class VRFStatusChoices(ChoiceSet):
     STATUS_DEPRECATED = "deprecated"
 
     CHOICES = (
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_DOWN, "Down"),
-        (STATUS_DEPRECATED, "Deprecated"),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_DOWN, _("Down")),
+        (STATUS_DEPRECATED, _("Deprecated")),
     )
 
 
@@ -165,9 +167,9 @@ class VLANStatusChoices(ChoiceSet):
     STATUS_DEPRECATED = "deprecated"
 
     CHOICES = (
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_RESERVED, "Reserved"),
-        (STATUS_DEPRECATED, "Deprecated"),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_RESERVED, _("Reserved")),
+        (STATUS_DEPRECATED, _("Deprecated")),
     )
 
 

@@ -12,6 +12,7 @@ from django.db.models import Q
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
 from django.utils.html import format_html
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.forms import (
@@ -375,9 +376,9 @@ class RelationshipModel(models.Model):
                     try:
                         add_url = reverse(get_route_for_model(required_model_class, "add"))
                         hint = format_html(
-                            '<a target="_blank" href="{}">Click here</a> to create a {}.',
-                            add_url,
-                            required_model_meta.verbose_name,
+                            gettext('<a target="_blank" href="{url}">Click here</a> to create a {name}.'),
+                            url=add_url,
+                            name=required_model_meta.verbose_name,
                         )
                     except NoReverseMatch:
                         pass
@@ -390,11 +391,11 @@ class RelationshipModel(models.Model):
                         pass
 
                 error_message = format_html(
-                    "{} require {} {}, but no {} exist yet. ",
-                    bettertitle(name_plural),
-                    num_required_verbose,
-                    required_model_meta.verbose_name,
-                    required_model_meta.verbose_name_plural,
+                    gettext("{relationship} require {count} {name}, but no {name_plural} exist yet. "),
+                    relationship=bettertitle(name_plural),
+                    count=num_required_verbose,
+                    name=required_model_meta.verbose_name,
+                    name_plural=required_model_meta.verbose_name_plural,
                 )
                 error_message += hint
                 field_errors[field_key].append(error_message)
@@ -627,27 +628,34 @@ class Relationship(
     BaseModel,
 ):
     label = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH, unique=True, help_text="Label of the relationship as displayed to users"
+        max_length=CHARFIELD_MAX_LENGTH,
+        unique=True,
+        help_text=_("Label of the relationship as displayed to users"),
+        verbose_name=_("label"),
     )
     key = AutoSlugField(
         populate_from="label",
         slugify_function=slugify_dashes_to_underscores,
-        help_text="Internal relationship key. Please use underscores rather than dashes in this key.",
+        help_text=_("Internal relationship key. Please use underscores rather than dashes in this key."),
+        verbose_name=_("key"),
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     type = models.CharField(
         max_length=50,
         choices=RelationshipTypeChoices,
         default=RelationshipTypeChoices.TYPE_MANY_TO_MANY,
-        help_text="Cardinality of this relationship",
+        help_text=_("Cardinality of this relationship"),
+        verbose_name=_("type"),
     )
     required_on = models.CharField(
         max_length=12,
         choices=RelationshipRequiredSideChoices,
         default=RelationshipRequiredSideChoices.NEITHER_SIDE_REQUIRED,
-        help_text="Objects on the specified side MUST implement this relationship. "
-        "Not permitted for symmetric relationships.",
+        help_text=_(
+            "Objects on the specified side MUST implement this relationship. Not permitted for symmetric relationships."
+        ),
         blank=True,
+        verbose_name=_("required on"),
     )
 
     #
@@ -657,26 +665,27 @@ class Relationship(
         to=ContentType,
         on_delete=models.CASCADE,
         related_name="source_relationships",
-        verbose_name="Source Object",
+        verbose_name=_("Source Object"),
         limit_choices_to=FeatureQuery("relationships"),
-        help_text="The source object type to which this relationship applies.",
+        help_text=_("The source object type to which this relationship applies."),
     )
     source_label = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        verbose_name="Source Label",
-        help_text="Label for related destination objects, as displayed on the source object.",
+        verbose_name=_("Source Label"),
+        help_text=_("Label for related destination objects, as displayed on the source object."),
     )
     source_hidden = models.BooleanField(
         default=False,
-        verbose_name="Hide for source object",
-        help_text="Hide this relationship on the source object.",
+        verbose_name=_("Hide for source object"),
+        help_text=_("Hide this relationship on the source object."),
     )
     source_filter = models.JSONField(
         encoder=DjangoJSONEncoder,
         blank=True,
         null=True,
-        help_text="Filterset filter matching the applicable source objects of the selected type",
+        help_text=_("Filterset filter matching the applicable source objects of the selected type"),
+        verbose_name=_("source filter"),
     )
 
     #
@@ -686,32 +695,34 @@ class Relationship(
         to=ContentType,
         on_delete=models.CASCADE,
         related_name="destination_relationships",
-        verbose_name="Destination Object",
+        verbose_name=_("Destination Object"),
         limit_choices_to=FeatureQuery("relationships"),
-        help_text="The destination object type to which this relationship applies.",
+        help_text=_("The destination object type to which this relationship applies."),
     )
     destination_label = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        verbose_name="Destination Label",
-        help_text="Label for related source objects, as displayed on the destination object.",
+        verbose_name=_("Destination Label"),
+        help_text=_("Label for related source objects, as displayed on the destination object."),
     )
     destination_hidden = models.BooleanField(
         default=False,
-        verbose_name="Hide for destination object",
-        help_text="Hide this relationship on the destination object.",
+        verbose_name=_("Hide for destination object"),
+        help_text=_("Hide this relationship on the destination object."),
     )
     destination_filter = models.JSONField(
         encoder=DjangoJSONEncoder,
         blank=True,
         null=True,
-        help_text="Filterset filter matching the applicable destination objects of the selected type",
+        help_text=_("Filterset filter matching the applicable destination objects of the selected type"),
+        verbose_name=_("destination filter"),
     )
     advanced_ui = models.BooleanField(
         default=False,
-        verbose_name="Move to Advanced tab",
-        help_text="Hide this field from the object's primary information tab. "
-        'It will appear in the "Advanced" tab instead.',
+        verbose_name=_("Move to Advanced tab"),
+        help_text=_(
+            'Hide this field from the object\'s primary information tab. It will appear in the "Advanced" tab instead.'
+        ),
     )
 
     natural_key_field_names = ["key"]
@@ -859,16 +870,24 @@ class Relationship(
             filter_ = getattr(self, f"{side}_filter")
             side_model = getattr(self, f"{side}_type").model_class()
             if not side_model:  # can happen if for example an App providing the model was uninstalled
-                raise ValidationError({f"{side}_type": "Unable to locate model class"})
+                raise ValidationError({f"{side}_type": _("Unable to locate model class")})
             model_name = side_model._meta.label
             if not isinstance(filter_, dict):
-                raise ValidationError({f"{side}_filter": f"Filter for {model_name} must be a dictionary"})
+                raise ValidationError(
+                    {
+                        f"{side}_filter": gettext("Filter for %(model_name)s must be a dictionary")
+                        % {"model_name": model_name}
+                    }
+                )
 
             filterset_class = get_filterset_for_model(side_model)
             if not filterset_class:
                 raise ValidationError(
                     {
-                        f"{side}_filter": f"Filters are not supported for {model_name} object (Unable to find a FilterSet)"
+                        f"{side}_filter": gettext(
+                            "Filters are not supported for %(model_name)s object (Unable to find a FilterSet)"
+                        )
+                        % {"model_name": model_name}
                     }
                 )
             filterset = filterset_class(filter_, side_model.objects.all())
@@ -927,20 +946,26 @@ class Relationship(
 
             if nbr_existing_cras and self.__class__.objects.get(pk=self.pk).type != self.type:
                 raise ValidationError(
-                    "Not supported to change the type of the relationship when some associations"
-                    " are present in the database, delete all associations first before modifying the type."
+                    _(
+                        "Not supported to change the type of the relationship when some associations"
+                        " are present in the database, delete all associations first before modifying the type."
+                    )
                 )
 
             if nbr_existing_cras and self.__class__.objects.get(pk=self.pk).source_type != self.source_type:
                 raise ValidationError(
-                    "Not supported to change the type of the source object when some associations"
-                    " are present in the database, delete all associations first before modifying the source type."
+                    _(
+                        "Not supported to change the type of the source object when some associations"
+                        " are present in the database, delete all associations first before modifying the source type."
+                    )
                 )
 
             elif nbr_existing_cras and self.__class__.objects.get(pk=self.pk).destination_type != self.destination_type:
                 raise ValidationError(
-                    "Not supported to change the type of the destination object when some associations"
-                    " are present in the database, delete all associations first before modifying the destination type."
+                    _(
+                        "Not supported to change the type of the destination object when some associations"
+                        " are present in the database, delete all associations first before modifying the destination type."
+                    )
                 )
 
     def skip_required(self, referenced_instance_or_class, side):
@@ -975,15 +1000,22 @@ class Relationship(
 @extras_features("custom_validators")
 class RelationshipAssociation(BaseModel):
     relationship = models.ForeignKey(
-        to="extras.Relationship", on_delete=models.CASCADE, related_name="relationship_associations"
+        to="extras.Relationship",
+        on_delete=models.CASCADE,
+        related_name="relationship_associations",
+        verbose_name=_("relationship"),
     )
 
-    source_type = models.ForeignKey(to=ContentType, on_delete=models.CASCADE, related_name="+")
-    source_id = models.UUIDField(db_index=True)
+    source_type = models.ForeignKey(
+        to=ContentType, on_delete=models.CASCADE, related_name="+", verbose_name=_("source type")
+    )
+    source_id = models.UUIDField(db_index=True, verbose_name=_("source id"))
     source = GenericForeignKey(ct_field="source_type", fk_field="source_id")
 
-    destination_type = models.ForeignKey(to=ContentType, on_delete=models.CASCADE, related_name="+")
-    destination_id = models.UUIDField(db_index=True)
+    destination_type = models.ForeignKey(
+        to=ContentType, on_delete=models.CASCADE, related_name="+", verbose_name=_("destination type")
+    )
+    destination_id = models.UUIDField(db_index=True, verbose_name=_("destination id"))
     destination = GenericForeignKey(ct_field="destination_type", fk_field="destination_id")
 
     documentation_static_path = "docs/user-guide/platform-functionality/relationship.html"
@@ -1056,16 +1088,24 @@ class RelationshipAssociation(BaseModel):
     def clean(self):
         if self.source_type != self.relationship.source_type:
             raise ValidationError(
-                {"source_type": f"source_type has a different value than defined in {self.relationship}"}
+                {
+                    "source_type": gettext("source_type has a different value than defined in %(relationship)s")
+                    % {"relationship": self.relationship}
+                }
             )
 
         if self.destination_type != self.relationship.destination_type:
             raise ValidationError(
-                {"destination_type": f"destination_type has a different value than defined in {self.relationship}"}
+                {
+                    "destination_type": gettext(
+                        "destination_type has a different value than defined in %(relationship)s"
+                    )
+                    % {"relationship": self.relationship}
+                }
             )
 
         if self.source_type == self.destination_type and self.source_id == self.destination_id:
-            raise ValidationError({"destination_id": "An object cannot form a RelationshipAssociation with itself"})
+            raise ValidationError({"destination_id": _("An object cannot form a RelationshipAssociation with itself")})
 
         if self.relationship.symmetric:
             # Check for a "duplicate" record that exists with source and destination swapped
@@ -1077,9 +1117,14 @@ class RelationshipAssociation(BaseModel):
                 raise ValidationError(
                     {
                         "__all__": (
-                            f"A {self.relationship} association already exists between "
-                            f"{self.get_source() or self.source_id} and "
-                            f"{self.get_destination() or self.destination_id}"
+                            gettext(
+                                "A %(relationship)s association already exists between %(source_id)s and %(destination_id)s"
+                            )
+                            % {
+                                "relationship": self.relationship,
+                                "source_id": self.get_source() or self.source_id,
+                                "destination_id": self.get_destination() or self.destination_id,
+                            }
                         )
                     }
                 )
@@ -1102,8 +1147,13 @@ class RelationshipAssociation(BaseModel):
                 raise ValidationError(
                     {
                         "destination": (
-                            f"Unable to create more than one {self.relationship} association to "
-                            f"{self.get_destination() or self.destination_id} (destination)"
+                            gettext(
+                                "Unable to create more than one %(relationship)s association to %(destination_id)s (destination)"
+                            )
+                            % {
+                                "relationship": self.relationship,
+                                "destination_id": self.get_destination() or self.destination_id,
+                            }
                         )
                     }
                 )
@@ -1125,8 +1175,10 @@ class RelationshipAssociation(BaseModel):
                     raise ValidationError(
                         {
                             "source": (
-                                f"Unable to create more than one {self.relationship} association from "
-                                f"{self.get_source() or self.source_id} (source)"
+                                gettext(
+                                    "Unable to create more than one %(relationship)s association from %(source_id)s (source)"
+                                )
+                                % {"relationship": self.relationship, "source_id": self.get_source() or self.source_id}
                             )
                         }
                     )
@@ -1141,8 +1193,10 @@ class RelationshipAssociation(BaseModel):
                     raise ValidationError(
                         {
                             "source": (
-                                f"Unable to create more than one {self.relationship} association involving "
-                                f"{self.get_source() or self.source_id} (peer)"
+                                gettext(
+                                    "Unable to create more than one %(relationship)s association involving %(source_id)s (peer)"
+                                )
+                                % {"relationship": self.relationship, "source_id": self.get_source() or self.source_id}
                             )
                         }
                     )
@@ -1153,8 +1207,13 @@ class RelationshipAssociation(BaseModel):
                     raise ValidationError(
                         {
                             "destination": (
-                                f"Unable to create more than one {self.relationship} association involving "
-                                f"{self.get_destination() or self.destination_id} (peer)"
+                                gettext(
+                                    "Unable to create more than one %(relationship)s association involving %(destination_id)s (peer)"
+                                )
+                                % {
+                                    "relationship": self.relationship,
+                                    "destination_id": self.get_destination() or self.destination_id,
+                                }
                             )
                         }
                     )
@@ -1182,5 +1241,10 @@ class RelationshipAssociation(BaseModel):
 
             if queryset.exists() is False:
                 raise ValidationError(
-                    {side_name: (f"{side} violates {self.relationship} {side_name}_filter restriction")}
+                    {
+                        side_name: (
+                            gettext("%(side)s violates %(relationship)s %(side_name)s_filter restriction")
+                            % {"side": side, "relationship": self.relationship, "side_name": side_name}
+                        )
+                    }
                 )

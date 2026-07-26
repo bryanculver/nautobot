@@ -1,15 +1,21 @@
 import contextlib
+import functools
 import json
 import logging
 import re
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models.fields.related import ManyToManyField, ManyToManyRel
 from django.forms import formset_factory
+from django.forms.utils import pretty_name
 from django.urls import NoReverseMatch, reverse
+from django.utils import translation
+from django.utils.text import capfirst
+from django.utils.translation import gettext, gettext_lazy as _
 import yaml
 
 from nautobot.core.forms import widgets as nautobot_widgets
@@ -47,7 +53,7 @@ class AddressFieldMixin(forms.ModelForm):
     ModelForm mixin for IPAddress based models.
     """
 
-    address = formfields.IPNetworkFormField()
+    address = formfields.IPNetworkFormField(label=_("Address"))
 
     def __init__(self, *args, **kwargs):
         instance = kwargs.get("instance")
@@ -70,6 +76,18 @@ class AddressFieldMixin(forms.ModelForm):
         self.instance.address = self.cleaned_data.get("address")
 
 
+@functools.lru_cache(maxsize=None)
+def _label_matches_fallback(model, field_name, verbose_name):
+    """Whether inheriting this `verbose_name` leaves the English label unchanged.
+
+    Resolved under the default language, because the comparison is about the English source text
+    rather than whatever language the current request is in. Cached because it depends only on the
+    model definition, not on the request.
+    """
+    with translation.override(settings.LANGUAGE_CODE):
+        return str(capfirst(verbose_name)) == pretty_name(field_name)
+
+
 class BootstrapMixin(forms.BaseForm):
     """
     Add the base Bootstrap CSS classes to form elements.
@@ -84,6 +102,8 @@ class BootstrapMixin(forms.BaseForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self._inherit_labels_from_model()
 
         exempt_widgets = [
             forms.CheckboxInput,
@@ -106,6 +126,38 @@ class BootstrapMixin(forms.BaseForm):
                 field.widget.attrs["required"] = "required"
             if "placeholder" not in field.widget.attrs:
                 field.widget.attrs["placeholder"] = field.label
+
+    def _inherit_labels_from_model(self):
+        """Give a field declared without a label the model field's `verbose_name`.
+
+        A field declared on the form shadows the one Django would have generated from the model, and
+        a declared field with no label falls back to `pretty_name(attribute_name)` at render time.
+        That fallback is derived from Python identifiers and never consults the message catalog, so
+        such labels stay English in every language even when the model's `verbose_name` is
+        translated.
+
+        `capfirst(verbose_name)` is exactly what `Field.formfield()` uses for generated fields.
+
+        The label is only inherited when it renders identically in English to the fallback it
+        replaces, so this adds translatability without changing what an English-speaking operator
+        sees. Some model fields declare a `verbose_name` that deliberately differs from their
+        attribute name -- `position` is labelled "Position (U)", `content_types` is labelled
+        "Object(s)" -- and quietly adopting those would be a copy change rather than a translation
+        one, which is a separate decision.
+        """
+        model = getattr(getattr(self, "_meta", None), "model", None) or getattr(self, "model", None)
+        if model is None or not hasattr(model, "_meta"):
+            return
+        for name, field in self.fields.items():
+            if field.label is not None:
+                continue
+            try:
+                model_field = model._meta.get_field(name)
+            except FieldDoesNotExist:
+                continue
+            verbose_name = getattr(model_field, "verbose_name", None)
+            if verbose_name and _label_matches_fallback(model, name, verbose_name):
+                field.label = capfirst(verbose_name)
 
 
 class EmbeddedActionsFormMixin(forms.Form):
@@ -200,7 +252,7 @@ class ApprovalForm(BootstrapMixin, ReturnURLForm):
     A generic comment form. The form is not valid unless the confirm field is checked.
     """
 
-    comments = CommentField(label="Comments", required=False)
+    comments = CommentField(label=_("Comments"), required=False)
     confirm = forms.BooleanField(required=True, widget=forms.HiddenInput(), initial=True)
 
 
@@ -262,9 +314,9 @@ class BulkRenameForm(forms.Form):
     An extendable form to be used for renaming objects in bulk.
     """
 
-    find = forms.CharField()
-    replace = forms.CharField(required=False, strip=False)
-    use_regex = forms.BooleanField(required=False, initial=True, label="Use regular expressions")
+    find = forms.CharField(label=_("Find"))
+    replace = forms.CharField(required=False, strip=False, label=_("Replace"))
+    use_regex = forms.BooleanField(required=False, initial=True, label=_("Use regular expressions"))
 
     def clean(self):
         super().clean()
@@ -274,7 +326,7 @@ class BulkRenameForm(forms.Form):
             try:
                 re.compile(self.cleaned_data["find"])
             except re.error:
-                raise forms.ValidationError({"find": "Invalid regular expression"})
+                raise forms.ValidationError({"find": _("Invalid regular expression")})
 
 
 class CSVModelForm(forms.ModelForm):
@@ -300,7 +352,7 @@ class PrefixFieldMixin(forms.ModelForm):
     ModelForm mixin for IPNetwork based models.
     """
 
-    prefix = formfields.IPNetworkFormField()
+    prefix = formfields.IPNetworkFormField(label=_("Prefix"))
 
     def __init__(self, *args, **kwargs):
         instance = kwargs.get("instance")
@@ -330,10 +382,10 @@ class ImportForm(BootstrapMixin, forms.Form):
 
     data = forms.CharField(
         widget=forms.Textarea,
-        help_text="Enter object data in JSON or YAML format. Note: Only a single object/document is supported.",
+        help_text=_("Enter object data in JSON or YAML format. Note: Only a single object/document is supported."),
         label="",
     )
-    format = forms.ChoiceField(choices=(("json", "JSON"), ("yaml", "YAML")), initial="yaml")
+    format = forms.ChoiceField(choices=(("json", "JSON"), ("yaml", "YAML")), initial="yaml", label=_("Format"))
 
     def clean(self):
         super().clean()
@@ -347,17 +399,17 @@ class ImportForm(BootstrapMixin, forms.Form):
                 self.cleaned_data["data"] = json.loads(data)
                 # Check for multiple JSON objects
                 if not isinstance(self.cleaned_data["data"], dict):
-                    raise forms.ValidationError({"data": "Import is limited to one object at a time."})
+                    raise forms.ValidationError({"data": _("Import is limited to one object at a time.")})
             except json.decoder.JSONDecodeError as err:
-                raise forms.ValidationError({"data": f"Invalid JSON data: {err}"})
+                raise forms.ValidationError({"data": gettext("Invalid JSON data: %(err)s") % {"err": err}})
         else:
             # Check for multiple YAML documents
             if "\n---" in data:
-                raise forms.ValidationError({"data": "Import is limited to one object at a time."})
+                raise forms.ValidationError({"data": _("Import is limited to one object at a time.")})
             try:
                 self.cleaned_data["data"] = yaml.load(data, Loader=yaml.SafeLoader)
             except yaml.error.YAMLError as err:
-                raise forms.ValidationError({"data": f"Invalid YAML data: {err}"})
+                raise forms.ValidationError({"data": gettext("Invalid YAML data: %(err)s") % {"err": err}})
 
 
 class TableConfigForm(BootstrapMixin, forms.Form):
@@ -369,7 +421,9 @@ class TableConfigForm(BootstrapMixin, forms.Form):
         choices=[],
         required=False,
         widget=nautobot_widgets.SelectMultipleOrderable(),
-        help_text="Use the controls below to arrange columns in the desired order and select which columns to display.",
+        help_text=_(
+            "Use the controls below to arrange columns in the desired order and select which columns to display."
+        ),
     )
 
     def __init__(self, table, *args, **kwargs):
@@ -448,7 +502,7 @@ class DynamicFilterForm(BootstrapMixin, forms.Form):
     lookup_field = forms.ChoiceField(
         choices=[],
         required=False,
-        label="Field",
+        label=_("Field"),
     )
     lookup_type = forms.ChoiceField(
         choices=[],
@@ -456,7 +510,7 @@ class DynamicFilterForm(BootstrapMixin, forms.Form):
     )
     lookup_value = forms.CharField(
         required=False,
-        label="Value",
+        label=_("Value"),
     )
 
     def __init__(self, *args, filterset=None, filter_fields_prefix=None, **kwargs):

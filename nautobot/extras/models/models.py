@@ -13,6 +13,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.http import HttpResponse
+from django.utils.translation import gettext, gettext_lazy as _
 from graphql import IntValueNode, parse, StringValueNode
 from graphql.error import GraphQLSyntaxError
 from graphql.language.ast import ExecutableDefinitionNode
@@ -66,7 +67,14 @@ class ConfigContextSchemaValidationMixin:
             try:
                 Draft7Validator(schema.data_schema, format_checker=Draft7Validator.FORMAT_CHECKER).validate(data)
             except JSONSchemaValidationError as e:
-                raise ValidationError({data_field: [f"Validation using the JSON Schema {schema} failed.", e.message]})
+                raise ValidationError(
+                    {
+                        data_field: [
+                            gettext("Validation using the JSON Schema %(schema)s failed.") % {"schema": schema},
+                            e.message,
+                        ]
+                    }
+                )
 
 
 def limit_dynamic_group_choices():
@@ -91,7 +99,7 @@ class ConfigContext(
     will be available to a Device in location A assigned to tenant B. Data is stored in JSON format.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
 
     # A ConfigContext *may* be owned by another model, such as a GitRepository, or it may be un-owned
     owner_content_type = models.ForeignKey(
@@ -102,45 +110,61 @@ class ConfigContext(
         null=True,
         blank=True,
         related_name="config_contexts",
+        verbose_name=_("owner content type"),
     )
-    owner_object_id = models.UUIDField(default=None, null=True, blank=True)
+    owner_object_id = models.UUIDField(default=None, null=True, blank=True, verbose_name=_("owner object id"))
     owner = GenericForeignKey(
         ct_field="owner_content_type",
         fk_field="owner_object_id",
     )
 
-    weight = models.PositiveSmallIntegerField(default=1000)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    is_active = models.BooleanField(
-        default=True,
-    )
+    weight = models.PositiveSmallIntegerField(default=1000, verbose_name=_("weight"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
+    is_active = models.BooleanField(default=True, verbose_name=_("is active"))
     config_context_schema = models.ForeignKey(
         to="extras.ConfigContextSchema",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        help_text="Optional schema to validate the structure of the data",
+        help_text=_("Optional schema to validate the structure of the data"),
         related_name="config_contexts",
+        verbose_name=_("config context schema"),
     )
-    locations = models.ManyToManyField(to="dcim.Location", related_name="+", blank=True)
+    locations = models.ManyToManyField(to="dcim.Location", related_name="+", blank=True, verbose_name=_("locations"))
     # TODO(timizuo): Find a way to limit role choices to Device; as of now using
     #  limit_choices_to=Role.objects.get_for_model(Device), causes a partial import error
-    roles = models.ManyToManyField(to="extras.Role", related_name="+", blank=True)
-    device_types = models.ManyToManyField(to="dcim.DeviceType", related_name="+", blank=True)
-    device_redundancy_groups = models.ManyToManyField(to="dcim.DeviceRedundancyGroup", related_name="+", blank=True)
-    platforms = models.ManyToManyField(to="dcim.Platform", related_name="+", blank=True)
-    cluster_groups = models.ManyToManyField(to="virtualization.ClusterGroup", related_name="+", blank=True)
-    clusters = models.ManyToManyField(to="virtualization.Cluster", related_name="+", blank=True)
-    tenant_groups = models.ManyToManyField(to="tenancy.TenantGroup", related_name="+", blank=True)
-    tenants = models.ManyToManyField(to="tenancy.Tenant", related_name="+", blank=True)
-    tags = models.ManyToManyField(to="extras.Tag", related_name="+", blank=True)
-    device_families = models.ManyToManyField("dcim.DeviceFamily", related_name="+", blank=True)
+    roles = models.ManyToManyField(to="extras.Role", related_name="+", blank=True, verbose_name=_("roles"))
+    device_types = models.ManyToManyField(
+        to="dcim.DeviceType", related_name="+", blank=True, verbose_name=_("device types")
+    )
+    device_redundancy_groups = models.ManyToManyField(
+        to="dcim.DeviceRedundancyGroup", related_name="+", blank=True, verbose_name=_("device redundancy groups")
+    )
+    platforms = models.ManyToManyField(to="dcim.Platform", related_name="+", blank=True, verbose_name=_("platforms"))
+    cluster_groups = models.ManyToManyField(
+        to="virtualization.ClusterGroup", related_name="+", blank=True, verbose_name=_("cluster groups")
+    )
+    clusters = models.ManyToManyField(
+        to="virtualization.Cluster", related_name="+", blank=True, verbose_name=_("clusters")
+    )
+    tenant_groups = models.ManyToManyField(
+        to="tenancy.TenantGroup", related_name="+", blank=True, verbose_name=_("tenant groups")
+    )
+    tenants = models.ManyToManyField(to="tenancy.Tenant", related_name="+", blank=True, verbose_name=_("tenants"))
+    tags = models.ManyToManyField(to="extras.Tag", related_name="+", blank=True, verbose_name=_("tags"))
+    device_families = models.ManyToManyField(
+        "dcim.DeviceFamily", related_name="+", blank=True, verbose_name=_("device families")
+    )
 
     # Due to feature flag CONFIG_CONTEXT_DYNAMIC_GROUPS_ENABLED this field will remain empty unless set to True.
     dynamic_groups = models.ManyToManyField(
-        to="extras.DynamicGroup", related_name="+", blank=True, limit_choices_to=limit_dynamic_group_choices
+        to="extras.DynamicGroup",
+        related_name="+",
+        blank=True,
+        limit_choices_to=limit_dynamic_group_choices,
+        verbose_name=_("dynamic groups"),
     )
-    data = models.JSONField(encoder=DjangoJSONEncoder)
+    data = models.JSONField(encoder=DjangoJSONEncoder, verbose_name=_("data"))
 
     objects = BaseManager.from_queryset(ConfigContextQuerySet)()
 
@@ -159,7 +183,7 @@ class ConfigContext(
 
         # Verify that JSON data is provided as an object
         if not isinstance(self.data, dict):
-            raise ValidationError({"data": 'JSON data must be in object form. Example: {"foo": 123}'})
+            raise ValidationError({"data": _('JSON data must be in object form. Example: {"foo": 123}')})
 
         # Validate data against schema
         self._validate_with_schema("data", "config_context_schema")
@@ -172,16 +196,15 @@ class ConfigContextModel(models.Model, ConfigContextSchemaValidationMixin):
     """
 
     local_config_context_data = models.JSONField(
-        encoder=DjangoJSONEncoder,
-        blank=True,
-        null=True,
+        encoder=DjangoJSONEncoder, blank=True, null=True, verbose_name=_("local config context data")
     )
     local_config_context_schema = ForeignKeyWithAutoRelatedName(
         to="extras.ConfigContextSchema",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        help_text="Optional schema to validate the structure of the data",
+        verbose_name=_("local config context schema"),
+        help_text=_("Optional schema to validate the structure of the data"),
     )
     # The local context data *may* be owned by another model, such as a GitRepository, or it may be un-owned
     local_config_context_data_owner_content_type = ForeignKeyWithAutoRelatedName(
@@ -191,8 +214,11 @@ class ConfigContextModel(models.Model, ConfigContextSchemaValidationMixin):
         default=None,
         null=True,
         blank=True,
+        verbose_name=_("local config context data owner content type"),
     )
-    local_config_context_data_owner_object_id = models.UUIDField(default=None, null=True, blank=True)
+    local_config_context_data_owner_object_id = models.UUIDField(
+        default=None, null=True, blank=True, verbose_name=_("local config context data owner object id")
+    )
     local_config_context_data_owner = GenericForeignKey(
         ct_field="local_config_context_data_owner_content_type",
         fk_field="local_config_context_data_owner_object_id",
@@ -235,12 +261,12 @@ class ConfigContextModel(models.Model, ConfigContextSchemaValidationMixin):
         # Verify that JSON data is provided as an object
         if self.local_config_context_data and not isinstance(self.local_config_context_data, dict):
             raise ValidationError(
-                {"local_config_context_data": 'JSON data must be in object form. Example: {"foo": 123}'}
+                {"local_config_context_data": _('JSON data must be in object form. Example: {"foo": 123}')}
             )
 
         if self.local_config_context_schema and not self.local_config_context_data:
             raise ValidationError(
-                {"local_config_context_schema": "Local config context data must exist for a schema to be applied."}
+                {"local_config_context_schema": _("Local config context data must exist for a schema to be applied.")}
             )
 
         # Validate data against schema
@@ -256,10 +282,11 @@ class ConfigContextSchema(OrganizationalModel):
     This model stores jsonschema documents where are used to optionally validate config context data payloads.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     data_schema = models.JSONField(
-        help_text="A JSON Schema document which is used to validate a config context object."
+        help_text=_("A JSON Schema document which is used to validate a config context object."),
+        verbose_name=_("data schema"),
     )
     # A ConfigContextSchema *may* be owned by another model, such as a GitRepository, or it may be un-owned
     owner_content_type = models.ForeignKey(
@@ -270,8 +297,9 @@ class ConfigContextSchema(OrganizationalModel):
         null=True,
         blank=True,
         related_name="config_context_schemas",
+        verbose_name=_("owner content type"),
     )
-    owner_object_id = models.UUIDField(default=None, null=True, blank=True)
+    owner_object_id = models.UUIDField(default=None, null=True, blank=True, verbose_name=_("owner object id"))
     owner = GenericForeignKey(
         ct_field="owner_content_type",
         fk_field="owner_object_id",
@@ -302,8 +330,10 @@ class ConfigContextSchema(OrganizationalModel):
         ):
             raise ValidationError(
                 {
-                    "data_schema": "Nautobot only supports context data in the form of an object and thus the "
-                    "JSON schema must be of type object and specify a set of properties."
+                    "data_schema": _(
+                        "Nautobot only supports context data in the form of an object and thus the "
+                        "JSON schema must be of type object and specify a set of properties."
+                    )
                 }
             )
 
@@ -333,33 +363,41 @@ class CustomLink(
         on_delete=models.CASCADE,
         limit_choices_to=FeatureQuery("custom_links"),
         related_name="custom_links",
+        verbose_name=_("content type"),
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
     text = models.CharField(
         max_length=500,
-        help_text="Jinja2 template code for link text. "
-        "Reference the object as <code>{{ obj }}</code> such as <code>{{ obj.platform.name }}</code>. "
-        "Links which render as empty text will not be displayed.",
+        help_text=_(
+            "Jinja2 template code for link text. "
+            "Reference the object as <code>{{ obj }}</code> such as <code>{{ obj.platform.name }}</code>. "
+            "Links which render as empty text will not be displayed."
+        ),
+        verbose_name=_("text"),
     )
     target_url = models.CharField(
         max_length=500,
-        verbose_name="URL",
-        help_text="Jinja2 template code for link URL. "
-        "Reference the object as <code>{{ obj }}</code> such as <code>{{ obj.platform.name }}</code>.",
+        verbose_name=_("URL"),
+        help_text=_(
+            "Jinja2 template code for link URL. "
+            "Reference the object as <code>{{ obj }}</code> such as <code>{{ obj.platform.name }}</code>."
+        ),
     )
-    weight = models.PositiveSmallIntegerField(default=100)
+    weight = models.PositiveSmallIntegerField(default=100, verbose_name=_("weight"))
     group_name = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        help_text="Links with the same group will appear as a dropdown menu",
+        help_text=_("Links with the same group will appear as a dropdown menu"),
+        verbose_name=_("group name"),
     )
     button_class = models.CharField(
         max_length=30,
         choices=ButtonClassChoices,
         default=ButtonClassChoices.CLASS_DEFAULT,
-        help_text="The class of the first link in a group will be used for the dropdown button",
+        help_text=_("The class of the first link in a group will be used for the dropdown button"),
+        verbose_name=_("button class"),
     )
-    new_window = models.BooleanField(help_text="Force link to open in a new window")
+    new_window = models.BooleanField(help_text=_("Force link to open in a new window"), verbose_name=_("new window"))
 
     is_data_compliance_model = False
 
@@ -402,8 +440,9 @@ class ExportTemplate(
         default=None,
         null=True,
         blank=True,
+        verbose_name=_("owner content type"),
     )
-    owner_object_id = models.UUIDField(default=None, null=True, blank=True)
+    owner_object_id = models.UUIDField(default=None, null=True, blank=True, verbose_name=_("owner object id"))
     owner = GenericForeignKey(
         ct_field="owner_content_type",
         fk_field="owner_object_id",
@@ -413,22 +452,25 @@ class ExportTemplate(
         on_delete=models.CASCADE,
         limit_choices_to=FeatureQuery("export_templates"),
         related_name="export_templates",
+        verbose_name=_("content type"),
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     template_code = models.TextField(
-        help_text="The list of objects being exported is passed as a context variable named <code>queryset</code>."
+        help_text=_("The list of objects being exported is passed as a context variable named <code>queryset</code>."),
+        verbose_name=_("template code"),
     )
     mime_type = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        verbose_name="MIME type",
-        help_text="Defaults to <code>text/plain</code>",
+        verbose_name=_("MIME type"),
+        help_text=_("Defaults to <code>text/plain</code>"),
     )
     file_extension = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        help_text="Extension to append to the rendered filename",
+        help_text=_("Extension to append to the rendered filename"),
+        verbose_name=_("file extension"),
     )
 
     class Meta:
@@ -483,49 +525,53 @@ class ExportTemplate(
 class ExternalIntegration(PrimaryModel):
     """Model for tracking integrations with external applications."""
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
     remote_url = LaxURLField(
         max_length=500,
-        verbose_name="Remote URL",
+        verbose_name=_("Remote URL"),
     )
     secrets_group = models.ForeignKey(
         null=True,
         blank=True,
         to="extras.SecretsGroup",
         on_delete=models.PROTECT,
-        help_text="Credentials used for authenticating with the remote system",
+        help_text=_("Credentials used for authenticating with the remote system"),
+        verbose_name=_("secrets group"),
     )
     verify_ssl = models.BooleanField(
         default=True,
-        verbose_name="Verify SSL",
-        help_text="Verify SSL certificates when connecting to the remote system",
+        verbose_name=_("Verify SSL"),
+        help_text=_("Verify SSL certificates when connecting to the remote system"),
     )
     timeout = models.IntegerField(
         default=30,
         validators=[MinValueValidator(0)],
-        help_text="Number of seconds to wait for a response",
+        help_text=_("Number of seconds to wait for a response"),
+        verbose_name=_("timeout"),
     )
     extra_config = models.JSONField(
         blank=True,
         null=True,
-        help_text="Optional user-defined JSON data for this integration",
+        help_text=_("Optional user-defined JSON data for this integration"),
+        verbose_name=_("extra config"),
     )
     http_method = models.CharField(
         max_length=10,
         choices=WebhookHttpMethodChoices,
-        verbose_name="HTTP method",
+        verbose_name=_("HTTP method"),
         blank=True,
     )
     headers = models.JSONField(
         encoder=DjangoJSONEncoder,
         blank=True,
         null=True,
-        help_text="Headers for the HTTP request",
+        help_text=_("Headers for the HTTP request"),
+        verbose_name=_("headers"),
     )
     ca_file_path = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        verbose_name="CA file path",
+        verbose_name=_("CA file path"),
     )
 
     def __str__(self):
@@ -588,9 +634,9 @@ class FileAttachment(BaseModel):
     not intended to be used standalone.
     """
 
-    bytes = models.BinaryField()
-    filename = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
-    mimetype = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
+    bytes = models.BinaryField(verbose_name=_("bytes"))
+    filename = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("filename"))
+    mimetype = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("mimetype"))
 
     is_metadata_associable_model = False
     is_data_compliance_model = False
@@ -650,10 +696,17 @@ class FileProxy(BaseModel):
     `delete()` on each one individually.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
-    file = models.FileField(upload_to=_upload_to, storage=_job_storage)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-    job_result = models.ForeignKey(to=JobResult, null=True, blank=True, on_delete=models.CASCADE, related_name="files")
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("name"))
+    file = models.FileField(upload_to=_upload_to, storage=_job_storage, verbose_name=_("file"))
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name=_("uploaded at"))
+    job_result = models.ForeignKey(
+        to=JobResult,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="files",
+        verbose_name=_("job result"),
+    )
 
     is_data_compliance_model = False
 
@@ -664,7 +717,7 @@ class FileProxy(BaseModel):
         get_latest_by = "uploaded_at"
         ordering = ["name"]
         # TODO: unique_together = [["name", "uploaded_at"]]
-        verbose_name_plural = "file proxies"
+        verbose_name_plural = _("file proxies")
 
     # TODO: This isn't a guaranteed natural key for this model (see lack of a `unique_together` above), but in practice
     # it is "nearly" unique. Once a proper unique_together is added and accounted for, this can be removed as redundant
@@ -710,20 +763,21 @@ class GraphQLQuery(
         null=True,
         blank=True,
         related_name="graphql_queries",
+        verbose_name=_("owner content type"),
     )
-    owner_object_id = models.UUIDField(default=None, null=True, blank=True)
+    owner_object_id = models.UUIDField(default=None, null=True, blank=True, verbose_name=_("owner object id"))
     owner = GenericForeignKey(
         ct_field="owner_content_type",
         fk_field="owner_object_id",
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    query = models.TextField()
-    variables = models.JSONField(encoder=DjangoJSONEncoder, default=dict, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    query = models.TextField(verbose_name=_("query"))
+    variables = models.JSONField(encoder=DjangoJSONEncoder, default=dict, blank=True, verbose_name=_("variables"))
 
     class Meta:
         ordering = ("name",)
-        verbose_name = "GraphQL query"
-        verbose_name_plural = "GraphQL queries"
+        verbose_name = _("GraphQL query")
+        verbose_name_plural = _("GraphQL queries")
 
     def save(self, *args, **kwargs):
         variables = {}
@@ -763,7 +817,7 @@ class GraphQLQuery(
 
 
 class HealthCheckTestModel(BaseModel):
-    title = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
+    title = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("title"))
     is_metadata_associable_model = False
 
 
@@ -777,13 +831,17 @@ class ImageAttachment(BaseModel):
     An uploaded image which is associated with an object.
     """
 
-    content_type = models.ForeignKey(to=ContentType, on_delete=models.CASCADE, related_name="image_attachments")
-    object_id = models.UUIDField(db_index=True)
+    content_type = models.ForeignKey(
+        to=ContentType, on_delete=models.CASCADE, related_name="image_attachments", verbose_name=_("content type")
+    )
+    object_id = models.UUIDField(db_index=True, verbose_name=_("object id"))
     parent = GenericForeignKey(ct_field="content_type", fk_field="object_id")
-    image = models.ImageField(upload_to=image_upload, height_field="image_height", width_field="image_width")
-    image_height = models.PositiveSmallIntegerField()
-    image_width = models.PositiveSmallIntegerField()
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, db_index=True)
+    image = models.ImageField(
+        upload_to=image_upload, height_field="image_height", width_field="image_width", verbose_name=_("image")
+    )
+    image_height = models.PositiveSmallIntegerField(verbose_name=_("image height"))
+    image_width = models.PositiveSmallIntegerField(verbose_name=_("image width"))
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, db_index=True, verbose_name=_("name"))
     created = models.DateTimeField(auto_now_add=True)
 
     natural_key_field_names = ["pk"]
@@ -802,7 +860,7 @@ class ImageAttachment(BaseModel):
         # Currently only Device, Rack, and Location support ImageAttachment records.
         # If this changes, various other code paths will need similar updates, e.g. the REST API.
         if self.content_type.app_label != "dcim" or self.content_type.model not in ["device", "location", "rack"]:
-            raise ValidationError({"content_type": "Not a permitted content-type for ImageAttachments."})
+            raise ValidationError({"content_type": _("Not a permitted content-type for ImageAttachments.")})
 
     def delete(self, *args, **kwargs):
         _name = self.image.name
@@ -848,8 +906,10 @@ class Note(ChangeLoggedModel, DataComplianceModelMixin, BaseModel):
     Notes allow anyone with proper permissions to add a note to an object.
     """
 
-    assigned_object_type = models.ForeignKey(to=ContentType, on_delete=models.CASCADE, related_name="notes")
-    assigned_object_id = models.UUIDField(db_index=True)
+    assigned_object_type = models.ForeignKey(
+        to=ContentType, on_delete=models.CASCADE, related_name="notes", verbose_name=_("assigned object type")
+    )
+    assigned_object_id = models.UUIDField(db_index=True, verbose_name=_("assigned object id"))
     assigned_object = GenericForeignKey(ct_field="assigned_object_type", fk_field="assigned_object_id")
     user = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
@@ -857,10 +917,11 @@ class Note(ChangeLoggedModel, DataComplianceModelMixin, BaseModel):
         related_name="notes",
         blank=True,
         null=True,
+        verbose_name=_("user"),
     )
-    user_name = models.CharField(max_length=150, editable=False)
+    user_name = models.CharField(max_length=150, editable=False, verbose_name=_("User name"))
 
-    note = models.TextField()
+    note = models.TextField(verbose_name=_("note"))
     objects = BaseManager.from_queryset(NotesQuerySet)()
 
     is_metadata_associable_model = False
@@ -888,20 +949,36 @@ class Note(ChangeLoggedModel, DataComplianceModelMixin, BaseModel):
 )
 class SavedView(BaseModel, ChangeLoggedModel):
     owner = models.ForeignKey(
-        to=User, blank=False, null=False, on_delete=models.CASCADE, help_text="The user that created this view"
+        to=User,
+        blank=False,
+        null=False,
+        on_delete=models.CASCADE,
+        help_text=_("The user that created this view"),
+        verbose_name=_("owner"),
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=False, null=False, help_text="The name of this view")
+    name = models.CharField(
+        max_length=CHARFIELD_MAX_LENGTH,
+        blank=False,
+        null=False,
+        help_text=_("The name of this view"),
+        verbose_name=_("name"),
+    )
     view = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=False,
         null=False,
-        help_text="The name of the list view that the saved view is derived from, e.g. dcim:device_list",
+        help_text=_("The name of the list view that the saved view is derived from, e.g. dcim:device_list"),
+        verbose_name=_("view"),
     )
     config = models.JSONField(
-        encoder=DjangoJSONEncoder, blank=True, default=dict, help_text="Saved Configuration on this view"
+        encoder=DjangoJSONEncoder,
+        blank=True,
+        default=dict,
+        help_text=_("Saved Configuration on this view"),
+        verbose_name=_("config"),
     )
-    is_global_default = models.BooleanField(default=False)
-    is_shared = models.BooleanField(default=True)
+    is_global_default = models.BooleanField(default=False, verbose_name=_("is global default"))
+    is_shared = models.BooleanField(default=True, verbose_name=_("is shared"))
 
     documentation_static_path = "docs/user-guide/platform-functionality/savedview.html"
     is_data_compliance_model = False
@@ -909,8 +986,8 @@ class SavedView(BaseModel, ChangeLoggedModel):
     class Meta:
         ordering = ["owner", "view", "name"]
         unique_together = [["owner", "name", "view"]]
-        verbose_name = "saved view"
-        verbose_name_plural = "saved views"
+        verbose_name = _("saved view")
+        verbose_name_plural = _("saved views")
 
     def __str__(self):
         return f"{self.owner.username} - {self.view} - {self.name}"
@@ -947,9 +1024,13 @@ class SavedView(BaseModel, ChangeLoggedModel):
 
 @extras_features("graphql")
 class UserSavedViewAssociation(BaseModel):
-    saved_view = models.ForeignKey("extras.SavedView", on_delete=models.CASCADE, related_name="user_assignments")
-    user = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="saved_view_assignments")
-    view_name = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
+    saved_view = models.ForeignKey(
+        "extras.SavedView", on_delete=models.CASCADE, related_name="user_assignments", verbose_name=_("saved view")
+    )
+    user = models.ForeignKey(
+        "users.User", on_delete=models.CASCADE, related_name="saved_view_assignments", verbose_name=_("user")
+    )
+    view_name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("view name"))
     is_metadata_associable_model = False
     is_data_compliance_model = False
 
@@ -987,64 +1068,88 @@ class Webhook(
     content_types = models.ManyToManyField(
         to=ContentType,
         related_name="webhooks",
-        verbose_name="Object types",
+        verbose_name=_("Object types"),
         limit_choices_to=FeatureQuery("webhooks"),
-        help_text="The object(s) to which this Webhook applies.",
+        help_text=_("The object(s) to which this Webhook applies."),
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    type_create = models.BooleanField(default=False, help_text="Call this webhook when a matching object is created.")
-    type_update = models.BooleanField(default=False, help_text="Call this webhook when a matching object is updated.")
-    type_delete = models.BooleanField(default=False, help_text="Call this webhook when a matching object is deleted.")
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    type_create = models.BooleanField(
+        default=False,
+        help_text=_("Call this webhook when a matching object is created."),
+        verbose_name=_("type create"),
+    )
+    type_update = models.BooleanField(
+        default=False,
+        help_text=_("Call this webhook when a matching object is updated."),
+        verbose_name=_("type update"),
+    )
+    type_delete = models.BooleanField(
+        default=False,
+        help_text=_("Call this webhook when a matching object is deleted."),
+        verbose_name=_("type delete"),
+    )
     payload_url = models.CharField(
         max_length=500,
-        verbose_name="URL",
-        help_text="A POST will be sent to this URL when the webhook is called.",
+        verbose_name=_("URL"),
+        help_text=_("A POST will be sent to this URL when the webhook is called."),
     )
-    enabled = models.BooleanField(default=True)
+    enabled = models.BooleanField(default=True, verbose_name=_("enabled"))
     http_method = models.CharField(
         max_length=30,
         choices=WebhookHttpMethodChoices,
         default=WebhookHttpMethodChoices.METHOD_POST,
-        verbose_name="HTTP method",
+        verbose_name=_("HTTP method"),
     )
     http_content_type = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         default=HTTP_CONTENT_TYPE_JSON,
-        verbose_name="HTTP content type",
-        help_text="The complete list of official content types is available "
-        '<a href="https://www.iana.org/assignments/media-types/media-types.xhtml">here</a>.',
+        verbose_name=_("HTTP content type"),
+        help_text=_(
+            "The complete list of official content types is available "
+            '<a href="https://www.iana.org/assignments/media-types/media-types.xhtml">here</a>.'
+        ),
     )
     additional_headers = models.TextField(
         blank=True,
-        help_text="User-supplied HTTP headers to be sent with the request in addition to the HTTP content type. "
-        "Headers should be defined in the format <code>Name: Value</code>. Jinja2 template processing is "
-        "supported with the same context as the request body (below).",
+        help_text=_(
+            "User-supplied HTTP headers to be sent with the request in addition to the HTTP content type. "
+            "Headers should be defined in the format <code>Name: Value</code>. Jinja2 template processing is "
+            "supported with the same context as the request body (below)."
+        ),
+        verbose_name=_("additional headers"),
     )
     body_template = models.TextField(
         blank=True,
-        help_text="Jinja2 template for a custom request body. If blank, a JSON object representing the change will be "
-        "included. Available context data includes: <code>event</code>, <code>model</code>, "
-        "<code>timestamp</code>, <code>username</code>, <code>request_id</code>, and <code>data</code>.",
+        help_text=_(
+            "Jinja2 template for a custom request body. If blank, a JSON object representing the change will be "
+            "included. Available context data includes: <code>event</code>, <code>model</code>, "
+            "<code>timestamp</code>, <code>username</code>, <code>request_id</code>, and <code>data</code>."
+        ),
+        verbose_name=_("body template"),
     )
     secret = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        help_text="When provided, the request will include a 'X-Hook-Signature' "
-        "header containing a HMAC hex digest of the payload body using "
-        "the secret as the key. The secret is not transmitted in "
-        "the request.",
+        help_text=_(
+            "When provided, the request will include a 'X-Hook-Signature' "
+            "header containing a HMAC hex digest of the payload body using "
+            "the secret as the key. The secret is not transmitted in "
+            "the request."
+        ),
+        verbose_name=_("secret"),
     )
     ssl_verification = models.BooleanField(
         default=True,
-        verbose_name="SSL verification",
-        help_text="Enable SSL certificate verification. Disable with caution!",
+        verbose_name=_("SSL verification"),
+        help_text=_("Enable SSL certificate verification. Disable with caution!"),
     )
     ca_file_path = models.CharField(
         max_length=4096,
         blank=True,
-        verbose_name="CA File Path",
-        help_text="The specific CA certificate file to use for SSL verification. "
-        "Leave blank to use the system defaults.",
+        verbose_name=_("CA File Path"),
+        help_text=_(
+            "The specific CA certificate file to use for SSL verification. Leave blank to use the system defaults."
+        ),
         default="",
     )
 
@@ -1059,12 +1164,12 @@ class Webhook(
 
         # At least one action type must be selected
         if not self.type_create and not self.type_delete and not self.type_update:
-            raise ValidationError("You must select at least one type: create, update, and/or delete.")
+            raise ValidationError(_("You must select at least one type: create, update, and/or delete."))
 
         # CA file path requires SSL verification enabled
         if not self.ssl_verification and self.ca_file_path:
             raise ValidationError(
-                {"ca_file_path": "Do not specify a CA certificate file if SSL verification is disabled."}
+                {"ca_file_path": _("Do not specify a CA certificate file if SSL verification is disabled.")}
             )
 
         # Validate payload_url against SSRF policy (scheme allow-list, host allow-list, IP-literal block-list).

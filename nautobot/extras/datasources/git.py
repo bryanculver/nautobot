@@ -14,6 +14,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext_lazy as _
 from git import InvalidGitRepositoryError, Repo
 import yaml
 
@@ -65,7 +66,7 @@ def get_git_repository_for_sync(request, pk):
         Http404: if the repository doesn't exist or isn't visible to the user.
     """
     if not request.user.has_perm("extras.change_gitrepository"):
-        raise PermissionDenied("This user does not have permission to make changes to Git repositories.")
+        raise PermissionDenied(_("This user does not have permission to make changes to Git repositories."))
 
     repository = get_object_or_404(GitRepository.objects.restrict(request.user, "change"), pk=pk)
 

@@ -1,0 +1,1 @@
+Fixed `bettertitle` applying English title case to translated text, which produced incorrect capitalization such as "Políticas VPN De Fase 1" and "Affectations D'adresses IP"; outside English it now capitalizes only the first character.

@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import django_tables2 as tables
 from django_tables2.utils import Accessor
 
@@ -34,7 +35,7 @@ class RackGroupTable(BaseTable):
     rack_count = LinkedCountColumn(
         viewname="dcim:rack_list",
         url_params={"rack_group": "pk"},
-        verbose_name="Racks",
+        verbose_name=_("Racks"),
     )
     actions = ButtonsColumn(model=RackGroup, prepend_template=RACKGROUP_ELEVATIONS)
 
@@ -55,7 +56,7 @@ class RackTable(StatusTableMixin, RoleTableMixin, BaseTable):
     rack_group = tables.Column(linkify=True)
     location = tables.Column(linkify=True)
     tenant = TenantColumn()
-    u_height = tables.TemplateColumn(template_code="{{ record.u_height }}U", verbose_name="Height")
+    u_height = tables.TemplateColumn(template_code="{{ record.u_height }}U", verbose_name=_("Height"))
 
     class Meta(BaseTable.Meta):
         model = Rack
@@ -91,11 +92,11 @@ class RackDetailTable(RackTable):
     device_count = LinkedCountColumn(
         viewname="dcim:device_list",
         url_params={"rack": "pk"},
-        verbose_name="Devices",
+        verbose_name=_("Devices"),
     )
-    get_utilization = tables.TemplateColumn(template_code=UTILIZATION_GRAPH, orderable=False, verbose_name="Space")
+    get_utilization = tables.TemplateColumn(template_code=UTILIZATION_GRAPH, orderable=False, verbose_name=_("Space"))
     get_power_utilization = tables.TemplateColumn(
-        template_code=UTILIZATION_GRAPH, orderable=False, verbose_name="Power"
+        template_code=UTILIZATION_GRAPH, orderable=False, verbose_name=_("Power")
     )
     tags = TagColumn(url_name="dcim:rack_list")
 
@@ -140,11 +141,11 @@ class RackDetailTable(RackTable):
 
 class RackReservationTable(BaseTable):
     pk = ToggleColumn()
-    reservation = tables.Column(accessor="pk", linkify=True)
+    reservation = tables.Column(accessor="pk", linkify=True, verbose_name=_("Reservation"))
     location = tables.Column(accessor=Accessor("rack__location"), linkify=True)
     tenant = TenantColumn()
     rack = tables.Column(linkify=True)
-    unit_list = tables.Column(orderable=False, verbose_name="Units", linkify=True)
+    unit_list = tables.Column(orderable=False, verbose_name=_("Units"), linkify=True)
     tags = TagColumn(url_name="dcim:rackreservation_list")
     actions = ButtonsColumn(RackReservation)
 

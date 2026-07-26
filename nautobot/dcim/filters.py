@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Exists, F, OuterRef, Q
+from django.utils.translation import gettext_lazy as _
 import django_filters
 from drf_spectacular.utils import extend_schema_field
 from timezone_field import TimeZoneField
@@ -179,7 +180,7 @@ class LocationTypeFilterSet(NautobotFilterSet, NameSearchFilterSet):
     parent = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=LocationType.objects.all(),
         to_field_name="name",
-        label="Parent location type (name or ID)",
+        label=_("Parent location type (name or ID)"),
     )
     content_types = ContentTypeMultipleChoiceFilter(
         choices=FeatureQuery("locations").get_choices,
@@ -215,35 +216,35 @@ class LocationFilterSet(NautobotFilterSet, StatusModelFilterSetMixin, TenancyMod
     max_depth = django_filters.NumberFilter(
         method="filter_max_depth",
         exclude=True,
-        label="Maximum nesting depth within parent Locations",
+        label=_("Maximum nesting depth within parent Locations"),
     )
     parent = NaturalKeyOrPKMultipleChoiceFilter(
         prefers_id=True,
         queryset=Location.objects.all(),
         to_field_name="name",
-        label="Parent location (name or ID)",
+        label=_("Parent location (name or ID)"),
     )
     subtree = NaturalKeyOrPKMultipleChoiceFilter(
         prefers_id=True,
         queryset=Location.objects.all(),
         to_field_name="name",
-        label="Location(s) and descendants thereof (name or ID)",
+        label=_("Location(s) and descendants thereof (name or ID)"),
         method="_subtree",
     )
     child_location_type = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=LocationType.objects.all(),
         to_field_name="name",
-        label="Child location type (name or ID)",
+        label=_("Child location type (name or ID)"),
         method="_child_location_type",
     )
     content_type = ContentTypeMultipleChoiceFilter(
         field_name="location_type__content_types",
         choices=FeatureQuery("locations").get_choices,
-        label="Object types allowed to be associated with this Location Type",
+        label=_("Object types allowed to be associated with this Location Type"),
     )
     has_circuit_terminations = RelatedMembershipBooleanFilter(
         field_name="circuit_terminations",
-        label="Has circuit terminations",
+        label=_("Has circuit terminations"),
     )
     devices = NaturalKeyOrPKMultipleChoiceFilter(
         prefers_id=True,
@@ -252,7 +253,7 @@ class LocationFilterSet(NautobotFilterSet, StatusModelFilterSetMixin, TenancyMod
     )
     has_devices = RelatedMembershipBooleanFilter(
         field_name="devices",
-        label="Has devices",
+        label=_("Has devices"),
     )
     power_panels = NaturalKeyOrPKMultipleChoiceFilter(
         to_field_name="name",
@@ -260,7 +261,7 @@ class LocationFilterSet(NautobotFilterSet, StatusModelFilterSetMixin, TenancyMod
     )
     has_power_panels = RelatedMembershipBooleanFilter(
         field_name="power_panels",
-        label="Has power panels",
+        label=_("Has power panels"),
     )
     rack_groups = NaturalKeyOrPKMultipleChoiceFilter(
         prefers_id=True,
@@ -269,11 +270,11 @@ class LocationFilterSet(NautobotFilterSet, StatusModelFilterSetMixin, TenancyMod
     )
     has_rack_groups = RelatedMembershipBooleanFilter(
         field_name="rack_groups",
-        label="Has rack groups",
+        label=_("Has rack groups"),
     )
     has_racks = RelatedMembershipBooleanFilter(
         field_name="racks",
-        label="Has racks",
+        label=_("Has racks"),
     )
     racks = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Rack.objects.all(),
@@ -281,30 +282,30 @@ class LocationFilterSet(NautobotFilterSet, StatusModelFilterSetMixin, TenancyMod
     )
     has_prefixes = RelatedMembershipBooleanFilter(
         field_name="prefixes",
-        label="Has prefixes",
+        label=_("Has prefixes"),
     )
     vlan_groups = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=VLANGroup.objects.all(),
         to_field_name="name",
-        label="VLAN groups (name or ID)",
+        label=_("VLAN groups (name or ID)"),
     )
     has_vlan_groups = RelatedMembershipBooleanFilter(
         field_name="vlan_groups",
-        label="Has VLAN groups",
+        label=_("Has VLAN groups"),
     )
     has_vlans = RelatedMembershipBooleanFilter(
         field_name="vlans",
-        label="Has VLANs",
+        label=_("Has VLANs"),
     )
     vlans = NaturalKeyOrPKMultipleChoiceFilter(
         prefers_id=True,
         to_field_name="vid",
         queryset=VLAN.objects.all(),
-        label="Tagged VLANs (VID or ID)",
+        label=_("Tagged VLANs (VID or ID)"),
     )
     has_clusters = RelatedMembershipBooleanFilter(
         field_name="clusters",
-        label="Has clusters",
+        label=_("Has clusters"),
     )
     clusters = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Cluster.objects.all(),
@@ -312,7 +313,7 @@ class LocationFilterSet(NautobotFilterSet, StatusModelFilterSetMixin, TenancyMod
     )
     time_zone = django_filters.MultipleChoiceFilter(
         choices=[(str(obj), name) for obj, name in TimeZoneField().choices],
-        label="Time zone",
+        label=_("Time zone"),
         null_value="",
     )
 
@@ -392,7 +393,7 @@ class RackGroupFilterSet(LocatableModelFilterSetMixin, NautobotFilterSet, NameSe
     ancestors = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Location.objects.all(),
         to_field_name="name",
-        label="Location(s) and ancestors thereof (name or ID)",
+        label=_("Location(s) and ancestors thereof (name or ID)"),
         method="_ancestors",
     )
     children = NaturalKeyOrPKMultipleChoiceFilter(
@@ -401,7 +402,7 @@ class RackGroupFilterSet(LocatableModelFilterSetMixin, NautobotFilterSet, NameSe
     )
     has_children = RelatedMembershipBooleanFilter(
         field_name="children",
-        label="Has children",
+        label=_("Has children"),
     )
     # TODO: solve https://github.com/nautobot/nautobot/issues/2875 to use this filter correctly
     power_panels = NaturalKeyOrPKMultipleChoiceFilter(
@@ -412,11 +413,11 @@ class RackGroupFilterSet(LocatableModelFilterSetMixin, NautobotFilterSet, NameSe
     )
     has_power_panels = RelatedMembershipBooleanFilter(
         field_name="power_panels",
-        label="Has power panels",
+        label=_("Has power panels"),
     )
     has_racks = RelatedMembershipBooleanFilter(
         field_name="racks",
-        label="Has racks",
+        label=_("Has racks"),
     )
 
     class Meta:
@@ -471,14 +472,14 @@ class RackFilterSet(
         queryset=RackGroup.objects.all(),
         field_name="rack_group",
         to_field_name="name",
-        label="Rack group (name or ID)",
+        label=_("Rack group (name or ID)"),
     )
     type = django_filters.MultipleChoiceFilter(choices=RackTypeChoices)
     width = django_filters.MultipleChoiceFilter(choices=RackWidthChoices)
-    serial = MultiValueCharFilter(lookup_expr="iexact", label="Serial Number")
+    serial = MultiValueCharFilter(lookup_expr="iexact", label=_("Serial Number"))
     has_devices = RelatedMembershipBooleanFilter(
         field_name="devices",
-        label="Has devices",
+        label=_("Has devices"),
     )
     # TODO: solve https://github.com/nautobot/nautobot/issues/2875 to use this filter correctly
     power_feeds = NaturalKeyOrPKMultipleChoiceFilter(
@@ -489,11 +490,11 @@ class RackFilterSet(
     )
     has_power_feeds = RelatedMembershipBooleanFilter(
         field_name="power_feeds",
-        label="Has power feeds",
+        label=_("Has power feeds"),
     )
     has_rack_reservations = RelatedMembershipBooleanFilter(
         field_name="rack_reservations",
-        label="Has rack reservations",
+        label=_("Has rack reservations"),
     )
 
     class Meta:
@@ -529,7 +530,7 @@ class RackReservationFilterSet(TenancyModelFilterSetMixin, NautobotFilterSet):
         queryset=RackGroup.objects.all(),
         field_name="rack__rack_group",
         to_field_name="name",
-        label="Rack group (name or ID)",
+        label=_("Rack group (name or ID)"),
     )
     location = TreeNodeMultipleChoiceFilter(
         queryset=Location.objects.all(),
@@ -562,7 +563,7 @@ class ManufacturerFilterSet(NautobotFilterSet, NameSearchFilterSet):
     )
     has_inventory_items = RelatedMembershipBooleanFilter(
         field_name="inventory_items",
-        label="Has inventory items",
+        label=_("Has inventory items"),
     )
     device_types = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=DeviceType.objects.all(),
@@ -570,7 +571,7 @@ class ManufacturerFilterSet(NautobotFilterSet, NameSearchFilterSet):
     )
     has_device_types = RelatedMembershipBooleanFilter(
         field_name="device_types",
-        label="Has device types",
+        label=_("Has device types"),
     )
     platforms = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Platform.objects.all(),
@@ -578,7 +579,7 @@ class ManufacturerFilterSet(NautobotFilterSet, NameSearchFilterSet):
     )
     has_platforms = RelatedMembershipBooleanFilter(
         field_name="platforms",
-        label="Has platforms",
+        label=_("Has platforms"),
     )
 
     class Meta:
@@ -593,7 +594,7 @@ class DeviceFamilyFilterSet(NautobotFilterSet, NameSearchFilterSet):
     )
     has_device_types = RelatedMembershipBooleanFilter(
         field_name="device_types",
-        label="Has device types",
+        label=_("Has device types"),
     )
 
     class Meta:
@@ -617,35 +618,35 @@ class DeviceTypeFilterSet(DeviceTypeModuleTypeCommonFiltersMixin, NautobotFilter
     )
     console_ports = django_filters.BooleanFilter(
         method="_console_ports",
-        label="Has console ports",
+        label=_("Has console ports"),
     )
     console_server_ports = django_filters.BooleanFilter(
         method="_console_server_ports",
-        label="Has console server ports",
+        label=_("Has console server ports"),
     )
     power_ports = django_filters.BooleanFilter(
         method="_power_ports",
-        label="Has power ports",
+        label=_("Has power ports"),
     )
     power_outlets = django_filters.BooleanFilter(
         method="_power_outlets",
-        label="Has power outlets",
+        label=_("Has power outlets"),
     )
     interfaces = django_filters.BooleanFilter(
         method="_interfaces",
-        label="Has interfaces",
+        label=_("Has interfaces"),
     )
     pass_through_ports = RelatedMembershipBooleanFilter(
         field_name="front_port_templates",
-        label="Has pass-through ports",
+        label=_("Has pass-through ports"),
     )
     device_bays = django_filters.BooleanFilter(
         method="_device_bays",
-        label="Has device bays",
+        label=_("Has device bays"),
     )
     has_devices = RelatedMembershipBooleanFilter(
         field_name="devices",
-        label="Has device instances",
+        label=_("Has device instances"),
     )
     # TODO: solve https://github.com/nautobot/nautobot/issues/2875 to use this filter correctly
     device_bay_templates = NaturalKeyOrPKMultipleChoiceFilter(
@@ -655,11 +656,11 @@ class DeviceTypeFilterSet(DeviceTypeModuleTypeCommonFiltersMixin, NautobotFilter
     )
     has_device_bay_templates = RelatedMembershipBooleanFilter(
         field_name="device_bay_templates",
-        label="Has device bay templates",
+        label=_("Has device bay templates"),
     )
     has_software_image_files = RelatedMembershipBooleanFilter(
         field_name="software_image_files",
-        label="Has software image files",
+        label=_("Has software image files"),
     )
     software_image_files = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=SoftwareImageFile.objects.all(),
@@ -722,7 +723,7 @@ class PowerPortTemplateFilterSet(ModularDeviceComponentTemplateModelFilterSetMix
     )
     has_power_outlet_templates = RelatedMembershipBooleanFilter(
         field_name="power_outlet_templates",
-        label="Has power outlet templates",
+        label=_("Has power outlet templates"),
     )
 
     class Meta:
@@ -762,7 +763,7 @@ class FrontPortTemplateFilterSet(ModularDeviceComponentTemplateModelFilterSetMix
 class RearPortTemplateFilterSet(ModularDeviceComponentTemplateModelFilterSetMixin, BaseFilterSet):
     has_front_port_templates = RelatedMembershipBooleanFilter(
         field_name="front_port_templates",
-        label="Has front port templates",
+        label=_("Has front port templates"),
     )
 
     class Meta:
@@ -783,11 +784,11 @@ class PlatformFilterSet(NautobotFilterSet, NameSearchFilterSet):
     )
     has_devices = RelatedMembershipBooleanFilter(
         field_name="devices",
-        label="Has devices",
+        label=_("Has devices"),
     )
     has_virtual_machines = RelatedMembershipBooleanFilter(
         field_name="virtual_machines",
-        label="Has virtual machines",
+        label=_("Has virtual machines"),
     )
 
     class Meta:
@@ -843,13 +844,13 @@ class DeviceFilterSet(
         field_name="device_type__manufacturer",
         queryset=Manufacturer.objects.all(),
         to_field_name="name",
-        label="Manufacturer (name or ID)",
+        label=_("Manufacturer (name or ID)"),
     )
     device_family = NaturalKeyOrPKMultipleChoiceFilter(
         field_name="device_type__device_family",
         queryset=DeviceFamily.objects.all(),
         to_field_name="name",
-        label="Device family (name or ID)",
+        label=_("Device family (name or ID)"),
     )
     device_type = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=DeviceType.objects.all(),
@@ -864,7 +865,7 @@ class DeviceFilterSet(
         queryset=RackGroup.objects.all(),
         field_name="rack__rack_group",
         to_field_name="name",
-        label="Rack group (name or ID)",
+        label=_("Rack group (name or ID)"),
     )
     # TODO: solve https://github.com/nautobot/nautobot/issues/2875 to use this filter correctly
     rack = NaturalKeyOrPKMultipleChoiceFilter(
@@ -877,22 +878,22 @@ class DeviceFilterSet(
         field_name="clusters",
         queryset=Cluster.objects.all(),
         to_field_name="name",
-        label="VM cluster (name or ID)",
+        label=_("VM cluster (name or ID)"),
     )
     clusters = NaturalKeyOrPKMultipleChoiceFilter(
         field_name="clusters",
         queryset=Cluster.objects.all(),
         to_field_name="name",
-        label="VM clusters (name or ID)",
+        label=_("VM clusters (name or ID)"),
     )
     is_full_depth = django_filters.BooleanFilter(
         field_name="device_type__is_full_depth",
-        label="Is full depth",
+        label=_("Is full depth"),
     )
     serial = MultiValueCharFilter(lookup_expr="iexact")
     has_primary_ip = django_filters.BooleanFilter(
         method="_has_primary_ip",
-        label="Has a primary IP",
+        label=_("Has a primary IP"),
     )
     secrets_group = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=SecretsGroup.objects.all(),
@@ -904,7 +905,7 @@ class DeviceFilterSet(
     )
     is_virtual_chassis_member = RelatedMembershipBooleanFilter(
         field_name="virtual_chassis",
-        label="Is a virtual chassis member",
+        label=_("Is a virtual chassis member"),
     )
     device_redundancy_group = NaturalKeyOrPKMultipleChoiceFilter(
         field_name="device_redundancy_group",
@@ -919,11 +920,11 @@ class DeviceFilterSet(
     virtual_chassis_member = is_virtual_chassis_member
     has_device_bays = RelatedMembershipBooleanFilter(
         field_name="device_bays",
-        label="Has device bays",
+        label=_("Has device bays"),
     )
     has_software_image_files = RelatedMembershipBooleanFilter(
         field_name="software_image_files",
-        label="Has software image files",
+        label=_("Has software image files"),
     )
     software_image_files = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=SoftwareImageFile.objects.all(),
@@ -931,7 +932,7 @@ class DeviceFilterSet(
     )
     has_software_version = RelatedMembershipBooleanFilter(
         field_name="software_version",
-        label="Has software version",
+        label=_("Has software version"),
     )
     software_version = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=SoftwareVersion.objects.all(),
@@ -939,10 +940,12 @@ class DeviceFilterSet(
     )
     ip_addresses = MultiValueCharFilter(
         method="filter_ip_addresses",
-        label="IP addresses (address or ID)",
+        label=_("IP addresses (address or ID)"),
         distinct=True,
     )
-    has_ip_addresses = RelatedMembershipBooleanFilter(field_name="interfaces__ip_addresses", label="Has IP addresses")
+    has_ip_addresses = RelatedMembershipBooleanFilter(
+        field_name="interfaces__ip_addresses", label=_("Has IP addresses")
+    )
     radio_profiles = NaturalKeyOrPKMultipleChoiceFilter(
         field_name="controller_managed_device_group__radio_profiles",
         queryset=RadioProfile.objects.all(),
@@ -950,7 +953,7 @@ class DeviceFilterSet(
     )
     has_radio_profiles = RelatedMembershipBooleanFilter(
         field_name="controller_managed_device_group__radio_profiles",
-        label="Has radio profiles",
+        label=_("Has radio profiles"),
     )
     wireless_networks = NaturalKeyOrPKMultipleChoiceFilter(
         field_name="controller_managed_device_group__wireless_networks",
@@ -959,18 +962,18 @@ class DeviceFilterSet(
     )
     has_wireless_networks = RelatedMembershipBooleanFilter(
         field_name="controller_managed_device_group__wireless_networks",
-        label="Has wireless networks",
+        label=_("Has wireless networks"),
     )
     controller = NaturalKeyOrPKMultipleChoiceFilter(
         field_name="controller_managed_device_group__controller",
         queryset=Controller.objects.all(),
         to_field_name="name",
-        label="Controller (name or ID)",
+        label=_("Controller (name or ID)"),
     )
     vrfs = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=VRF.objects.all(),
         to_field_name="rd",
-        label="VRFs (ID or RD)",
+        label=_("VRFs (ID or RD)"),
     )
 
     def filter_ip_addresses(self, queryset, name, value):
@@ -1053,7 +1056,7 @@ class PowerPortFilterSet(
     )
     has_power_outlets = RelatedMembershipBooleanFilter(
         field_name="power_outlets",
-        label="Has power outlets",
+        label=_("Has power outlets"),
     )
 
     class Meta:
@@ -1094,18 +1097,18 @@ class InterfaceFilterSet(
         queryset=Device.objects.all(),
         method="filter_device_id",
         field_name="device",
-        label='Device (ID)  (deprecated, use "device" filter instead)',
+        label=_('Device (ID)  (deprecated, use "device" filter instead)'),
     )
     device_with_common_vc = django_filters.UUIDFilter(
         method="filter_device_common_vc_id",
         field_name="pk",
-        label="Virtual Chassis member Device (ID)",
+        label=_("Virtual Chassis member Device (ID)"),
     )
     kind = django_filters.ChoiceFilter(
         choices=[("physical", "Physical"), ("virtual", "Virtual"), ("wireless", "Wireless")],
         method="filter_kind",
         field_name="type",  # prevents unnecessary queryset logic in REST API schema generation
-        label="Kind of interface",
+        label=_("Kind of interface"),
     )
     # TODO: solve https://github.com/nautobot/nautobot/issues/2875 to use this filter correctly
     parent_interface = NaturalKeyOrPKMultipleChoiceFilter(
@@ -1137,7 +1140,7 @@ class InterfaceFilterSet(
     )
     has_tagged_vlans = RelatedMembershipBooleanFilter(
         field_name="tagged_vlans",
-        label="Has tagged VLANs",
+        label=_("Has tagged VLANs"),
     )
     # TODO: solve https://github.com/nautobot/nautobot/issues/2875 to use this filter correctly
     child_interfaces = NaturalKeyOrPKMultipleChoiceFilter(
@@ -1147,7 +1150,7 @@ class InterfaceFilterSet(
     )
     has_child_interfaces = RelatedMembershipBooleanFilter(
         field_name="child_interfaces",
-        label="Has child interfaces",
+        label=_("Has child interfaces"),
     )
     # TODO: solve https://github.com/nautobot/nautobot/issues/2875 to use this filter correctly
     bridged_interfaces = NaturalKeyOrPKMultipleChoiceFilter(
@@ -1157,7 +1160,7 @@ class InterfaceFilterSet(
     )
     has_bridged_interfaces = RelatedMembershipBooleanFilter(
         field_name="bridged_interfaces",
-        label="Has bridged interfaces",
+        label=_("Has bridged interfaces"),
     )
     # TODO: solve https://github.com/nautobot/nautobot/issues/2875 to use this filter correctly
     member_interfaces = NaturalKeyOrPKMultipleChoiceFilter(
@@ -1167,11 +1170,11 @@ class InterfaceFilterSet(
     )
     has_member_interfaces = RelatedMembershipBooleanFilter(
         field_name="member_interfaces",
-        label="Has member interfaces",
+        label=_("Has member interfaces"),
     )
     mac_address = MultiValueMACAddressFilter()
-    vlan_id = django_filters.CharFilter(method="filter_vlan_id", label="Assigned VLAN")
-    vlan = django_filters.NumberFilter(method="filter_vlan", label="Assigned VID")
+    vlan_id = django_filters.CharFilter(method="filter_vlan_id", label=_("Assigned VLAN"))
+    vlan = django_filters.NumberFilter(method="filter_vlan", label=_("Assigned VID"))
     type = django_filters.MultipleChoiceFilter(choices=InterfaceTypeChoices, null_value=None)
     port_type = django_filters.MultipleChoiceFilter(choices=PortTypeChoices, null_value=None)
     duplex = django_filters.MultipleChoiceFilter(choices=InterfaceDuplexChoices, null_value=None)
@@ -1182,17 +1185,17 @@ class InterfaceFilterSet(
     )
     ip_addresses = MultiValueCharFilter(
         method="filter_ip_addresses",
-        label="IP addresses (address or ID)",
+        label=_("IP addresses (address or ID)"),
         distinct=True,
     )
-    has_ip_addresses = RelatedMembershipBooleanFilter(field_name="ip_addresses", label="Has IP addresses")
+    has_ip_addresses = RelatedMembershipBooleanFilter(field_name="ip_addresses", label=_("Has IP addresses"))
     virtual_device_contexts = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=VirtualDeviceContext.objects.all(),
         to_field_name="name",
     )
     has_virtual_device_contexts = RelatedMembershipBooleanFilter(
         field_name="virtual_device_contexts",
-        label="Has Virtual Device Context",
+        label=_("Has Virtual Device Context"),
     )
 
     def filter_ip_addresses(self, queryset, name, value):
@@ -1305,7 +1308,7 @@ class RearPortFilterSet(ModularDeviceComponentModelFilterSetMixin, CableTerminat
     )
     has_front_ports = RelatedMembershipBooleanFilter(
         field_name="front_ports",
-        label="Has front ports",
+        label=_("Has front ports"),
     )
 
     class Meta:
@@ -1359,7 +1362,7 @@ class InventoryItemFilterSet(DeviceComponentModelFilterSetMixin, RelationshipMod
         prefers_id=True,
         queryset=InventoryItem.objects.all(),
         to_field_name="name",
-        label="Parent items (name or ID)",
+        label=_("Parent items (name or ID)"),
     )
     manufacturer = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Manufacturer.objects.all(),
@@ -1370,16 +1373,16 @@ class InventoryItemFilterSet(DeviceComponentModelFilterSetMixin, RelationshipMod
         prefers_id=True,
         queryset=InventoryItem.objects.all(),
         to_field_name="name",
-        label="Child items (name or ID)",
+        label=_("Child items (name or ID)"),
     )
     has_children = RelatedMembershipBooleanFilter(
         field_name="children",
-        label="Has child items",
+        label=_("Has child items"),
     )
     serial = MultiValueCharFilter(lookup_expr="iexact")
     has_software_image_files = RelatedMembershipBooleanFilter(
         field_name="software_image_files",
-        label="Has software image files",
+        label=_("Has software image files"),
     )
     software_image_files = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=SoftwareImageFile.objects.all(),
@@ -1387,7 +1390,7 @@ class InventoryItemFilterSet(DeviceComponentModelFilterSetMixin, RelationshipMod
     )
     has_software_version = RelatedMembershipBooleanFilter(
         field_name="software_version",
-        label="Has software version",
+        label=_("Has software version"),
     )
     software_version = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=SoftwareVersion.objects.all(),
@@ -1432,30 +1435,30 @@ class VirtualChassisFilterSet(NautobotFilterSet):
         field_name="master__location",
         queryset=Location.objects.all(),
         to_field_name="name",
-        label="Location (name or ID)",
+        label=_("Location (name or ID)"),
     )
     tenant = NaturalKeyOrPKMultipleChoiceFilter(
         field_name="master__tenant",
         queryset=Tenant.objects.all(),
         to_field_name="name",
-        label="Tenant (name or ID)",
+        label=_("Tenant (name or ID)"),
     )
     tenant_group = TreeNodeMultipleChoiceFilter(
         field_name="master__tenant__tenant_group",
         queryset=TenantGroup.objects.all(),
         to_field_name="name",
-        label="Tenant Group (name or ID)",
+        label=_("Tenant Group (name or ID)"),
     )
     # TODO: solve https://github.com/nautobot/nautobot/issues/2875 to use this filter correctly
     members = NaturalKeyOrPKMultipleChoiceFilter(
         prefers_id=True,
         to_field_name="name",
         queryset=Device.objects.all(),
-        label="Device members (name or ID)",
+        label=_("Device members (name or ID)"),
     )
     has_members = RelatedMembershipBooleanFilter(
         field_name="members",
-        label="Has device members",
+        label=_("Has device members"),
     )
 
     class Meta:
@@ -1506,7 +1509,7 @@ class CableToCableTerminationFilterSet(NautobotFilterSet):
     cable = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Cable.objects.all(),
         to_field_name="pk",
-        label="Cable (ID)",
+        label=_("Cable (ID)"),
     )
 
     class Meta:
@@ -1519,15 +1522,15 @@ class CableFilterSet(NautobotFilterSet, StatusModelFilterSetMixin):
     cable_type = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=CableType.objects.all(),
         to_field_name="name",
-        label="Cable Type (name or ID)",
+        label=_("Cable Type (name or ID)"),
     )
     has_cable_type = RelatedMembershipBooleanFilter(
         field_name="cable_type",
-        label="Has cable type",
+        label=_("Has cable type"),
     )
     is_disconnected = django_filters.BooleanFilter(
         method="filter_is_disconnected",
-        label="Is disconnected (missing one or both side terminations)",
+        label=_("Is disconnected (missing one or both side terminations)"),
     )
     type = django_filters.MultipleChoiceFilter(choices=CableTypeChoices)
     color = MultiValueCharFilter()
@@ -1535,7 +1538,7 @@ class CableFilterSet(NautobotFilterSet, StatusModelFilterSetMixin):
         queryset=Device.objects.all(),
         method="filter_device_id",
         field_name="terminations",
-        label="Device (ID)",
+        label=_("Device (ID)"),
     )
     device = extend_schema_field({"type": "string"})(
         django_filters.ModelMultipleChoiceFilter(
@@ -1543,7 +1546,7 @@ class CableFilterSet(NautobotFilterSet, StatusModelFilterSetMixin):
             to_field_name="name",
             method="filter_device",
             field_name="device",
-            label="Device (name)",
+            label=_("Device (name)"),
         )
     )
     rack_id = extend_schema_field({"type": "string", "format": "uuid"})(
@@ -1551,7 +1554,7 @@ class CableFilterSet(NautobotFilterSet, StatusModelFilterSetMixin):
             queryset=Rack.objects.all(),
             method="filter_device",
             field_name="device__rack",
-            label="Rack (ID)",
+            label=_("Rack (ID)"),
         )
     )
     rack = extend_schema_field({"type": "string"})(
@@ -1560,7 +1563,7 @@ class CableFilterSet(NautobotFilterSet, StatusModelFilterSetMixin):
             to_field_name="name",
             method="filter_device",
             field_name="device__rack",
-            label="Rack (name)",
+            label=_("Rack (name)"),
         )
     )
     location_id = extend_schema_field({"type": "string", "format": "uuid"})(
@@ -1568,7 +1571,7 @@ class CableFilterSet(NautobotFilterSet, StatusModelFilterSetMixin):
             queryset=Location.objects.all(),
             method="filter_device",
             field_name="device__location",
-            label="Location (ID)",
+            label=_("Location (ID)"),
         )
     )
     location = extend_schema_field({"type": "string"})(
@@ -1577,7 +1580,7 @@ class CableFilterSet(NautobotFilterSet, StatusModelFilterSetMixin):
             to_field_name="name",
             method="filter_device",
             field_name="device__location",
-            label="Location (name)",
+            label=_("Location (name)"),
         )
     )
     tenant_id = extend_schema_field({"type": "string", "format": "uuid"})(
@@ -1585,7 +1588,7 @@ class CableFilterSet(NautobotFilterSet, StatusModelFilterSetMixin):
             queryset=Tenant.objects.all(),
             method="filter_device",
             field_name="device__tenant",
-            label="Tenant (ID)",
+            label=_("Tenant (ID)"),
         )
     )
     tenant = extend_schema_field({"type": "string"})(
@@ -1594,30 +1597,30 @@ class CableFilterSet(NautobotFilterSet, StatusModelFilterSetMixin):
             to_field_name="name",
             method="filter_device",
             field_name="device__tenant",
-            label="Tenant (name)",
+            label=_("Tenant (name)"),
         )
     )
     termination_a_type = ContentTypeMultipleChoiceFilter(
         choices=FeatureQuery("cable_terminations").get_choices,
         conjoined=False,
         method="_termination_a_type",
-        label="Termination A type",
+        label=_("Termination A type"),
     )
     termination_b_type = ContentTypeMultipleChoiceFilter(
         choices=FeatureQuery("cable_terminations").get_choices,
         conjoined=False,
         method="_termination_b_type",
-        label="Termination B type",
+        label=_("Termination B type"),
     )
-    termination_a_id = MultiValueUUIDFilter(method="_termination_a_id", label="Termination A (ID)")
-    termination_b_id = MultiValueUUIDFilter(method="_termination_b_id", label="Termination B (ID)")
+    termination_a_id = MultiValueUUIDFilter(method="_termination_a_id", label=_("Termination A (ID)"))
+    termination_b_id = MultiValueUUIDFilter(method="_termination_b_id", label=_("Termination B (ID)"))
     termination_type = ContentTypeMultipleChoiceFilter(
         choices=FeatureQuery("cable_terminations").get_choices,
         conjoined=False,
         distinct=True,
         lookup_expr="in",
         method="_termination_type",
-        label="Termination (either end) type",
+        label=_("Termination (either end) type"),
     )
 
     class Meta:
@@ -1791,10 +1794,10 @@ class ConsoleConnectionFilterSet(ConnectionFilterSetMixin, BaseFilterSet):
     )
     location = django_filters.CharFilter(
         method="filter_location",
-        label="Location (name)",
+        label=_("Location (name)"),
     )
-    device_id = MultiValueUUIDFilter(method="filter_device", label="Device (ID)")
-    device = MultiValueCharFilter(method="filter_device", field_name="device__name", label="Device (name)")
+    device_id = MultiValueUUIDFilter(method="filter_device", label=_("Device (ID)"))
+    device = MultiValueCharFilter(method="filter_device", field_name="device__name", label=_("Device (name)"))
 
     class Meta:
         model = ConsolePort
@@ -1810,10 +1813,10 @@ class PowerConnectionFilterSet(ConnectionFilterSetMixin, BaseFilterSet):
     )
     location = django_filters.CharFilter(
         method="filter_location",
-        label="Location (name)",
+        label=_("Location (name)"),
     )
-    device_id = MultiValueUUIDFilter(method="filter_device", label="Device (ID)")
-    device = MultiValueCharFilter(method="filter_device", field_name="device__name", label="Device (name)")
+    device_id = MultiValueUUIDFilter(method="filter_device", label=_("Device (ID)"))
+    device = MultiValueCharFilter(method="filter_device", field_name="device__name", label=_("Device (name)"))
 
     class Meta:
         model = PowerPort
@@ -1829,10 +1832,10 @@ class InterfaceConnectionFilterSet(BaseFilterSet):
     filter.
     """
 
-    q = django_filters.CharFilter(method="search", label="Search")
-    location = django_filters.CharFilter(method="filter_location", label="Location (name)")
-    device_id = MultiValueUUIDFilter(method="filter_device_id", label="Device (ID)")
-    device = MultiValueCharFilter(method="filter_device_name", label="Device (name)")
+    q = django_filters.CharFilter(method="search", label=_("Search"))
+    location = django_filters.CharFilter(method="filter_location", label=_("Location (name)"))
+    device_id = MultiValueUUIDFilter(method="filter_device_id", label=_("Device (ID)"))
+    device = MultiValueCharFilter(method="filter_device_name", label=_("Device (name)"))
 
     class Meta:
         model = CablePath
@@ -1868,7 +1871,7 @@ class PowerPanelFilterSet(LocatableModelFilterSetMixin, NautobotFilterSet):
         prefers_id=True,
         queryset=RackGroup.objects.all(),
         to_field_name="name",
-        label="Rack group (name or ID)",
+        label=_("Rack group (name or ID)"),
     )
     # TODO: solve https://github.com/nautobot/nautobot/issues/2875 to use this filter correctly
     power_feeds = NaturalKeyOrPKMultipleChoiceFilter(
@@ -1878,11 +1881,11 @@ class PowerPanelFilterSet(LocatableModelFilterSetMixin, NautobotFilterSet):
     )
     has_power_feeds = RelatedMembershipBooleanFilter(
         field_name="power_feeds",
-        label="Has power feeds",
+        label=_("Has power feeds"),
     )
     has_feeders = RelatedMembershipBooleanFilter(
         field_name="feeders",
-        label="Has feeders",
+        label=_("Has feeders"),
     )
 
     class Meta:
@@ -1902,7 +1905,7 @@ class PowerFeedFilterSet(
         field_name="power_panel__location",
         queryset=Location.objects.all(),
         to_field_name="name",
-        label="Location (name or ID)",
+        label=_("Location (name or ID)"),
     )
     # TODO: solve https://github.com/nautobot/nautobot/issues/2875 to use this filter correctly
     power_panel = NaturalKeyOrPKMultipleChoiceFilter(
@@ -1914,7 +1917,7 @@ class PowerFeedFilterSet(
         prefers_id=True,
         queryset=PowerPanel.objects.all(),
         to_field_name="name",
-        label="Destination panel (name or ID)",
+        label=_("Destination panel (name or ID)"),
     )
     # TODO: solve https://github.com/nautobot/nautobot/issues/2875 to use this filter correctly
     rack = NaturalKeyOrPKMultipleChoiceFilter(
@@ -1966,12 +1969,12 @@ class InterfaceRedundancyGroupFilterSet(NautobotFilterSet, StatusModelFilterSetM
     )
     virtual_ip = MultiValueCharFilter(
         method="filter_virtual_ip",
-        label="Virtual IP Address (address or ID)",
+        label=_("Virtual IP Address (address or ID)"),
     )
     interfaces = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Interface.objects.all(),
         to_field_name="name",
-        label="Interfaces (name or ID)",
+        label=_("Interfaces (name or ID)"),
         prefers_id=True,
     )
 
@@ -2034,7 +2037,7 @@ class SoftwareImageFileFilterSet(NautobotFilterSet, StatusModelFilterSetMixin):
         field_name="software_version__platform",
         queryset=Platform.objects.all(),
         to_field_name="name",
-        label="Software version platform (name or ID)",
+        label=_("Software version platform (name or ID)"),
     )
     device_types = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=DeviceType.objects.all(),
@@ -2042,17 +2045,17 @@ class SoftwareImageFileFilterSet(NautobotFilterSet, StatusModelFilterSetMixin):
     )
     has_device_types = RelatedMembershipBooleanFilter(
         field_name="device_types",
-        label="Has device types",
+        label=_("Has device types"),
     )
     devices = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Device.objects.all(),
     )
     has_devices = RelatedMembershipBooleanFilter(
         field_name="devices",
-        label="Has devices",
+        label=_("Has devices"),
     )
     default_image = django_filters.BooleanFilter(
-        label="Is default image for associated software version",
+        label=_("Is default image for associated software version"),
     )
     external_integration = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=ExternalIntegration.objects.all(),
@@ -2079,21 +2082,21 @@ class SoftwareVersionFilterSet(NautobotFilterSet, StatusModelFilterSetMixin):
     )
     has_devices = RelatedMembershipBooleanFilter(
         field_name="devices",
-        label="Has devices",
+        label=_("Has devices"),
     )
     inventory_items = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=InventoryItem.objects.all(),
     )
     has_inventory_items = RelatedMembershipBooleanFilter(
         field_name="inventory_items",
-        label="Has inventory items",
+        label=_("Has inventory items"),
     )
     virtual_machines = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=VirtualMachine.objects.all(),
     )
     has_virtual_machines = RelatedMembershipBooleanFilter(
         field_name="virtual_machines",
-        label="Has virtual machines",
+        label=_("Has virtual machines"),
     )
     platform = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Platform.objects.all(),
@@ -2103,11 +2106,11 @@ class SoftwareVersionFilterSet(NautobotFilterSet, StatusModelFilterSetMixin):
         field_name="software_image_files__device_types",
         queryset=DeviceType.objects.all(),
         to_field_name="model",
-        label="Device types (model or ID)",
+        label=_("Device types (model or ID)"),
     )
     has_software_image_files = RelatedMembershipBooleanFilter(
         field_name="software_image_files",
-        label="Has software image files",
+        label=_("Has software image files"),
     )
     software_image_files = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=SoftwareImageFile.objects.all(),
@@ -2170,7 +2173,7 @@ class ControllerFilterSet(
         choices=ControllerCapabilitiesChoices,
         null_value=None,
         lookup_expr="icontains",
-        label="Capabilities",
+        label=_("Capabilities"),
     )
     controller_device = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Device.objects.all(),
@@ -2184,7 +2187,7 @@ class ControllerFilterSet(
         field_name="controller_managed_device_groups__wireless_networks",
         queryset=WirelessNetwork.objects.all(),
         to_field_name="name",
-        label="Wireless Networks (name or ID)",
+        label=_("Wireless Networks (name or ID)"),
     )
 
     class Meta:
@@ -2207,7 +2210,7 @@ class ControllerManagedDeviceGroupFilterSet(
         choices=ControllerCapabilitiesChoices,
         null_value=None,
         lookup_expr="icontains",
-        label="Capabilities",
+        label=_("Capabilities"),
     )
     controller = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Controller.objects.all(),
@@ -2216,12 +2219,12 @@ class ControllerManagedDeviceGroupFilterSet(
     parent = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=ControllerManagedDeviceGroup.objects.all(),
         to_field_name="name",
-        label="Parent group (name or ID)",
+        label=_("Parent group (name or ID)"),
     )
     subtree = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=ControllerManagedDeviceGroup.objects.all(),
         to_field_name="name",
-        label="Controlled device groups and descendants thereof (name or ID)",
+        label=_("Controlled device groups and descendants thereof (name or ID)"),
         method="_subtree",
     )
     radio_profiles = NaturalKeyOrPKMultipleChoiceFilter(
@@ -2229,32 +2232,32 @@ class ControllerManagedDeviceGroupFilterSet(
     )
     has_radio_profiles = RelatedMembershipBooleanFilter(
         field_name="radio_profiles",
-        label="Has radio profiles",
+        label=_("Has radio profiles"),
     )
     wireless_networks = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=WirelessNetwork.objects.all(),
     )
     has_wireless_networks = RelatedMembershipBooleanFilter(
         field_name="wireless_networks",
-        label="Has wireless networks",
+        label=_("Has wireless networks"),
     )
     devices = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Device.objects.all(),
         to_field_name="name",
-        label="Devices (name or ID)",
+        label=_("Devices (name or ID)"),
     )
     has_devices = RelatedMembershipBooleanFilter(
         field_name="devices",
-        label="Has devices",
+        label=_("Has devices"),
     )
     virtual_device_contexts = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=VirtualDeviceContext.objects.all(),
         to_field_name="name",
-        label="Virtual device contexts (name or ID)",
+        label=_("Virtual device contexts (name or ID)"),
     )
     has_virtual_device_contexts = RelatedMembershipBooleanFilter(
         field_name="virtual_device_contexts",
-        label="Has virtual device contexts",
+        label=_("Has virtual device contexts"),
     )
 
     class Meta:
@@ -2325,13 +2328,13 @@ class ModuleFilterSet(
     )
     is_installed = RelatedMembershipBooleanFilter(
         field_name="parent_module_bay",
-        label="Is installed in a module bay",
+        label=_("Is installed in a module bay"),
     )
     manufacturer = NaturalKeyOrPKMultipleChoiceFilter(
         field_name="module_type__manufacturer",
         queryset=Manufacturer.objects.all(),
         to_field_name="name",
-        label="Manufacturer (name or ID)",
+        label=_("Manufacturer (name or ID)"),
     )
     module_type = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=ModuleType.objects.all(),
@@ -2341,7 +2344,7 @@ class ModuleFilterSet(
         field_name="module_type__module_family",
         queryset=ModuleFamily.objects.all(),
         to_field_name="name",
-        label="Module family (name or ID)",
+        label=_("Module family (name or ID)"),
     )
     device = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Device.objects.all(),
@@ -2353,7 +2356,7 @@ class ModuleFilterSet(
         django_filters.ModelChoiceFilter(
             queryset=ModuleBay.objects.all(),
             method="filter_module_bay",
-            label="Compatible with module bay (ID)",
+            label=_("Compatible with module bay (ID)"),
         )
     )
 
@@ -2426,12 +2429,12 @@ class ModuleTypeFilterSet(DeviceTypeModuleTypeCommonFiltersMixin, NautobotFilter
         django_filters.ModelChoiceFilter(
             queryset=ModuleBay.objects.all(),
             method="filter_module_bay",
-            label="Installable in module bay (ID)",
+            label=_("Installable in module bay (ID)"),
         )
     )
     has_modules = RelatedMembershipBooleanFilter(
         field_name="modules",
-        label="Has module instances",
+        label=_("Has module instances"),
     )
 
     class Meta:
@@ -2480,7 +2483,7 @@ class ModuleBayTemplateFilterSet(ModularDeviceComponentTemplateModelFilterSetMix
         to_field_name="name",
     )
     requires_first_party_modules = django_filters.BooleanFilter(
-        label="Requires first-party modules",
+        label=_("Requires first-party modules"),
     )
 
     class Meta:
@@ -2519,11 +2522,11 @@ class ModuleBayFilterSet(NautobotFilterSet):
     )
     has_parent_device = RelatedMembershipBooleanFilter(
         field_name="parent_device",
-        label="Has parent device",
+        label=_("Has parent device"),
     )
     has_parent_module = RelatedMembershipBooleanFilter(
         field_name="parent_module",
-        label="Has parent module",
+        label=_("Has parent module"),
     )
     # needed because this is a *reverse* OneToOneField and so doesn't get included automatically in "__all__"
     installed_module = ModelMultipleChoiceFilter(
@@ -2531,7 +2534,7 @@ class ModuleBayFilterSet(NautobotFilterSet):
     )
     has_installed_module = RelatedMembershipBooleanFilter(
         field_name="installed_module",
-        label="Has installed module",
+        label=_("Has installed module"),
     )
     module_family = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=ModuleFamily.objects.all(),
@@ -2539,7 +2542,7 @@ class ModuleBayFilterSet(NautobotFilterSet):
     )
     requires_first_party_modules = django_filters.BooleanFilter(
         field_name="requires_first_party_modules",
-        label="Requires first-party modules",
+        label=_("Requires first-party modules"),
     )
 
     class Meta:
@@ -2568,15 +2571,15 @@ class VirtualDeviceContextFilterSet(
     )
     primary_ip4 = MultiValueCharFilter(
         method="filter_primary_ip4",
-        label="Primary IPv4 Address (address or ID)",
+        label=_("Primary IPv4 Address (address or ID)"),
     )
     primary_ip6 = MultiValueCharFilter(
         method="filter_primary_ip6",
-        label="Primary IPv6 Address (address or ID)",
+        label=_("Primary IPv6 Address (address or ID)"),
     )
     has_primary_ip = django_filters.BooleanFilter(
         method="_has_primary_ip",
-        label="Has a primary IP",
+        label=_("Has a primary IP"),
     )
     device = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Device.objects.all(),
@@ -2589,11 +2592,11 @@ class VirtualDeviceContextFilterSet(
     )
     has_interfaces = RelatedMembershipBooleanFilter(
         field_name="interfaces",
-        label="Has Interfaces",
+        label=_("Has Interfaces"),
     )
     has_tenant = RelatedMembershipBooleanFilter(
         field_name="tenant",
-        label="Has tenant",
+        label=_("Has tenant"),
     )
     controller_managed_device_group = NaturalKeyOrPKMultipleChoiceFilter(
         field_name="controller_managed_device_group",
@@ -2663,7 +2666,7 @@ class InterfaceVDCAssignmentFilterSet(NautobotFilterSet):
         field_name="interface__device",
         queryset=Device.objects.all(),
         to_field_name="name",
-        label="Device (name or ID)",
+        label=_("Device (name or ID)"),
     )
     virtual_device_context = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=VirtualDeviceContext.objects.all(),
@@ -2716,7 +2719,7 @@ class ModuleFamilyFilterSet(NautobotFilterSet):
     module_bay_id = extend_schema_field({"type": "array", "items": {"type": "string", "format": "uuid"}})(
         ModelMultipleChoiceFilter(
             queryset=ModuleBay.objects.all(),
-            label="Module bay (ID)",
+            label=_("Module bay (ID)"),
         )
     )
 
@@ -2759,12 +2762,12 @@ class DeviceClusterAssignmentFilterSet(NautobotFilterSet):
     device = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Device.objects.all(),
         to_field_name="name",
-        label="Device (name or ID)",
+        label=_("Device (name or ID)"),
     )
     cluster = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Cluster.objects.all(),
         to_field_name="name",
-        label="Cluster (name or ID)",
+        label=_("Cluster (name or ID)"),
     )
 
     class Meta:

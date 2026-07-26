@@ -2,6 +2,8 @@ from django.template import Context
 from django.template.loader import render_to_string
 from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
+from django.utils.text import format_lazy
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.templatetags import helpers
 from nautobot.core.ui.object_detail import Button, KeyValueTablePanel, ObjectFieldsPanel
@@ -39,14 +41,17 @@ class JobKeyValueOverrideValueTablePanel(KeyValueTablePanel):
             value (str): The content to display.
             prefix (str): The label shown before the value (default: 'default is').
         """
-        return format_html('<span class="text-secondary">overridden; default is {}</span>', mark_safe(text))  # noqa: S308
+        return format_html(
+            '<span class="text-secondary">{}</span>',
+            format_lazy(_("overridden; default is {value}"), value=mark_safe(text)),  # noqa: S308
+        )
 
     def _render_overridden_block(self, content):
         """
         Render a more complex block of HTML content (like rendered markdown or JSON)
         in a div with a muted label indicating it's an overridden value.
         """
-        return format_html('<div class="text-secondary">overridden; default is:<br>{}</div>', content)
+        return format_html('<div class="text-secondary">{}<br>{}</div>', _("overridden; default is:"), content)
 
     def render_description_default(self, default_value):
         """

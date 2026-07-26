@@ -1,0 +1,1 @@
+Marked model field labels as translatable, which covers the form labels and table column headers that previously always rendered in English.

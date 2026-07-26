@@ -1,0 +1,1 @@
+Marked the UI framework's own labels as translatable, including object detail panel and tab labels, the table configuration button, and the Edit/Clone/Delete action buttons.

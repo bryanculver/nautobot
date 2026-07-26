@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 import netaddr
 
 from nautobot.extras.choices import ObjectChangeActionChoices
@@ -71,7 +72,8 @@ def _webhook_check_address_against_block_lists(host, addr, *, check_additional=T
             "Webhook URL validation: host %r resolved to %s, which is in a built-in blocked range.", host, addr
         )
         raise ValidationError(
-            f"Webhook URL host {host!r} is not permitted (resolves to a reserved/loopback/link-local address)."
+            _("Webhook URL host %(host)r is not permitted (resolves to a reserved/loopback/link-local address).")
+            % {"host": host}
         )
     if not check_additional:
         return
@@ -86,15 +88,18 @@ def _webhook_check_address_against_block_lists(host, addr, *, check_additional=T
                 network,
             )
             raise ValidationError(
-                f"Webhook URL host {host!r} is not permitted. "
-                "Add the host to WEBHOOK_ALLOWED_HOSTS if this target is intentional."
+                _(
+                    "Webhook URL host %(host)r is not permitted. "
+                    "Add the host to WEBHOOK_ALLOWED_HOSTS if this target is intentional."
+                )
+                % {"host": host}
             )
 
 
 def _webhook_validate_scheme_and_extract_host(url):
     """Shared scheme + URL syntax check. Returns the URL host."""
     if not url:
-        raise ValidationError("Webhook URL is required.")
+        raise ValidationError(_("Webhook URL is required."))
 
     allowed_schemes = list(settings.WEBHOOK_ALLOWED_SCHEMES)
     try:
@@ -103,13 +108,14 @@ def _webhook_validate_scheme_and_extract_host(url):
         scheme = urlsplit(url).scheme.lower()
         if scheme and scheme not in (s.lower() for s in allowed_schemes):
             raise ValidationError(
-                f"Webhook URL scheme {scheme!r} is not permitted; allowed schemes are: {', '.join(allowed_schemes)}."
+                _("Webhook URL scheme %(scheme)r is not permitted; allowed schemes are: %(allowed)s.")
+                % {"scheme": scheme, "allowed": ", ".join(allowed_schemes)}
             )
         raise exc
 
     host = urlsplit(url).hostname
     if not host:
-        raise ValidationError("Webhook URL must include a host.")
+        raise ValidationError(_("Webhook URL must include a host."))
     return host
 
 
@@ -165,7 +171,7 @@ def validate_webhook_url(url):
         infos = socket.getaddrinfo(bare_host, None)
     except socket.gaierror as exc:
         logger.warning("Webhook URL validation: DNS resolution failed for host %r: %s", host, exc)
-        raise ValidationError(f"Unable to resolve webhook host {host!r}.")
+        raise ValidationError(_("Unable to resolve webhook host %(host)r.") % {"host": host})
 
     chosen = None
     for info in infos:

@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import django_tables2 as tables
 
 from nautobot.core.tables import (
@@ -52,16 +53,16 @@ class ManufacturerTable(BaseTable):
     pk = ToggleColumn()
     name = tables.LinkColumn()
     cloud_account_count = LinkedCountColumn(
-        viewname="cloud:cloudaccount_list", url_params={"provider": "name"}, verbose_name="Cloud Accounts"
+        viewname="cloud:cloudaccount_list", url_params={"provider": "name"}, verbose_name=_("Cloud Accounts")
     )
     device_type_count = LinkedCountColumn(
-        viewname="dcim:devicetype_list", url_params={"manufacturer": "name"}, verbose_name="Device Types"
+        viewname="dcim:devicetype_list", url_params={"manufacturer": "name"}, verbose_name=_("Device Types")
     )
     inventory_item_count = LinkedCountColumn(
-        viewname="dcim:inventoryitem_list", url_params={"manufacturer": "name"}, verbose_name="Inventory Items"
+        viewname="dcim:inventoryitem_list", url_params={"manufacturer": "name"}, verbose_name=_("Inventory Items")
     )
     platform_count = LinkedCountColumn(
-        viewname="dcim:platform_list", url_params={"manufacturer": "name"}, verbose_name="Platforms"
+        viewname="dcim:platform_list", url_params={"manufacturer": "name"}, verbose_name=_("Platforms")
     )
     actions = ButtonsColumn(Manufacturer)
 
@@ -88,7 +89,7 @@ class DeviceFamilyTable(BaseTable):
     pk = ToggleColumn()
     name = tables.Column(linkify=True)
     device_type_count = LinkedCountColumn(
-        viewname="dcim:devicetype_list", url_params={"device_family": "name"}, verbose_name="Device Types"
+        viewname="dcim:devicetype_list", url_params={"device_family": "name"}, verbose_name=_("Device Types")
     )
     actions = ButtonsColumn(DeviceFamily)
     tags = TagColumn(url_name="dcim:devicefamily_list")
@@ -113,13 +114,13 @@ class DeviceFamilyTable(BaseTable):
 class DeviceTypeTable(BaseTable):
     pk = ToggleColumn()
     manufacturer = tables.Column(linkify=True)
-    model = tables.Column(linkify=True, verbose_name="Device Type")
+    model = tables.Column(linkify=True, verbose_name=_("Device Type"))
     device_family = tables.Column(linkify=True)
-    is_full_depth = BooleanColumn(verbose_name="Full Depth")
+    is_full_depth = BooleanColumn(verbose_name=_("Full Depth"))
     device_count = LinkedCountColumn(
         viewname="dcim:device_list",
         url_params={"device_type": "pk"},
-        verbose_name="Devices",
+        verbose_name=_("Devices"),
     )
     tags = TagColumn(url_name="dcim:devicetype_list")
     actions = ButtonsColumn(DeviceType)
@@ -159,12 +160,12 @@ class DeviceTypeTable(BaseTable):
 class ModuleTypeTable(BaseTable):
     pk = ToggleColumn()
     manufacturer = tables.Column(linkify=True)
-    model = tables.Column(linkify=True, verbose_name="Module Type")
-    module_family = tables.Column(linkify=True, verbose_name="Family")
+    model = tables.Column(linkify=True, verbose_name=_("Module Type"))
+    module_family = tables.Column(linkify=True, verbose_name=_("Family"))
     module_count = LinkedCountColumn(
         viewname="dcim:module_list",
         url_params={"module_type": "pk"},
-        verbose_name="Modules",
+        verbose_name=_("Modules"),
     )
     tags = TagColumn(url_name="dcim:moduletype_list")
 
@@ -210,7 +211,7 @@ class ConsolePortTemplateTable(ComponentTemplateTable):
     class Meta(BaseTable.Meta):
         model = ConsolePortTemplate
         fields = ("pk", "name", "label", "type", "description", "actions")
-        empty_text = "None"
+        empty_text = _("None")
 
 
 class ConsoleServerPortTemplateTable(ComponentTemplateTable):
@@ -224,7 +225,7 @@ class ConsoleServerPortTemplateTable(ComponentTemplateTable):
     class Meta(BaseTable.Meta):
         model = ConsoleServerPortTemplate
         fields = ("pk", "name", "label", "type", "description", "actions")
-        empty_text = "None"
+        empty_text = _("None")
 
 
 class PowerPortTemplateTable(ComponentTemplateTable):
@@ -248,7 +249,7 @@ class PowerPortTemplateTable(ComponentTemplateTable):
             "description",
             "actions",
         )
-        empty_text = "None"
+        empty_text = _("None")
 
 
 class PowerOutletTemplateTable(ComponentTemplateTable):
@@ -271,14 +272,14 @@ class PowerOutletTemplateTable(ComponentTemplateTable):
             "description",
             "actions",
         )
-        empty_text = "None"
+        empty_text = _("None")
 
 
 class InterfaceTemplateTable(ComponentTemplateTable):
     name = DeviceComponentNameColumn(modelname="interfacetemplate")
-    mgmt_only = BooleanColumn(verbose_name="Management Only")
-    speed = tables.Column(verbose_name="Speed", accessor="speed")
-    duplex = tables.Column(verbose_name="Duplex", accessor="duplex")
+    mgmt_only = BooleanColumn(verbose_name=_("Management Only"))
+    speed = tables.Column(verbose_name=_("Speed"), accessor="speed")
+    duplex = tables.Column(verbose_name=_("Duplex"), accessor="duplex")
     actions = ButtonsColumn(
         model=InterfaceTemplate,
         buttons=("edit", "delete"),
@@ -289,7 +290,7 @@ class InterfaceTemplateTable(ComponentTemplateTable):
         model = InterfaceTemplate
         fields = ("pk", "name", "label", "mgmt_only", "type", "port_type", "speed", "duplex", "description", "actions")
         default_columns = ("pk", "name", "label", "mgmt_only", "type", "port_type", "speed", "description", "actions")
-        empty_text = "None"
+        empty_text = _("None")
 
     def render_speed(self, record):
         return humanize_speed(record.speed)
@@ -297,7 +298,7 @@ class InterfaceTemplateTable(ComponentTemplateTable):
 
 class FrontPortTemplateTable(ComponentTemplateTable):
     name = DeviceComponentNameColumn(modelname="frontporttemplate")
-    rear_port_position = tables.Column(verbose_name="Position")
+    rear_port_position = tables.Column(verbose_name=_("Position"))
     actions = ButtonsColumn(
         model=FrontPortTemplate,
         buttons=("edit", "delete"),
@@ -316,7 +317,7 @@ class FrontPortTemplateTable(ComponentTemplateTable):
             "description",
             "actions",
         )
-        empty_text = "None"
+        empty_text = _("None")
 
 
 class RearPortTemplateTable(ComponentTemplateTable):
@@ -330,7 +331,7 @@ class RearPortTemplateTable(ComponentTemplateTable):
     class Meta(BaseTable.Meta):
         model = RearPortTemplate
         fields = ("pk", "name", "label", "type", "positions", "description", "actions")
-        empty_text = "None"
+        empty_text = _("None")
 
 
 class DeviceBayTemplateTable(ComponentTemplateTable):
@@ -344,7 +345,7 @@ class DeviceBayTemplateTable(ComponentTemplateTable):
     class Meta(BaseTable.Meta):
         model = DeviceBayTemplate
         fields = ("pk", "name", "label", "description", "actions")
-        empty_text = "None"
+        empty_text = _("None")
 
 
 class ModuleBayTemplateTable(ComponentTemplateTable):
@@ -354,8 +355,8 @@ class ModuleBayTemplateTable(ComponentTemplateTable):
         buttons=("edit", "delete"),
         return_url_extra=r"%3Ftab=modulebays",
     )
-    module_family = tables.Column(verbose_name="Family", linkify=True)
-    requires_first_party_modules = BooleanColumn(verbose_name="Requires First-Party Modules")
+    module_family = tables.Column(verbose_name=_("Family"), linkify=True)
+    requires_first_party_modules = BooleanColumn(verbose_name=_("Requires First-Party Modules"))
 
     class Meta(BaseTable.Meta):
         model = ModuleBayTemplate
@@ -389,4 +390,4 @@ class ModuleBayTemplateTable(ComponentTemplateTable):
             "description",
             "actions",
         )
-        empty_text = "None"
+        empty_text = _("None")

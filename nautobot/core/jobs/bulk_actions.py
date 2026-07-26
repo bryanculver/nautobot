@@ -6,6 +6,7 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.db.models import ManyToManyField, ProtectedError
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.forms.utils import restrict_form_fields
 from nautobot.core.utils.lookup import get_form_for_model
@@ -29,15 +30,15 @@ class BulkEditObjects(Job):
 
     content_type = ObjectVar(
         model=ContentType,
-        description="Type of objects to update",
+        description=_("Type of objects to update"),
     )
     # The names of the job inputs must match the parameters of `key_params` and get_bulk_queryset_from_view
     # This may be confusing for the saved_view_id since the job input is an ObjectVar but the key_param is a PK
     # But it is the lesser of two evils.
-    form_data = JSONVar(description="BulkEditForm data")
-    pk_list = JSONVar(description="List of objects pks to edit", required=False)
-    edit_all = BooleanVar(description="Bulk Edit all object / all filtered objects", required=False)
-    filter_query_params = JSONVar(label="Filter Query Params", required=False)
+    form_data = JSONVar(description=_("BulkEditForm data"))
+    pk_list = JSONVar(description=_("List of objects pks to edit"), required=False)
+    edit_all = BooleanVar(description=_("Bulk Edit all object / all filtered objects"), required=False)
+    filter_query_params = JSONVar(label=_("Filter Query Params"), required=False)
     saved_view_id = ObjectVar(model=SavedView, required=False)
 
     class Meta:
@@ -138,7 +139,7 @@ class BulkEditObjects(Job):
 
         if not self.user.has_perm(f"{content_type.app_label}.change_{content_type.model}"):
             self.logger.error('User "%s" does not have permission to update %s objects', self.user, content_type.model)
-            raise PermissionDenied("User does not have change permissions on the requested content-type")
+            raise PermissionDenied(_("User does not have change permissions on the requested content-type"))
 
         self.key_params = {
             "content_type": content_type,
@@ -187,14 +188,14 @@ class BulkDeleteObjects(Job):
 
     content_type = ObjectVar(
         model=ContentType,
-        description="Type of objects to delete",
+        description=_("Type of objects to delete"),
     )
     # The names of the job inputs must match the parameters of `key_params` and get_bulk_queryset_from_view
     # This may be confusing for the saved_view_id since the job input is an ObjectVar but the key_param is a PK
     # But it is the lesser of two evils.
-    pk_list = JSONVar(description="List of objects pks to delete", required=False)
-    delete_all = BooleanVar(description="Delete all (filtered) objects instead of a list of PKs", required=False)
-    filter_query_params = JSONVar(label="Filter Query Params", required=False)
+    pk_list = JSONVar(description=_("List of objects pks to delete"), required=False)
+    delete_all = BooleanVar(description=_("Delete all (filtered) objects instead of a list of PKs"), required=False)
+    filter_query_params = JSONVar(label=_("Filter Query Params"), required=False)
     saved_view_id = ObjectVar(model=SavedView, required=False)
 
     class Meta:
@@ -213,7 +214,7 @@ class BulkDeleteObjects(Job):
             filter_query_params = {}
         if not self.user.has_perm(f"{content_type.app_label}.delete_{content_type.model}"):
             self.logger.error('User "%s" does not have permission to delete %s objects', self.user, content_type.model)
-            raise PermissionDenied("User does not have delete permissions on the requested content-type")
+            raise PermissionDenied(_("User does not have delete permissions on the requested content-type"))
 
         key_params = {
             "content_type": content_type,
@@ -244,7 +245,7 @@ class BulkDeleteObjects(Job):
 
         try:
             self.logger.info(f"Deleting {queryset.count()} {verbose_name_plural}...")
-            _, deleted_info = bulk_delete_with_bulk_change_logging(queryset)
+            _deleted_count, deleted_info = bulk_delete_with_bulk_change_logging(queryset)
             deleted_count = deleted_info.get(model._meta.label, 0)
         except ProtectedError as err:
             # TODO this error message needs to be cleaner, ideally using a variant of handle_protectederror

@@ -8,19 +8,23 @@ cost of that choice is that the two can drift: editing a `.po` without re-runnin
 close that gap.
 """
 
-import gettext
+import ast
+import contextlib
 from pathlib import Path
 import re
-import shutil
 import subprocess
+import sys
 import tempfile
 
 from django.apps import apps
 from django.conf import settings
+from django.urls import resolve, reverse
 from django.utils import translation
 from django.utils.translation import to_locale
+from django.utils.translation.trans_real import all_locale_paths, DjangoTranslation
 
 from nautobot.core.testing import TestCase
+from nautobot.core.testing.translations import TranslationCatalogTestCaseMixin
 
 DOMAINS = ["django", "djangojs"]
 
@@ -34,116 +38,89 @@ LOCALE_PATH = Path(settings.LOCALE_PATHS[0])
 PYPROJECT_PATH = Path(__file__).resolve().parents[3] / "pyproject.toml"
 
 
-def catalog_path(language, domain, suffix):
-    return LOCALE_PATH / to_locale(language) / "LC_MESSAGES" / f"{domain}.{suffix}"
+class TranslationCatalogTestCase(TranslationCatalogTestCaseMixin, TestCase):
+    """Nautobot's own shipped catalogs, checked with the same mixin Apps use."""
 
+    locale_path = LOCALE_PATH
+    languages = NON_ENGLISH_LANGUAGES
+    domains = DOMAINS
 
-def read_catalog(path):
-    """Return the message catalog compiled into a `.mo` file."""
-    with path.open("rb") as handle:
-        return gettext.GNUTranslations(handle)._catalog
-
-
-class TranslationCatalogTestCase(TestCase):
-    def test_every_shipped_language_has_compiled_catalogs(self):
+    def test_fuzzy_clearing_empties_every_translation_shape(self):
         """
-        A language in `LANGUAGES` with no `.mo` silently falls back to English for every string.
+        `invoke makemessages` must be able to empty any translation msgmerge guessed.
 
-        Django reads `.mo` and never `.po`, so a missing or unshipped compiled catalog is
-        indistinguishable at runtime from having no translations at all.
+        gettext ignores a fuzzy entry at runtime, so a guess renders as English while *looking*
+        translated in the catalog -- the worst state for anyone auditing coverage. The clearing step
+        therefore strips the marker and empties the text together; if it ever emptied only part of a
+        translation, the leftover guess would be promoted from ignored to served.
+
+        This exercises the script `tasks.py` actually emits, against every entry shape a catalog
+        contains: a translation wrapped across continuation lines (which happens whenever a msgid
+        holds embedded newlines, `--no-wrap` notwithstanding), a plural with one form per language,
+        a plain single-line entry, and the header -- which is itself flagged fuzzy and whose charset
+        declaration must survive, or the catalog stops compiling.
         """
-        for language in NON_ENGLISH_LANGUAGES:
-            for domain in DOMAINS:
-                with self.subTest(language=language, domain=domain):
-                    path = catalog_path(language, domain, "mo")
-                    self.assertTrue(path.is_file(), f"{path} is missing; run `invoke compilemessages`")
-                    # The header entry is keyed by the empty msgid and is always present, so a
-                    # catalog of exactly one entry is a compiled-but-empty catalog.
-                    self.assertGreater(len(read_catalog(path)), 1, f"{path} contains no translations")
+        tasks_path = PYPROJECT_PATH.parent / "tasks.py"
+        if not tasks_path.is_file():
+            self.skipTest("not running from a source checkout")
 
-    def test_compiled_catalogs_match_their_sources(self):
-        """
-        Every `.mo` must be the current compilation of its `.po`.
+        script = None
+        for node in ast.walk(ast.parse(tasks_path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.FunctionDef) and node.name == "_clear_fuzzy_translations":
+                for sub in ast.walk(node):
+                    if isinstance(sub, ast.Assign) and getattr(sub.targets[0], "id", None) == "script":
+                        script = ast.literal_eval(sub.value)
+        self.assertIsNotNone(script, "could not find the clearing script in tasks.py")
 
-        Recompiles each source into a temporary file and compares catalogs, rather than comparing
-        bytes or timestamps: `msgfmt` output is not reproducible across versions, and Git does not
-        preserve mtimes, so both of those would fail spuriously.
-        """
-        msgfmt = shutil.which("msgfmt")
-        if msgfmt is None:
-            self.skipTest("gettext `msgfmt` is not installed")
+        sample = (
+            "#, fuzzy\n"
+            'msgid ""\n'
+            '"Help text. Example:\\n"\n'
+            '"<pre>{}</pre>"\n'
+            'msgstr ""\n'
+            '"Falsche Vermutung. Beispiel:\\n"\n'
+            '"<pre>{}</pre>"\n'
+            "\n"
+            "#, fuzzy\n"
+            '#| msgid "%(count)s widget"\n'
+            'msgid "%(count)s interface"\n'
+            'msgid_plural "%(count)s interfaces"\n'
+            'msgstr[0] "Falsche Vermutung"\n'
+            'msgstr[1] "Falsche Vermutungen"\n'
+            "\n"
+            "#, fuzzy\n"
+            'msgid "Cable"\n'
+            'msgstr "Kabel raten"\n'
+            "\n"
+            'msgid "Kept"\n'
+            'msgstr "Behalten"\n'
+        )
+        header = '#, fuzzy\nmsgid ""\nmsgstr ""\n"Content-Type: text/plain; charset=UTF-8\\n"\n\n'
 
-        for language in NON_ENGLISH_LANGUAGES:
-            for domain in DOMAINS:
-                with self.subTest(language=language, domain=domain):
-                    source = catalog_path(language, domain, "po")
-                    compiled = catalog_path(language, domain, "mo")
-                    with tempfile.TemporaryDirectory() as directory:
-                        fresh = Path(directory) / f"{domain}.mo"
-                        # argv is the resolved `msgfmt` path plus paths built from settings and the
-                        # constants above; none of it is caller-supplied.
-                        subprocess.run([msgfmt, "--check", "-o", str(fresh), str(source)], check=True)  # noqa: S603
-                        self.assertEqual(
-                            read_catalog(compiled),
-                            read_catalog(fresh),
-                            f"{compiled} is stale relative to {source}; run `invoke compilemessages`",
-                        )
+        with tempfile.TemporaryDirectory() as workspace:
+            catalog = Path(workspace) / "nautobot" / "locale" / "xx" / "LC_MESSAGES" / "django.po"
+            catalog.parent.mkdir(parents=True)
+            catalog.write_text(header + sample, encoding="utf-8")
+            # Run it the way `tasks.py` does -- `python -c` in the repo root -- rather than
+            # exec()ing it in-process, so the test exercises the real invocation.
+            completed = subprocess.run(  # noqa: S603  # the script is our own tasks.py source
+                [sys.executable, "-c", script],
+                cwd=workspace,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            result = catalog.read_text(encoding="utf-8")
 
-    def test_translations_are_single_line(self):
-        """
-        No `msgstr` may spread its text across continuation lines.
-
-        The fuzzy-clearing step in `invoke makemessages` empties translations by matching
-        `msgstr "..."` and `msgstr[N] "..."` a line at a time. A wrapped translation -- `msgstr ""`
-        followed by quoted continuation lines -- would survive that untouched while the `fuzzy`
-        marker was stripped, promoting one of msgmerge's guesses into a translation gettext
-        actually serves. Exactly that bug shipped once via the plural forms.
-
-        A multi-line *msgid* is fine and does occur, because several source strings contain
-        embedded newlines; only the translation side is load-bearing here.
-        """
-        wrapped = re.compile(r'^(?:msgstr|msgstr\[\d+\]) ""\n"', re.MULTILINE)
-        for language in NON_ENGLISH_LANGUAGES:
-            for domain in DOMAINS:
-                source = catalog_path(language, domain, "po")
-                # The header's own msgstr is legitimately multi-line, so skip that first entry.
-                text = source.read_text(encoding="utf-8")
-                body = text.split("\n\n", 1)[1] if "\n\n" in text else ""
-                with self.subTest(language=language, domain=domain):
-                    self.assertIsNone(
-                        wrapped.search(body),
-                        f"{source} wraps a translation across lines, which the fuzzy-clearing step "
-                        "in `invoke makemessages` cannot empty",
-                    )
-
-    def test_plural_entries_declare_the_right_number_of_forms(self):
-        """
-        Every plural entry must carry exactly as many forms as its catalog declares.
-
-        `nplurals` is not the same everywhere -- Chinese declares one form, German and French two,
-        Spanish three -- so a plural entry copied between catalogs can easily end up with the wrong
-        count. `msgfmt` does not flag a surplus form while it is still empty, which is exactly the
-        state a half-finished translation is in, so the mismatch survives until someone fills it in.
-        """
-        for language in NON_ENGLISH_LANGUAGES:
-            for domain in DOMAINS:
-                source = catalog_path(language, domain, "po")
-                text = source.read_text(encoding="utf-8")
-                declared = re.search(r"nplurals=(\d+)", text.split("\n\n", 1)[0])
-                self.assertIsNotNone(declared, f"{source} declares no Plural-Forms header")
-                expected = int(declared.group(1))
-                for block in text.split("\n\n"):
-                    if not re.search(r"^msgid_plural ", block, re.M):
-                        continue
-                    msgid = re.search(r'^msgid "(.*)"$', block, re.M)
-                    forms = re.findall(r"^msgstr\[(\d+)\] ", block, re.M)
-                    with self.subTest(language=language, domain=domain, msgid=msgid.group(1)):
-                        self.assertEqual(
-                            len(forms),
-                            expected,
-                            f"{source}: {msgid.group(1)!r} has {len(forms)} plural forms, "
-                            f"but the catalog declares nplurals={expected}",
-                        )
+        self.assertNotIn("Falsche Vermutung", result, "a guessed translation survived clearing")
+        self.assertNotIn("Kabel raten", result, "a single-line guess survived clearing")
+        self.assertIn('msgstr[0] ""', result, "plural form 0 was not emptied")
+        self.assertIn('msgstr[1] ""', result, "plural form 1 was not emptied")
+        self.assertIn('"<pre>{}</pre>"', result, "the msgid lost its continuation lines")
+        self.assertIn('"Behalten"', result, "a non-fuzzy translation was cleared")
+        self.assertIn("charset=UTF-8", result, "the header lost its charset declaration")
+        self.assertEqual(result.count("#, fuzzy"), 1, "only the header should keep a fuzzy marker")
 
     def test_compiled_catalogs_are_packaged(self):
         """
@@ -275,3 +252,370 @@ class PluralizationTestCase(TestCase):
             [],
             "Use ngettext(singular, plural, count) instead of appending 's':\n" + "\n".join(offenders),
         )
+
+
+class AppTranslationContractTestCase(TestCase):
+    """Guard the contract that lets separately-packaged Apps ship their own catalogs."""
+
+    def test_installed_app_locale_directories_are_discovered(self):
+        """
+        Every installed app that ships a `locale/` directory must be on the search path.
+
+        This is what makes the App contract work: Django's `all_locale_paths()` appends
+        `<app>/locale` for each entry in `INSTALLED_APPS`, and Nautobot appends every `PLUGINS`
+        entry there. The assertion is over the mechanism rather than a named app, so it still holds
+        in a deployment with no Apps installed.
+        """
+        searched = {Path(entry) for entry in all_locale_paths()}
+        expected = [
+            Path(config.path) / "locale" for config in apps.get_app_configs() if (Path(config.path) / "locale").is_dir()
+        ]
+        self.assertNotEqual(expected, [], "no installed app ships a locale directory; test is vacuous")
+        for locale_dir in expected:
+            with self.subTest(locale_dir=str(locale_dir)):
+                self.assertIn(locale_dir, searched)
+
+    def test_javascript_catalog_is_not_restricted_to_a_package(self):
+        """
+        The `/jsi18n/` route must not name any `packages`.
+
+        `JavaScriptCatalog` treats `packages` as a *restriction*, not an addition -- naming one
+        excludes every other installed app, which is exactly how an App supplies JavaScript strings.
+        It also silently excluded `django.contrib.admin`'s own catalog. Asserted structurally so it
+        holds even where no App is installed.
+        """
+        view = resolve(reverse("javascript_catalog")).func
+        self.assertEqual(
+            getattr(view, "view_initkwargs", {}),
+            {},
+            "the jsi18n route must not pass `packages=`; doing so excludes App catalogs",
+        )
+
+    def test_javascript_plural_rule_covers_our_plural_entries(self):
+        """
+        The plural rule served to JavaScript must be able to index our own plural forms.
+
+        `DjangoTranslation.merge()` takes the plural function from the *first* catalog merged, and
+        with no `packages=` restriction that is some other installed app's -- `django.contrib.admin`
+        declares `nplurals=3` for French where Nautobot declares 2. Harmless while our `djangojs`
+        catalogs contain no plural entries, which is the case today, so this guards the moment that
+        stops being true rather than asserting a rule we do not own.
+        """
+        for language in NON_ENGLISH_LANGUAGES:
+            source = self.catalog_path_for(language)
+            if not source.is_file():
+                continue
+            forms = len(re.findall(r"^msgstr\[\d+\] ", source.read_text(encoding="utf-8"), re.M))
+            if not forms:
+                continue  # no JS plurals yet; nothing the served rule could get wrong
+            served = DjangoTranslation(language, domain="djangojs", localedirs=None)
+            reachable = {served.plural(n) for n in range(0, 1000)}
+            declared = int(re.search(r"nplurals=(\d+)", source.read_text(encoding="utf-8")).group(1))
+            with self.subTest(language=language):
+                self.assertTrue(
+                    max(reachable) < declared,
+                    f"the plural rule served for {language} reaches form index {max(reachable)}, but "
+                    f"nautobot/locale/{to_locale(language)}/LC_MESSAGES/djangojs.po declares only "
+                    f"{declared} forms. Another installed app's catalog is supplying the rule.",
+                )
+
+    def catalog_path_for(self, language):
+        return LOCALE_PATH / to_locale(language) / "LC_MESSAGES" / "djangojs.po"
+
+
+class EmbeddedTemplateStringTestCase(TestCase):
+    """Guard the strings that live in template fragments held in Python string literals."""
+
+    def test_template_tags_embedded_in_python_are_extractable(self):
+        """
+        Every `{% trans %}` written inside a Python string literal must reach the catalog.
+
+        `makemessages` runs the Python extractor over `.py` files -- it looks for `gettext()` calls,
+        not for template syntax -- and the Django template extractor only over `.html`. A
+        `{% trans %}` inside a Python string is therefore invisible to both. Nothing breaks: gettext
+        falls back to the msgid, so the fragment renders in English and keeps rendering in English
+        in every language, with no entry a translator could ever fill in. That silence is the whole
+        reason for this test.
+
+        `django-tables2` fragments are the usual home for these, because a table column's markup is
+        conventionally written beside the table class rather than in its own template file. The fix
+        is to declare the msgids next to the fragment with `gettext_noop()`, which the Python
+        extractor does see -- see `TRANSLATABLE_IPADDRESS_OR_RANGE_ACTIONS` in `nautobot.ipam.tables`.
+        """
+        catalog = set(
+            re.findall(
+                r'^msgid "(.*)"$',
+                (LOCALE_PATH / "de" / "LC_MESSAGES" / "django.po").read_text(encoding="utf-8"),
+                re.M,
+            )
+        )
+        self.assertNotEqual(catalog, set(), "the German catalog is empty; the check below would pass vacuously")
+
+        tag = re.compile(r"\{%\s*(?:trans|translate)\s+\"([^\"]+)\"")
+        unreachable = []
+        for path in sorted(Path(settings.BASE_DIR).rglob("*.py")):
+            if "/tests/" in str(path) or "/migrations/" in str(path):
+                continue
+            text = path.read_text(encoding="utf-8", errors="replace")
+            for match in tag.finditer(text):
+                if match.group(1) not in catalog:
+                    line = text[: match.start()].count("\n") + 1
+                    unreachable.append(f"{path.relative_to(settings.BASE_DIR)}:{line}: {match.group(1)!r}")
+
+        self.assertEqual(
+            unreachable,
+            [],
+            "these strings are marked for translation but no extractor can see them, so they will "
+            "render in English forever. Declare each one with `gettext_noop()` beside its fragment:\n"
+            + "\n".join(unreachable),
+        )
+
+
+class LazyHelpTextTestCase(TestCase):
+    """Guard help text that is assembled at field-construction time."""
+
+    def test_comment_field_help_text_is_not_frozen_at_import(self):
+        """
+        `CommentField`'s help text must resolve per request, not once at startup.
+
+        `format_html()` resolves a `gettext_lazy` argument immediately, and `CommentField.__init__`
+        reads `default_helptext` when the field is *constructed* -- which, for a field declared in a
+        form class body, is import time. Building it eagerly froze the text in whatever language was
+        active during startup, so every user saw English regardless of their preference, on all 127
+        comment and note fields in the product.
+
+        Nothing about that failure is visible in isolation: the string is marked, its msgids are
+        translated, and the catalog checks all pass. Only comparing two languages in one process
+        reveals it, which is what this test does.
+        """
+        # Deliberately a *product* form rather than a bare `CommentField()`: the field instance
+        # inside `NoteForm` was constructed when its module was imported, which is precisely the
+        # situation that froze the text. A `CommentField()` built inside this test would resolve
+        # under the active language whether or not the bug is present, and the test would pass
+        # vacuously.
+        from nautobot.extras.forms.forms import NoteForm
+
+        rendered = {}
+        for language in ("en", "de", "fr"):
+            with translation.override(language):
+                rendered[language] = str(NoteForm().fields["note"].help_text)
+
+        self.assertNotEqual(
+            rendered["de"],
+            rendered["en"],
+            "CommentField help text is identical in German and English; it is being resolved once "
+            "instead of per request (see `_markdown_helptext` in `nautobot.core.forms.fields`)",
+        )
+        self.assertNotEqual(rendered["fr"], rendered["de"])
+
+    def test_comment_field_help_text_is_still_marked_safe(self):
+        """
+        The deferred help text must keep `__html__`, or its markup renders as visible tags.
+
+        Wrapping the builder in `lazy()` is only correct if `SafeString` is given as the result
+        class; with `str` the proxy loses `__html__` and the anchor elements would be escaped into
+        the page as literal `&lt;a href=...&gt;` text.
+        """
+        from django.utils.html import conditional_escape
+
+        from nautobot.extras.forms.forms import NoteForm
+
+        with translation.override("de"):
+            help_text = NoteForm().fields["note"].help_text
+            self.assertTrue(hasattr(help_text, "__html__"), "help text lost its `__html__` marker")
+            self.assertNotIn("&lt;", conditional_escape(help_text), "help text markup would be escaped")
+
+
+class FrozenTranslationTestCase(TestCase):
+    """Guard against text that is marked and translated, yet still renders in one fixed language."""
+
+    #: Labels that are knowingly still English, with the reason each is out of reach here.
+    KNOWN_EXCEPTIONS = {
+        # Resolved from the *model's* `Meta.verbose_name` through the cable fieldset. Translating
+        # those needs `AlterModelOptions` migrations and is a separate, deliberate decision.
+        "Device",
+        "Interface",
+    }
+
+    def _translated_msgids(self):
+        source = Path(settings.LOCALE_PATHS[0]) / "de" / "LC_MESSAGES" / "django.po"
+        catalog = set()
+        for block in source.read_text(encoding="utf-8").split("\n\n"):
+            msgid = re.search(r'^msgid "(.+)"$', block, re.M)
+            if msgid and re.search(r'^msgstr "(.+)"$', block, re.M):
+                catalog.add(msgid.group(1).replace('\\"', '"'))
+        return catalog
+
+    def test_no_form_label_or_help_text_is_frozen(self):
+        """
+        A plain `str` whose text is a *translated* msgid was resolved once and kept.
+
+        This is the failure mode that survives every other check in this module: the string is
+        marked, the catalog has a translation for it, `msgfmt` is happy -- and the user still sees
+        English, because a `gettext` call was evaluated eagerly (typically by `format_html()` at
+        import time) and the resulting `str` cannot vary by request.
+
+        The two bugs this caught were `CommentField.default_helptext` and
+        `CustomFieldDescriptionField.default_helptext`, each affecting every comment and note field
+        in the product.
+        """
+        import importlib
+        import pkgutil
+
+        from django import forms
+        from django.utils.functional import Promise
+
+        import nautobot as nautobot_package
+
+        catalog = self._translated_msgids()
+        self.assertNotEqual(catalog, set(), "no translated msgids found; this check would pass vacuously")
+
+        modules = []
+        for info in pkgutil.walk_packages(nautobot_package.__path__, prefix="nautobot."):
+            name = info.name
+            if ".tests" in name or ".migrations" in name or "test_jobs" in name:
+                continue
+            if not (name.endswith(".forms") or ".forms." in name):
+                continue
+            with contextlib.suppress(Exception):
+                modules.append(importlib.import_module(name))
+
+        tag = re.compile(r"<[^>]+>")
+        frozen = []
+        seen = set()
+        for module in modules:
+            for attr in dir(module):
+                obj = getattr(module, attr, None)
+                if not isinstance(obj, type) or not issubclass(obj, forms.BaseForm):
+                    continue
+                key = f"{obj.__module__}.{obj.__name__}"
+                if key in seen or obj.__module__.startswith(("django", "example_app")):
+                    continue
+                seen.add(key)
+                model = getattr(getattr(obj, "_meta", None), "model", None)
+                instance = None
+                for args in ((), (model,) if model is not None else None):
+                    if args is None:
+                        continue
+                    with contextlib.suppress(Exception):
+                        instance = obj(*args)
+                        break
+                if instance is None:
+                    continue
+                for field_name, field in instance.fields.items():
+                    # App-contributed fields (custom fields, table extensions) belong to the App.
+                    if field_name.startswith("cf_") or "example_app" in field_name:
+                        continue
+                    for value in (field.label, field.help_text):
+                        if isinstance(value, Promise) or not isinstance(value, str) or not value.strip():
+                            continue
+                        plain = " ".join(tag.sub(" ", value).split())
+                        if plain in self.KNOWN_EXCEPTIONS:
+                            continue
+                        # Exact match catches a frozen label. Substring match is what catches a
+                        # frozen *sentence*: `CommentField`'s help text interpolates two anchors, so
+                        # the rendered string never equals its msgid -- only the translated fragments
+                        # inside it do. Checking exact-only silently missed that bug.
+                        hit = (
+                            plain
+                            if plain in catalog
+                            else next((msgid for msgid in catalog if len(msgid) > 20 and msgid in plain), None)
+                        )
+                        if hit is not None:
+                            frozen.append(f"{key}.{field_name}: {hit!r}")
+
+        self.assertEqual(
+            sorted(set(frozen)),
+            [],
+            "these strings have a translation in the catalog but are stored as plain `str`, so they "
+            "render in one fixed language for every user. Defer the `gettext` call (see "
+            "`_markdown_helptext` in `nautobot.core.forms.fields`) or mark the underlying "
+            "`verbose_name`:\n" + "\n".join(sorted(set(frozen))),
+        )
+
+    def test_no_table_column_header_is_frozen(self):
+        """
+        The same check for `django-tables2` column headers.
+
+        Table headers reach the user through a different path than form labels -- `Column.header`
+        falls back to the model field's `verbose_name` -- so a fix on one side does not imply the
+        other. `created`/`last_updated` were frozen here on every table in the product while the
+        form side was already correct.
+        """
+        import importlib
+        import pkgutil
+
+        from django.utils.functional import Promise
+        import django_tables2 as django_tables
+
+        import nautobot as nautobot_package
+
+        catalog = self._translated_msgids()
+        self.assertNotEqual(catalog, set(), "no translated msgids found; this check would pass vacuously")
+
+        modules = []
+        for info in pkgutil.walk_packages(nautobot_package.__path__, prefix="nautobot."):
+            name = info.name
+            if ".tests" in name or ".migrations" in name or "test_jobs" in name or not name.endswith(".tables"):
+                continue
+            with contextlib.suppress(Exception):
+                modules.append(importlib.import_module(name))
+
+        frozen, seen = [], set()
+        for module in modules:
+            for attr in dir(module):
+                obj = getattr(module, attr, None)
+                if not isinstance(obj, type) or not issubclass(obj, django_tables.Table):
+                    continue
+                key = f"{obj.__module__}.{obj.__name__}"
+                if key in seen or obj.__module__.startswith(("django", "django_tables2")):
+                    continue
+                seen.add(key)
+                for column_name, column in getattr(obj, "base_columns", {}).items():
+                    # Columns contributed by an App belong to that App's own catalog.
+                    if column_name.startswith("cf_") or "example_app" in column_name:
+                        continue
+                    verbose = column.verbose_name
+                    if verbose is None or isinstance(verbose, Promise) or not isinstance(verbose, str):
+                        continue
+                    plain = " ".join(verbose.split())
+                    if plain in catalog and plain not in self.KNOWN_EXCEPTIONS:
+                        frozen.append(f"{key}.{column_name}: {plain!r}")
+
+        self.assertEqual(
+            sorted(set(frozen)),
+            [],
+            "these column headers have a translation in the catalog but are stored as plain `str`, "
+            "so the header renders in one fixed language. Mark the underlying model field's "
+            "`verbose_name`:\n" + "\n".join(sorted(set(frozen))),
+        )
+
+
+class FilterLabelTestCase(TestCase):
+    """Lookup-expression filter labels are composed per request, and must stay that way."""
+
+    def test_lookup_expression_filter_labels_are_translated(self):
+        """
+        `comments__ic` and its thousands of siblings translate without any catalog entry of ours.
+
+        `label_for_filter()` composes the label at filterset instantiation from the model field's
+        `gettext_lazy` `verbose_name` plus a lookup verb from django-filter's own catalog. This test
+        exists because the arrangement is easy to break in two ways: marking a field's
+        `verbose_name` as a plain string, or "fixing" these filters by giving them an explicit
+        `label=`, which replaces a computed label with a frozen one.
+        """
+        from nautobot.circuits.filters import ProviderNetworkFilterSet
+
+        rendered = {}
+        for language in ("en", "de", "fr"):
+            with translation.override(language):
+                rendered[language] = str(ProviderNetworkFilterSet().filters["comments__ic"].label)
+
+        self.assertEqual(rendered["en"], "Comments contains")
+        self.assertNotEqual(
+            rendered["de"],
+            rendered["en"],
+            "lookup-expression filter labels are no longer translated; check that the model field's "
+            "`verbose_name` is still a lazy proxy and that no explicit `label=` was added",
+        )
+        self.assertNotEqual(rendered["fr"], rendered["en"])

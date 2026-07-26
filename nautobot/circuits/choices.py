@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.core.choices import ChoiceSet
 
 #
@@ -14,12 +16,12 @@ class CircuitStatusChoices(ChoiceSet):
     STATUS_DECOMMISSIONED = "decommissioned"
 
     CHOICES = (
-        (STATUS_PLANNED, "Planned"),
-        (STATUS_PROVISIONING, "Provisioning"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_OFFLINE, "Offline"),
-        (STATUS_DEPROVISIONING, "Deprovisioning"),
-        (STATUS_DECOMMISSIONED, "Decommissioned"),
+        (STATUS_PLANNED, _("Planned")),
+        (STATUS_PROVISIONING, _("Provisioning")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_OFFLINE, _("Offline")),
+        (STATUS_DEPROVISIONING, _("Deprovisioning")),
+        (STATUS_DECOMMISSIONED, _("Decommissioned")),
     )
 
 
@@ -32,4 +34,4 @@ class CircuitTerminationSideChoices(ChoiceSet):
     SIDE_A = "A"
     SIDE_Z = "Z"
 
-    CHOICES = ((SIDE_A, "A"), (SIDE_Z, "Z"))
+    CHOICES = ((SIDE_A, _("A")), (SIDE_Z, _("Z")))

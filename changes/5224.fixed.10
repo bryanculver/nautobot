@@ -1,0 +1,1 @@
+Fixed three model names rendering a mangled plural in non-English languages (for example "Gruppes" instead of "Gruppen"), caused by Django deriving `verbose_name_plural` by appending "s" to a translated `verbose_name`.

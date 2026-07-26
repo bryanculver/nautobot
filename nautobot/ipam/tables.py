@@ -1,5 +1,6 @@
 from django.db.models import Prefetch
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _, gettext_noop
 import django_tables2 as tables
 from django_tables2.utils import Accessor
 
@@ -195,11 +196,12 @@ IPADDRESSRANGE_COPY = """
 """
 
 IPADDRESS_OR_RANGE_ACTIONS = """\
+{% load i18n %}
 {% if record.present_in_database %}
     <div class="dropdown">
         <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
             <span class="mdi mdi-dots-vertical" aria-hidden="true"></span>
-            <span class="visually-hidden">Toggle Dropdown</span>
+            <span class="visually-hidden">{% trans "Toggle Dropdown" %}</span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
             {% with request.path|default:"" as request_path %}
@@ -207,25 +209,25 @@ IPADDRESS_OR_RANGE_ACTIONS = """\
                     <li>
                         <a href="{{ record.get_absolute_url }}" class="dropdown-item">
                             <span class="mdi mdi-information-outline" aria-hidden="true"></span>
-                            IP address range Details
+                            {% trans "IP address range Details" %}
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'ipam:ipaddressrange_changelog' pk=record.pk %}" class="dropdown-item">
-                            <span class="mdi mdi-history me-4" aria-hidden="true"></span>View IP address range change log
+                            <span class="mdi mdi-history me-4" aria-hidden="true"></span>{% trans "View IP address range change log" %}
                         </a>
                     </li>
                     {% if perms.ipam.change_iprange %}
                         <li>
                             <a href="{% url 'ipam:ipaddressrange_edit' pk=record.pk %}?return_url={{ return_url|default:request_path }}" class="dropdown-item text-warning">
-                                <span class="mdi mdi-pencil me-4" aria-hidden="true"></span>Edit IP address range
+                                <span class="mdi mdi-pencil me-4" aria-hidden="true"></span>{% trans "Edit IP address range" %}
                             </a>
                         </li>
                     {% endif %}
                     {% if perms.ipam.delete_iprange %}
                         <li>
                             <a href="{% url 'ipam:ipaddressrange_delete' pk=record.pk %}?return_url={{ return_url|default:request_path }}" class="dropdown-item text-danger">
-                                <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span>Delete IP address range
+                                <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span>{% trans "Delete IP address range" %}
                             </a>
                         </li>
                     {% endif %}
@@ -233,25 +235,25 @@ IPADDRESS_OR_RANGE_ACTIONS = """\
                     <li>
                         <a href="{{ record.get_absolute_url }}" class="dropdown-item">
                             <span class="mdi mdi-information-outline" aria-hidden="true"></span>
-                            IP address Details
+                            {% trans "IP address Details" %}
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'ipam:ipaddressrange_changelog' pk=record.pk %}" class="dropdown-item">
-                            <span class="mdi mdi-history me-4" aria-hidden="true"></span>View IP address change log
+                            <span class="mdi mdi-history me-4" aria-hidden="true"></span>{% trans "View IP address change log" %}
                         </a>
                     </li>
                     {% if perms.ipam.change_ipaddress %}
                         <li>
                             <a href="{% url 'ipam:ipaddress_edit' pk=record.pk %}?return_url={{ return_url|default:request_path }}" class="dropdown-item text-warning">
-                                <span class="mdi mdi-pencil me-4" aria-hidden="true"></span>Edit IP address
+                                <span class="mdi mdi-pencil me-4" aria-hidden="true"></span>{% trans "Edit IP address" %}
                             </a>
                         </li>
                     {% endif %}
                     {% if perms.ipam.delete_ipaddress %}
                         <li>
                             <a href="{% url 'ipam:ipaddress_delete' pk=record.pk %}?return_url={{ return_url|default:request_path }}" class="dropdown-item text-danger">
-                                <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span>Delete IP address
+                                <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span>{% trans "Delete IP address" %}
                             </a>
                         </li>
                     {% endif %}
@@ -261,6 +263,22 @@ IPADDRESS_OR_RANGE_ACTIONS = """\
     </div>
 {% endif %}
 """
+
+# `makemessages` runs the Python extractor over `.py` files and the template extractor only
+# over `.html`, so the `{% trans %}` tags in the fragment above are invisible to both: they
+# render (gettext falls back to the msgid) but no translator can ever reach them. Declaring
+# the msgids here makes them extractable. Same reasoning as `TRANSLATABLE_VIEW_TITLES` in
+# `nautobot.extras.views`.
+TRANSLATABLE_IPADDRESS_OR_RANGE_ACTIONS = (
+    gettext_noop("IP address range Details"),
+    gettext_noop("View IP address range change log"),
+    gettext_noop("Edit IP address range"),
+    gettext_noop("Delete IP address range"),
+    gettext_noop("IP address Details"),
+    gettext_noop("View IP address change log"),
+    gettext_noop("Edit IP address"),
+    gettext_noop("Delete IP address"),
+)
 
 VRF_LINK = """
 {% if record.vrf %}
@@ -342,7 +360,7 @@ class NamespaceTable(BaseTable):
 class VRFTable(StatusTableMixin, BaseTable):
     pk = ToggleColumn()
     name = tables.LinkColumn()
-    rd = tables.Column(verbose_name="RD")
+    rd = tables.Column(verbose_name=_("RD"))
     tenant = TenantColumn()
     import_targets = tables.TemplateColumn(template_code=VRF_TARGETS, orderable=False)
     export_targets = tables.TemplateColumn(template_code=VRF_TARGETS, orderable=False)
@@ -368,9 +386,11 @@ class VRFTable(StatusTableMixin, BaseTable):
 class VRFDeviceAssignmentTable(BaseTable):
     """Table for displaying VRF Device Assignments with RD."""
 
-    vrf = tables.Column(verbose_name="VRF", linkify=lambda record: record.vrf.get_absolute_url(), accessor="vrf__name")
+    vrf = tables.Column(
+        verbose_name=_("VRF"), linkify=lambda record: record.vrf.get_absolute_url(), accessor="vrf__name"
+    )
     namespace = tables.Column(
-        verbose_name="Namespace",
+        verbose_name=_("Namespace"),
         linkify=lambda record: record.vrf.namespace.get_absolute_url(),
         accessor="vrf__namespace__name",
     )
@@ -383,7 +403,8 @@ class VRFDeviceAssignmentTable(BaseTable):
         {% else %}
             Virtual Device Context
         {% endif %}
-        """
+        """,
+        verbose_name=_("Related object type"),
     )
     related_object_name = tables.TemplateColumn(
         template_code="""
@@ -394,9 +415,10 @@ class VRFDeviceAssignmentTable(BaseTable):
         {% else %}
             <a href="{{ record.virtual_device_context.get_absolute_url }}">{{ record.virtual_device_context.name }}</a>
         {% endif %}
-        """
+        """,
+        verbose_name=_("Related object name"),
     )
-    rd = tables.Column(verbose_name="VRF RD")
+    rd = tables.Column(verbose_name=_("VRF RD"))
     tenant = TenantColumn(accessor="vrf.tenant")
 
     class Meta(BaseTable.Meta):
@@ -408,9 +430,11 @@ class VRFDeviceAssignmentTable(BaseTable):
 class VRFPrefixAssignmentTable(BaseTable):
     """Table for displaying VRF Prefix Assignments."""
 
-    vrf = tables.Column(verbose_name="VRF", linkify=lambda record: record.vrf.get_absolute_url(), accessor="vrf__name")
+    vrf = tables.Column(
+        verbose_name=_("VRF"), linkify=lambda record: record.vrf.get_absolute_url(), accessor="vrf__name"
+    )
     prefix = tables.Column(linkify=True)
-    rd = tables.Column(accessor="vrf__rd", verbose_name="RD")
+    rd = tables.Column(accessor="vrf__rd", verbose_name=_("RD"))
     tenant = TenantColumn(accessor="vrf__tenant")
 
     class Meta(BaseTable.Meta):
@@ -443,11 +467,11 @@ class RouteTargetTable(BaseTable):
 class RIRTable(BaseTable):
     pk = ToggleColumn()
     name = tables.LinkColumn()
-    is_private = BooleanColumn(verbose_name="Private")
+    is_private = BooleanColumn(verbose_name=_("Private"))
     assigned_prefix_count = LinkedCountColumn(
         viewname="ipam:prefix_list",
         url_params={"rir": "name"},
-        verbose_name="Assigned Prefixes",
+        verbose_name=_("Assigned Prefixes"),
     )
     actions = ButtonsColumn(RIR)
 
@@ -487,30 +511,33 @@ class PrefixTable(StatusTableMixin, RoleTableMixin, BaseTable):
             }
         },
         order_by=("network", "prefix_length"),
+        verbose_name=_("Prefix"),
     )
     vrf_count = LinkedCountColumn(
         viewname="ipam:vrf_list",
         url_params={"prefix": "pk"},
         display_field="name",
         reverse_lookup="prefixes",
-        verbose_name="VRFs",
+        verbose_name=_("VRFs"),
     )
     tenant = TenantColumn()
     namespace = tables.Column(linkify=True)
-    vlan = tables.Column(linkify=True, verbose_name="VLAN")
-    rir = tables.Column(linkify=True, verbose_name="RIR")
-    descendants = tables.Column(accessor="descendants_count", orderable=False, empty_values=("", 0, None, [], ()))
+    vlan = tables.Column(linkify=True, verbose_name=_("VLAN"))
+    rir = tables.Column(linkify=True, verbose_name=_("RIR"))
+    descendants = tables.Column(
+        accessor="descendants_count", orderable=False, empty_values=("", 0, None, [], ()), verbose_name=_("Descendants")
+    )
     date_allocated = tables.DateTimeColumn()
     location_count = LinkedCountColumn(
-        viewname="dcim:location_list", url_params={"prefixes": "pk"}, display_field="name", verbose_name="Locations"
+        viewname="dcim:location_list", url_params={"prefixes": "pk"}, display_field="name", verbose_name=_("Locations")
     )
     cloud_networks_count = LinkedCountColumn(
-        viewname="cloud:cloudnetwork_list", url_params={"prefixes": "pk"}, verbose_name="Cloud Networks"
+        viewname="cloud:cloudnetwork_list", url_params={"prefixes": "pk"}, verbose_name=_("Cloud Networks")
     )
     tunnel_endpoints_count = LinkedCountColumn(
         viewname="vpn:vpntunnelendpoint_list",
         url_params={"protected_prefixes": "pk"},
-        verbose_name="VPN Tunnel Endpoints",
+        verbose_name=_("VPN Tunnel Endpoints"),
     )
     actions = ButtonsColumn(Prefix)
 
@@ -612,7 +639,7 @@ class IPAddressTable(StatusTableMixin, RoleTableMixin, BaseTable):
     pk = ToggleColumn()
     address = tables.TemplateColumn(
         template_code=IPADDRESS_COPY_LINK,
-        verbose_name="IP Address",
+        verbose_name=_("IP Address"),
         attrs={
             "td": {
                 "class": "nb-tree-element text-nowrap",
@@ -624,7 +651,7 @@ class IPAddressTable(StatusTableMixin, RoleTableMixin, BaseTable):
     tenant = TenantColumn()
     parent__namespace = tables.Column(linkify=True)
     interface_count = LinkedCountColumn(
-        viewname="dcim:interface_list", url_params={"ip_addresses": "pk"}, verbose_name="Interfaces"
+        viewname="dcim:interface_list", url_params={"ip_addresses": "pk"}, verbose_name=_("Interfaces")
     )
     # TODO: what about interfaces assigned to modules?
     interface_parent_count = LinkedCountColumn(
@@ -634,10 +661,10 @@ class IPAddressTable(StatusTableMixin, RoleTableMixin, BaseTable):
         lookup="interfaces__device",
         distinct=True,
         display_field="name",
-        verbose_name="Devices",
+        verbose_name=_("Devices"),
     )
     vm_interface_count = LinkedCountColumn(
-        viewname="virtualization:vminterface_list", url_params={"ip_addresses": "pk"}, verbose_name="VM Interfaces"
+        viewname="virtualization:vminterface_list", url_params={"ip_addresses": "pk"}, verbose_name=_("VM Interfaces")
     )
     vm_interface_parent_count = LinkedCountColumn(
         viewname="virtualization:virtualmachine_list",
@@ -646,7 +673,7 @@ class IPAddressTable(StatusTableMixin, RoleTableMixin, BaseTable):
         lookup="vm_interfaces__virtual_machine",
         distinct=True,
         display_field="name",
-        verbose_name="Virtual Machines",
+        verbose_name=_("Virtual Machines"),
     )
     actions = tables.TemplateColumn(
         template_code=IPADDRESS_OR_RANGE_ACTIONS,
@@ -696,10 +723,10 @@ class IPAddressTable(StatusTableMixin, RoleTableMixin, BaseTable):
 
 
 class IPAddressDetailTable(IPAddressTable):
-    nat_inside = tables.Column(linkify=True, verbose_name="NAT (Inside)")
+    nat_inside = tables.Column(linkify=True, verbose_name=_("NAT (Inside)"))
     tenant = TenantColumn()
     tags = TagColumn(url_name="ipam:ipaddress_list")
-    assigned = BooleanColumn(accessor="assigned_count")
+    assigned = BooleanColumn(accessor="assigned_count", verbose_name=_("Assigned"))
 
     def render_assigned(self, column, value):
         return column.render(value > 0)
@@ -737,7 +764,7 @@ class IPAddressDetailTable(IPAddressTable):
 
 class IPAddressAssignTable(StatusTableMixin, BaseTable):
     pk = ToggleColumn(visible=True)
-    address = tables.TemplateColumn(template_code=IPADDRESS_ASSIGN_COPY_LINK, verbose_name="IP Address")
+    address = tables.TemplateColumn(template_code=IPADDRESS_ASSIGN_COPY_LINK, verbose_name=_("IP Address"))
     # TODO: add interface M2M
 
     class Meta(BaseTable.Meta):
@@ -764,14 +791,18 @@ class IPAddressAssignTable(StatusTableMixin, BaseTable):
 class IPAddressRangeTable(StatusTableMixin, RoleTableMixin, BaseTable):
     pk = ToggleColumn()
     name = tables.Column(linkify=True, empty_values=[])
-    start_address = tables.TemplateColumn(template_code=IPADDRESSRANGE_COPY, order_by=("start_host",))
-    end_address = tables.TemplateColumn(template_code=IPADDRESSRANGE_COPY, order_by=("end_host",))
-    size = tables.Column(accessor="size", orderable=False, verbose_name="Size")
-    parent = tables.Column(linkify=True, verbose_name="Parent Prefix")
+    start_address = tables.TemplateColumn(
+        template_code=IPADDRESSRANGE_COPY, order_by=("start_host",), verbose_name=_("Start address")
+    )
+    end_address = tables.TemplateColumn(
+        template_code=IPADDRESSRANGE_COPY, order_by=("end_host",), verbose_name=_("End address")
+    )
+    size = tables.Column(accessor="size", orderable=False, verbose_name=_("Size"))
+    parent = tables.Column(linkify=True, verbose_name=_("Parent Prefix"))
     namespace = tables.Column(linkify=True, accessor="parent__namespace")
     tenant = TenantColumn()
-    count_as_utilized = BooleanColumn(verbose_name="Mark Utilized")
-    is_exclusive = BooleanColumn(verbose_name="Exclusive")
+    count_as_utilized = BooleanColumn(verbose_name=_("Mark Utilized"))
+    is_exclusive = BooleanColumn(verbose_name=_("Exclusive"))
     tags = TagColumn(url_name="ipam:ipaddressrange_list")
     actions = ButtonsColumn(IPAddressRange)
 
@@ -817,7 +848,7 @@ class InterfaceIPAddressTable(StatusTableMixin, BaseTable):
     List IP addresses assigned to a specific Interface.
     """
 
-    address = tables.TemplateColumn(template_code=IPADDRESS_COPY_LINK, verbose_name="IP Address")
+    address = tables.TemplateColumn(template_code=IPADDRESS_COPY_LINK, verbose_name=_("IP Address"))
     # vrf = tables.TemplateColumn(template_code=VRF_LINK, verbose_name="VRF")
     tenant = TenantColumn()
 
@@ -840,9 +871,9 @@ class IPAddressInterfaceTable(InterfaceTable):
         ),
         attrs={"td": {"class": "text-nowrap"}},
     )
-    parent_interface = tables.Column(linkify=True, verbose_name="Parent")
+    parent_interface = tables.Column(linkify=True, verbose_name=_("Parent"))
     bridge = tables.Column(linkify=True)
-    lag = tables.Column(linkify=True, verbose_name="LAG")
+    lag = tables.Column(linkify=True, verbose_name=_("LAG"))
 
     class Meta(ModularDeviceComponentTable.Meta):
         model = Interface
@@ -917,12 +948,12 @@ class IPAddressVMInterfaceTable(VMInterfaceTable):
 
 class IPAddressToInterfaceTable(BaseTable):
     pk = ToggleColumn()
-    ip_address = tables.Column(linkify=True, verbose_name="IP Address")
+    ip_address = tables.Column(linkify=True, verbose_name=_("IP Address"))
     # TODO(jathan): Probably should crib from something like the CABLETERMINATION column template so
     # that these columns show something like device1 > interface1 instead of just interface1 for
     # usability?
     interface = tables.Column(linkify=True)
-    vm_interface = tables.Column(linkify=True, verbose_name="VM Interface")
+    vm_interface = tables.Column(linkify=True, verbose_name=_("VM Interface"))
 
     class Meta(BaseTable.Meta):
         model = IPAddressToInterface
@@ -951,7 +982,9 @@ class VLANGroupTable(BaseTable):
     pk = ToggleColumn()
     name = tables.Column(linkify=True)
     location = tables.Column(linkify=True)
-    vlan_count = LinkedCountColumn(viewname="ipam:vlan_list", url_params={"vlan_group": "name"}, verbose_name="VLANs")
+    vlan_count = LinkedCountColumn(
+        viewname="ipam:vlan_list", url_params={"vlan_group": "name"}, verbose_name=_("VLANs")
+    )
     actions = ButtonsColumn(model=VLANGroup, prepend_template=VLANGROUP_ADD_VLAN)
 
     class Meta(BaseTable.Meta):
@@ -967,13 +1000,13 @@ class VLANGroupTable(BaseTable):
 
 class VLANTable(StatusTableMixin, RoleTableMixin, BaseTable):
     pk = ToggleColumn()
-    vid = tables.TemplateColumn(template_code=VLAN_LINK, verbose_name="ID")
+    vid = tables.TemplateColumn(template_code=VLAN_LINK, verbose_name=_("ID"))
     vlan_group = tables.Column(linkify=True)
     location_count = LinkedCountColumn(
         viewname="dcim:location_list",
         url_params={"vlans": "pk"},
         display_field="name",
-        verbose_name="Locations",
+        verbose_name=_("Locations"),
     )
     tenant = TenantColumn()
 
@@ -996,7 +1029,7 @@ class VLANTable(StatusTableMixin, RoleTableMixin, BaseTable):
 
 
 class VLANDetailTable(VLANTable):
-    prefixes = tables.TemplateColumn(template_code=VLAN_PREFIXES, orderable=False, verbose_name="Prefixes")
+    prefixes = tables.TemplateColumn(template_code=VLAN_PREFIXES, orderable=False, verbose_name=_("Prefixes"))
     tenant = TenantColumn()
     tags = TagColumn(url_name="ipam:vlan_list")
 
@@ -1033,7 +1066,7 @@ class VLANMembersTable(BaseTable):
     Base table for Interface and VMInterface assignments
     """
 
-    name = tables.LinkColumn(verbose_name="Interface")
+    name = tables.LinkColumn(verbose_name=_("Interface"))
     tagged = tables.Column(empty_values=(), orderable=False)
 
     def render_tagged(self, value, record):
@@ -1063,14 +1096,14 @@ class InterfaceVLANTable(StatusTableMixin, RoleTableMixin, BaseTable):
     List VLANs assigned to a specific Interface.
     """
 
-    vid = tables.LinkColumn(viewname="ipam:vlan", args=[Accessor("pk")], verbose_name="ID")
+    vid = tables.LinkColumn(viewname="ipam:vlan", args=[Accessor("pk")], verbose_name=_("ID"))
     tagged = BooleanColumn()
-    vlan_group = tables.Column(accessor=Accessor("vlan_group__name"), verbose_name="Group")
+    vlan_group = tables.Column(accessor=Accessor("vlan_group__name"), verbose_name=_("Group"))
     tenant = TenantColumn()
     location_count = LinkedCountColumn(
         viewname="dcim:location_list",
         url_params={"vlans": "pk"},
-        verbose_name="Locations",
+        verbose_name=_("Locations"),
     )
 
     class Meta(BaseTable.Meta):
@@ -1100,8 +1133,8 @@ class InterfaceVLANTable(StatusTableMixin, RoleTableMixin, BaseTable):
 class ServiceTable(BaseTable):
     pk = ToggleColumn()
     name = tables.Column(linkify=True)
-    parent = tables.LinkColumn(order_by=("device", "virtual_machine"))
-    ports = tables.TemplateColumn(template_code="{{ record.port_list }}", verbose_name="Ports")
+    parent = tables.LinkColumn(order_by=("device", "virtual_machine"), verbose_name=_("Parent"))
+    ports = tables.TemplateColumn(template_code="{{ record.port_list }}", verbose_name=_("Ports"))
     tags = TagColumn(url_name="ipam:service_list")
     actions = ButtonsColumn(Service, buttons=["changelog", "edit", "delete"])
 

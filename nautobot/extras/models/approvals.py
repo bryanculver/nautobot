@@ -7,6 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, ValidationError
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.models import BaseManager, BaseModel
@@ -62,23 +63,24 @@ class ApprovalWorkflowDefinitionManager(BaseManager.from_queryset(RestrictedQuer
 class ApprovalWorkflowDefinition(PrimaryModel):
     """ApprovalWorkflowDefinition model."""
 
-    name = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH,
-        unique=True,
-    )
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
     model_content_type = models.ForeignKey(
         to=ContentType,
         on_delete=models.PROTECT,
         related_name="+",
         limit_choices_to=FeatureQuery("approval_workflows"),
+        verbose_name=_("model content type"),
     )
     model_constraints = models.JSONField(
         blank=True,
         default=dict,
-        help_text="Constraints to filter the objects that can be approved using this workflow.",
+        help_text=_("Constraints to filter the objects that can be approved using this workflow."),
+        verbose_name=_("model constraints"),
     )
     weight = models.IntegerField(
-        default=0, help_text="Determines workflow relevance when multiple apply. Higher weight wins."
+        default=0,
+        help_text=_("Determines workflow relevance when multiple apply. Higher weight wins."),
+        verbose_name=_("weight"),
     )
     documentation_static_path = "docs/user-guide/platform-functionality/approval-workflow.html"
     is_dynamic_group_associable = False
@@ -89,7 +91,7 @@ class ApprovalWorkflowDefinition(PrimaryModel):
     class Meta:
         """Meta class for ApprovalWorkflow Definition."""
 
-        verbose_name = "Approval Workflow Definition"
+        verbose_name = _("Approval Workflow Definition")
         ordering = ["name"]
         unique_together = [["model_content_type", "weight"]]
 
@@ -101,11 +103,13 @@ class ApprovalWorkflowDefinition(PrimaryModel):
         super().clean()
         model_class = self.model_content_type.model_class()
         if model_class is None:
-            raise ValidationError({"model_content_type": "Couldn't find corresponding model class. Is it installed?"})
+            raise ValidationError(
+                {"model_content_type": _("Couldn't find corresponding model class. Is it installed?")}
+            )
         try:
             model_class.objects.filter(**self.model_constraints)
         except (FieldError, AttributeError) as exc:
-            raise ValidationError({"model_constraints": f"Invalid query filter: {exc}"})
+            raise ValidationError({"model_constraints": gettext("Invalid query filter: %(exc)s") % {"exc": exc}})
 
 
 @extras_features(
@@ -121,26 +125,32 @@ class ApprovalWorkflowStageDefinition(OrganizationalModel):
     approval_workflow_definition = models.ForeignKey(
         to="extras.ApprovalWorkflowDefinition",
         related_name="approval_workflow_stage_definitions",
-        verbose_name="Approval Workflow Definition",
+        verbose_name=_("Approval Workflow Definition"),
         on_delete=models.CASCADE,
-        help_text="Approval workflow definition to which this stage belongs.",
+        help_text=_("Approval workflow definition to which this stage belongs."),
     )
     sequence = models.PositiveIntegerField(
-        help_text="The sequence dictates the order in which this stage will need to be approved. The lower the number, the earlier it will be.",
+        help_text=_(
+            "The sequence dictates the order in which this stage will need to be approved. The lower the number, the earlier it will be."
+        ),
+        verbose_name=_("sequence"),
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("name"))
     min_approvers = models.PositiveIntegerField(
-        verbose_name="Minimum approvers",
-        help_text="Minimum number of approvers required to approve this stage.",
+        verbose_name=_("Minimum approvers"),
+        help_text=_("Minimum number of approvers required to approve this stage."),
     )
     denial_message = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH, blank=True, help_text="Message to show when the stage is denied."
+        max_length=CHARFIELD_MAX_LENGTH,
+        blank=True,
+        help_text=_("Message to show when the stage is denied."),
+        verbose_name=_("denial message"),
     )
     approver_group = models.ForeignKey(
         to=Group,
         related_name="approval_workflow_stage_definitions",
-        verbose_name="Group",
-        help_text="Group of users who are eligible to approve this stage. Only admin users can create new groups.",
+        verbose_name=_("Group"),
+        help_text=_("Group of users who are eligible to approve this stage. Only admin users can create new groups."),
         on_delete=models.PROTECT,
     )
     documentation_static_path = "docs/user-guide/platform-functionality/approval-workflow.html"
@@ -151,7 +161,7 @@ class ApprovalWorkflowStageDefinition(OrganizationalModel):
     class Meta:
         """Meta class for ApprovalWorkflowStage."""
 
-        verbose_name = "Approval Workflow Stage Definition"
+        verbose_name = _("Approval Workflow Stage Definition")
         unique_together = [["approval_workflow_definition", "name"], ["approval_workflow_definition", "sequence"]]
         ordering = ["approval_workflow_definition", "sequence"]
 
@@ -173,9 +183,9 @@ class ApprovalWorkflow(OrganizationalModel):
     approval_workflow_definition = models.ForeignKey(
         to="extras.ApprovalWorkflowDefinition",
         related_name="approval_workflows",
-        verbose_name="Approval Workflow Definition",
+        verbose_name=_("Approval Workflow Definition"),
         on_delete=models.SET_NULL,
-        help_text="Approval workflow definition to which this approval workflow belongs.",
+        help_text=_("Approval workflow definition to which this approval workflow belongs."),
         blank=True,
         null=True,
     )
@@ -187,18 +197,23 @@ class ApprovalWorkflow(OrganizationalModel):
         on_delete=models.PROTECT,
         related_name="+",
         limit_choices_to=FeatureQuery("approval_workflows"),
+        verbose_name=_("object under review content type"),
     )
-    object_under_review_object_id = models.UUIDField(db_index=True)
+    object_under_review_object_id = models.UUIDField(db_index=True, verbose_name=_("object under review object id"))
     current_state = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         choices=ApprovalWorkflowStateChoices,
         default=ApprovalWorkflowStateChoices.PENDING,
-        help_text="Current state of the approval workflow. Eligible values are: Pending, Approved, Denied, Canceled.",
+        help_text=_(
+            "Current state of the approval workflow. Eligible values are: Pending, Approved, Denied, Canceled."
+        ),
+        verbose_name=_("current state"),
     )
     decision_date = models.DateTimeField(
         blank=True,
         null=True,
-        help_text="Date and time when the decision of approval/denial was made.",
+        help_text=_("Date and time when the decision of approval/denial was made."),
+        verbose_name=_("decision date"),
     )
     # The user who triggered the approval workflow instance
     user = models.ForeignKey(
@@ -207,6 +222,7 @@ class ApprovalWorkflow(OrganizationalModel):
         related_name="approval_workflows",
         blank=True,
         null=True,
+        verbose_name=_("user"),
     )
     user_name = models.CharField(max_length=150, editable=False, db_index=True)
     documentation_static_path = "docs/user-guide/platform-functionality/approval-workflow.html"
@@ -217,6 +233,10 @@ class ApprovalWorkflow(OrganizationalModel):
     class Meta:
         """Meta class for ApprovalWorkflow."""
 
+        # Left untranslated deliberately: Django derives verbose_name_plural as
+        # verbose_name + "s", so translating the singular alone renders "Gruppes" / "组s".
+        # Declaring the plural needs an AlterModelOptions migration, deferred with the other
+        # model names. Guarded by test_translated_verbose_name_requires_explicit_plural.
         verbose_name = "Approval Workflow"
         unique_together = [
             "approval_workflow_definition",
@@ -303,8 +323,13 @@ class ApprovalWorkflow(OrganizationalModel):
         # Check of the object under review's content type matches the approval workflow definition's content type
         if self.object_under_review_content_type != self.approval_workflow_definition.model_content_type:
             raise ValidationError(
-                f"The content type {self.object_under_review_content_type} of "
-                f"the object under review does not match the content type {self.approval_workflow_definition.model_content_type} of the approval workflow definition."
+                gettext(
+                    "The content type %(object_under_review_content_type)s of the object under review does not match the content type %(model_content_type)s of the approval workflow definition."
+                )
+                % {
+                    "object_under_review_content_type": self.object_under_review_content_type,
+                    "model_content_type": self.approval_workflow_definition.model_content_type,
+                }
             )
 
         # TODO need to check of the object fits the model_constraints of the approval workflow
@@ -352,16 +377,16 @@ class ApprovalWorkflowStage(OrganizationalModel):
     approval_workflow = models.ForeignKey(
         to="extras.ApprovalWorkflow",
         related_name="approval_workflow_stages",
-        verbose_name="Approval Workflow",
+        verbose_name=_("Approval Workflow"),
         on_delete=models.CASCADE,
-        help_text="Approval workflow to which this stage belongs.",
+        help_text=_("Approval workflow to which this stage belongs."),
     )
     approval_workflow_stage_definition = models.ForeignKey(
         to="extras.ApprovalWorkflowStageDefinition",
         related_name="approval_workflow_stages",
-        verbose_name="Approval Workflow Stage Definition",
+        verbose_name=_("Approval Workflow Stage Definition"),
         on_delete=models.SET_NULL,
-        help_text="Approval workflow stage definition to which this stage belongs.",
+        help_text=_("Approval workflow stage definition to which this stage belongs."),
         blank=True,
         null=True,
     )
@@ -369,12 +394,14 @@ class ApprovalWorkflowStage(OrganizationalModel):
         max_length=CHARFIELD_MAX_LENGTH,
         choices=ApprovalWorkflowStateChoices,
         default=ApprovalWorkflowStateChoices.PENDING,
-        help_text="State of the approval workflow stage instance. Eligible values are: Pending, Approved, Denied.",
+        help_text=_("State of the approval workflow stage instance. Eligible values are: Pending, Approved, Denied."),
+        verbose_name=_("state"),
     )
     decision_date = models.DateTimeField(
         blank=True,
         null=True,
-        help_text="Date and time when the decision of approval/denial was made.",
+        help_text=_("Date and time when the decision of approval/denial was made."),
+        verbose_name=_("decision date"),
     )
     documentation_static_path = "docs/user-guide/platform-functionality/approval-workflow.html"
     is_version_controlled = False
@@ -384,7 +411,7 @@ class ApprovalWorkflowStage(OrganizationalModel):
     class Meta:
         """Meta class for ApprovalWorkflowStage."""
 
-        verbose_name = "Approval Workflow Stage"
+        verbose_name = _("Approval Workflow Stage")
         unique_together = [["approval_workflow", "approval_workflow_stage_definition"]]
         ordering = ["approval_workflow", "approval_workflow_stage_definition__sequence"]
 
@@ -544,25 +571,29 @@ class ApprovalWorkflowStageResponse(BaseModel):
     approval_workflow_stage = models.ForeignKey(
         to="extras.ApprovalWorkflowStage",
         related_name="approval_workflow_stage_responses",
-        verbose_name="Approval Workflow Stage",
+        verbose_name=_("Approval Workflow Stage"),
         on_delete=models.CASCADE,
     )
     user = models.ForeignKey(
         to=User,
         related_name="approval_workflow_stage_responses",
-        verbose_name="User",
+        verbose_name=_("User"),
         on_delete=models.CASCADE,
     )
     comments = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        help_text="User comments to explain the decision that he/she made",
+        help_text=_("User comments to explain the decision made"),
+        verbose_name=_("comments"),
     )
     state = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         choices=ApprovalWorkflowStateChoices,
         default=ApprovalWorkflowStateChoices.PENDING,
-        help_text="User response to this approval workflow stage instance. Eligible values are: Pending, Comment, Approved, Denied.",
+        help_text=_(
+            "User response to this approval workflow stage instance. Eligible values are: Pending, Comment, Approved, Denied."
+        ),
+        verbose_name=_("state"),
     )
     last_updated = models.DateTimeField(auto_now=True, blank=True, null=True)
     documentation_static_path = "docs/user-guide/platform-functionality/approval-workflow.html"
@@ -574,7 +605,7 @@ class ApprovalWorkflowStageResponse(BaseModel):
         """Meta class for ApprovalWorkflowStageResponse."""
 
         db_table = "extras_approvaluserresponse"
-        verbose_name = "Approval Workflow Stage Response"
+        verbose_name = _("Approval Workflow Stage Response")
         ordering = ["approval_workflow_stage", "last_updated"]
 
     def __str__(self):

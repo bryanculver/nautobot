@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import django_tables2 as tables
 
 from nautobot.core.tables import (
@@ -26,7 +27,7 @@ class RadioProfileTable(BaseTable):
     supported_data_rates_count = LinkedCountColumn(
         viewname="wireless:supporteddatarate_list",
         url_params={"radio_profiles": "pk"},
-        verbose_name="Supported Data Rates",
+        verbose_name=_("Supported Data Rates"),
         reverse_lookup="radio_profiles",
     )
 
@@ -77,7 +78,7 @@ class SupportedDataRateTable(BaseTable):
     pk = ToggleColumn()
     rate = tables.Column(linkify=True)
     standard = tables.Column()
-    mcs_index = tables.Column(verbose_name="MCS Index")
+    mcs_index = tables.Column(verbose_name=_("MCS Index"))
     tags = TagColumn(url_name="wireless:supporteddatarate_list")
     actions = ButtonsColumn(SupportedDataRate)
 
@@ -138,8 +139,8 @@ class WirelessNetworkTable(BaseTable):
 
 
 class BaseControllerManagedDeviceGroupWirelessNetworkAssignmentTable(BaseTable):
-    controller_managed_device_group = tables.Column(linkify=True, verbose_name="Device Group")
-    wireless_network = tables.Column(linkify=True, verbose_name="Wireless Network")
+    controller_managed_device_group = tables.Column(linkify=True, verbose_name=_("Device Group"))
+    wireless_network = tables.Column(linkify=True, verbose_name=_("Wireless Network"))
     vlan = tables.Column(linkify=True)
     ssid = tables.Column(accessor="wireless_network__ssid")
     mode = tables.Column(accessor="wireless_network__mode")
@@ -147,13 +148,13 @@ class BaseControllerManagedDeviceGroupWirelessNetworkAssignmentTable(BaseTable):
     enabled = BooleanColumn(accessor="wireless_network__enabled")
     hidden = BooleanColumn(accessor="wireless_network__hidden")
     secrets_group = tables.Column(
-        accessor="wireless_network__secrets_group", linkify=True, verbose_name="Secrets Group"
+        accessor="wireless_network__secrets_group", linkify=True, verbose_name=_("Secrets Group")
     )
     controller = tables.Column(accessor="controller_managed_device_group__controller", linkify=True)
     prefix_count = LinkedCountColumn(
         viewname="ipam:prefix_list",
         url_params={"vlan_id": "vlan_id"},
-        verbose_name="Prefixes",
+        verbose_name=_("Prefixes"),
         reverse_lookup="vlan__controller_managed_device_group_wireless_network_assignments",
     )
 
@@ -216,17 +217,17 @@ class ControllerControllerManagedDeviceGroupWirelessNetworkAssignmentTable(
 
 
 class ControllerManagedDeviceGroupRadioProfileAssignmentTable(BaseTable):
-    controller_managed_device_group = tables.Column(linkify=True, verbose_name="Device Group")
-    radio_profile = tables.Column(linkify=True, verbose_name="Radio Profile")
+    controller_managed_device_group = tables.Column(linkify=True, verbose_name=_("Device Group"))
+    radio_profile = tables.Column(linkify=True, verbose_name=_("Radio Profile"))
     frequency = tables.Column(accessor="radio_profile__frequency")
-    channel_width = tables.Column(accessor="radio_profile__channel_width", verbose_name="Channel Width")
+    channel_width = tables.Column(accessor="radio_profile__channel_width", verbose_name=_("Channel Width"))
     allowed_channel_list = tables.Column(
-        accessor="radio_profile__allowed_channel_list", verbose_name="Allowed Channels"
+        accessor="radio_profile__allowed_channel_list", verbose_name=_("Allowed Channels")
     )
     tx_power_min = tables.Column(accessor="radio_profile__tx_power_min")
     tx_power_max = tables.Column(accessor="radio_profile__tx_power_max")
     rx_power_min = tables.Column(accessor="radio_profile__rx_power_min")
-    regulatory_domain = tables.Column(accessor="radio_profile__regulatory_domain", verbose_name="Regulatory Domain")
+    regulatory_domain = tables.Column(accessor="radio_profile__regulatory_domain", verbose_name=_("Regulatory Domain"))
 
     class Meta(BaseTable.Meta):
         model = ControllerManagedDeviceGroupRadioProfileAssignment

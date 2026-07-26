@@ -4,6 +4,7 @@ from constance import config
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext
 
 from nautobot.core.ui.choices import SectionChoices
 from nautobot.core.ui.object_detail import (
@@ -173,7 +174,7 @@ class DataComplianceUIViewSet(  # pylint: disable=W0223
 
 class DeviceConstraintsView(GenericView):
     template_name = "data_validation/device_constraints.html"
-    view_titles = Titles(titles={"*": "Device Constraints"})
+    view_titles = Titles(titles={"*": '{% trans "Device Constraints" %}'})
 
     def get(self, request):
         form = forms.DeviceConstraintsForm(user=request.user)
@@ -205,7 +206,7 @@ class DeviceConstraintsView(GenericView):
                     field="name",
                 ).delete()
 
-            messages.success(request, "Device constraints have been updated successfully.")
+            messages.success(request, gettext("Device constraints have been updated successfully."))
             return redirect("data_validation:device-constraints")
 
         return render(

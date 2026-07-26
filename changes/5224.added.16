@@ -1,0 +1,1 @@
+Marked validation error messages that interpolate values (for example "Invalid MAC address format: <value>") as translatable by converting them from f-strings to parameterized `gettext` calls.

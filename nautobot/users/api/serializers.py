@@ -3,6 +3,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Group
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -105,5 +106,5 @@ class UserLoginSerializer(serializers.Serializer):
             password=attrs["password"],
         )
         if not user:
-            raise ValidationError("Invalid login credentials.")
+            raise ValidationError(_("Invalid login credentials."))
         return {"user": user}

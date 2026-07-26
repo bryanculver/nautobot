@@ -25,6 +25,7 @@ from django.utils.formats import date_format
 from django.utils.html import format_html, format_html_join
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.timezone import get_current_timezone, now
+from django.utils.translation import gettext, gettext_lazy as _, gettext_noop
 from django_tables2 import RequestConfig
 from jsonschema import SchemaError
 from jsonschema.validators import Draft7Validator
@@ -185,6 +186,11 @@ logger = logging.getLogger(__name__)
 #
 
 
+# See the note in `nautobot.core.ui.titles`: a title held in a Python literal is invisible to
+# `makemessages`, so its msgid is declared here to make it extractable.
+TRANSLATABLE_VIEW_TITLES = (gettext_noop("%(object)s - Synchronization Status"),)
+
+
 class ApprovalWorkflowDefinitionUIViewSet(NautobotUIViewSet):
     """ViewSet for ApprovalWorkflowDefinition."""
 
@@ -210,7 +216,7 @@ class ApprovalWorkflowDefinitionUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.RIGHT_HALF,
                 exclude_columns=["approval_workflow_definition", "actions"],
                 add_button_route=None,
-                table_title="Stages",
+                table_title=_("Stages"),
             ),
             object_detail.ObjectsTablePanel(
                 weight=200,
@@ -219,7 +225,7 @@ class ApprovalWorkflowDefinitionUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.FULL_WIDTH,
                 exclude_columns=["object_under_review_content_type", "approval_workflow_definition"],
                 add_button_route=None,
-                table_title="Workflows",
+                table_title=_("Workflows"),
             ),
         ],
     )
@@ -246,7 +252,7 @@ class ApprovalWorkflowDefinitionUIViewSet(NautobotUIViewSet):
             non_form_errors = stages.non_form_errors()
             # this error comming from https://docs.djangoproject.com/en/6.0/topics/forms/formsets/#validate-min
             if "Please submit at least 1 form." in non_form_errors:
-                raise ValidationError("At least one Approval Workflow Stage Definition is required.")
+                raise ValidationError(_("At least one Approval Workflow Stage Definition is required."))
             raise ValidationError(stages.errors)
 
         return obj
@@ -264,18 +270,24 @@ class ApprovalWorkflowDefinitionUIViewSet(NautobotUIViewSet):
         if isinstance(e, ValidationError) and e.code == PENDING_WORKFLOWS_ERROR_CODE:
             if self.action == "update":
                 cannot_delete_msg = format_html(
-                    "Cannot delete Approval Workflow Stage Definition(s). "
-                    "There are still pending Approval <a href='{}'>Workflows</a> including this definition. "
-                    "You must approve or cancel those workflows before deleting this definition.",
-                    self.obj.get_absolute_url(),
+                    gettext(
+                        "Cannot delete Approval Workflow Stage Definition(s). "
+                        "There are still pending Approval <a href='{url}'>Workflows</a> including this "
+                        "definition. You must approve or cancel those workflows before deleting this "
+                        "definition."
+                    ),
+                    url=self.obj.get_absolute_url(),
                 )
             else:
                 cannot_delete_msg = format_html(
-                    "Cannot delete Approval Workflow Definition '{}'. "
-                    "There are still pending Approval <a href='{}'>Workflows</a> using this definition. "
-                    "You must approve or cancel those workflows before deleting this definition.",
-                    self.obj.name,
-                    self.obj.get_absolute_url(),
+                    gettext(
+                        "Cannot delete Approval Workflow Definition '{name}'. "
+                        "There are still pending Approval <a href='{url}'>Workflows</a> using this "
+                        "definition. You must approve or cancel those workflows before deleting this "
+                        "definition."
+                    ),
+                    name=self.obj.name,
+                    url=self.obj.get_absolute_url(),
                 )
             messages.error(self.request, cannot_delete_msg)
             self.has_error = True
@@ -345,12 +357,12 @@ class ApprovalWorkflowUIViewSet(
             if key == "object_under_review":
                 return helpers.bettertitle(obj.object_under_review_content_type.model_class()._meta.verbose_name)
             if key == "user":
-                return "Requesting User"
+                return _("Requesting User")
             if key == "decision_date":
                 if obj.current_state == ApprovalWorkflowStateChoices.APPROVED:
-                    return "Approval Date"
+                    return _("Approval Date")
                 elif obj.current_state == ApprovalWorkflowStateChoices.DENIED:
-                    return "Denial Date"
+                    return _("Denial Date")
 
             return super().render_key(key, value, context)
 
@@ -370,7 +382,7 @@ class ApprovalWorkflowUIViewSet(
             ),
             object_detail.ObjectsTablePanel(
                 weight=200,
-                table_title="Stages",
+                table_title=_("Stages"),
                 table_class=tables.RelatedApprovalWorkflowStageTable,
                 table_filter="approval_workflow",
                 section=SectionChoices.RIGHT_HALF,
@@ -379,7 +391,7 @@ class ApprovalWorkflowUIViewSet(
             ),
             object_detail.ObjectsTablePanel(
                 weight=200,
-                table_title="Responses",
+                table_title=_("Responses"),
                 table_class=tables.RelatedApprovalWorkflowStageResponseTable,
                 table_filter="approval_workflow_stage__approval_workflow",
                 section=SectionChoices.FULL_WIDTH,
@@ -410,12 +422,14 @@ class ApprovalWorkflowUIViewSet(
         if not can_cancel(request.user, instance) and instance.is_active:
             messages.error(
                 request,
-                "You are not permitted to cancel this workflow. This workflow can be only canceled by submitter.",
+                gettext(
+                    "You are not permitted to cancel this workflow. This workflow can be only canceled by submitter."
+                ),
             )
             return redirect(self.get_return_url(request, instance))
 
         if not instance.is_active:
-            messages.error(request, "Can not cancel finished approval workflow.")
+            messages.error(request, gettext("Can not cancel finished approval workflow."))
             return redirect(self.get_return_url(request, instance))
 
         if request.method == "GET":
@@ -440,7 +454,7 @@ class ApprovalWorkflowUIViewSet(
 
         instance.cancel(user=request.user, comments=request.data.get("comments"))
         instance.refresh_from_db()
-        messages.success(request, f"You canceled {instance}.")
+        messages.success(request, gettext("You canceled %(instance)s.") % {"instance": instance})
         return redirect(self.get_return_url(request, instance))
 
 
@@ -483,14 +497,14 @@ class ApprovalWorkflowStageUIViewSet(
             obj = get_obj_from_context(context)
 
             if key == "approval_workflow":
-                return "Approval Workflow"
+                return _("Approval Workflow")
             if key == "decision_date":
                 if obj.state == ApprovalWorkflowStateChoices.APPROVED:
-                    return "Approval Date"
+                    return _("Approval Date")
                 elif obj.state == ApprovalWorkflowStateChoices.DENIED:
-                    return "Denial Date"
+                    return _("Denial Date")
             if key == "min_approvers":
-                return "Minimum Number of Approvers Needed"
+                return _("Minimum Number of Approvers Needed")
 
             return super().render_key(key, value, context)
 
@@ -524,7 +538,7 @@ class ApprovalWorkflowStageUIViewSet(
                 table_filter="approval_workflow_stage",
                 section=SectionChoices.FULL_WIDTH,
                 exclude_columns=["approval_workflow_stage"],
-                table_title="Responses",
+                table_title=_("Responses"),
                 enable_related_link=False,
             ),
         ],
@@ -547,11 +561,11 @@ class ApprovalWorkflowStageUIViewSet(
             request.user.is_superuser
             or instance.approval_workflow_stage_definition.approver_group.user_set.filter(id=request.user.id).exists()
         ):
-            messages.error(request, "You are not permitted to approve this workflow stage.")
+            messages.error(request, gettext("You are not permitted to approve this workflow stage."))
             return redirect(self.get_return_url(request, instance))
 
         if instance.approval_workflow.is_canceled:
-            messages.error(request, "Can not approve canceled approval workflow.")
+            messages.error(request, gettext("Can not approve canceled approval workflow."))
             return redirect(self.get_return_url(request, instance))
 
         if request.method == "GET":
@@ -588,7 +602,7 @@ class ApprovalWorkflowStageUIViewSet(
         approval_workflow_stage_response.state = ApprovalWorkflowStateChoices.APPROVED
         approval_workflow_stage_response.save()
         instance.refresh_from_db()
-        messages.success(request, f"You approved {instance}.")
+        messages.success(request, gettext("You approved %(instance)s.") % {"instance": instance})
         return redirect(self.get_return_url(request))
 
     @action(
@@ -608,11 +622,11 @@ class ApprovalWorkflowStageUIViewSet(
             request.user.is_superuser
             or instance.approval_workflow_stage_definition.approver_group.user_set.filter(id=request.user.id).exists()
         ):
-            messages.error(request, "You are not permitted to deny this workflow stage.")
+            messages.error(request, gettext("You are not permitted to deny this workflow stage."))
             return redirect(self.get_return_url(request, instance))
 
         if instance.approval_workflow.is_canceled:
-            messages.error(request, "Can not deny canceled approval workflow.")
+            messages.error(request, gettext("Can not deny canceled approval workflow."))
             return redirect(self.get_return_url(request, instance))
 
         if request.method == "GET":
@@ -642,7 +656,7 @@ class ApprovalWorkflowStageUIViewSet(
         approval_workflow_stage_response.state = ApprovalWorkflowStateChoices.DENIED
         approval_workflow_stage_response.save()
         instance.refresh_from_db()
-        messages.success(request, f"You denied {instance}.")
+        messages.success(request, gettext("You denied %(instance)s.") % {"instance": instance})
         return redirect(self.get_return_url(request))
 
     @action(
@@ -660,13 +674,15 @@ class ApprovalWorkflowStageUIViewSet(
 
         if not instance.is_not_done_stage:
             messages.error(
-                request, f"This stage is in {instance.state} state. Can't comment on an approved or denied stage."
+                request,
+                gettext("This stage is in %(state)s state. Can't comment on an approved or denied stage.")
+                % {"state": instance.state},
             )
             return redirect(self.get_return_url(request, instance))
 
         # We don't enforce approver-group/superuser check here, anyone can comment, not just an approver.
         if instance.approval_workflow.is_canceled:
-            messages.error(request, "Can not comment canceled approval workflow.")
+            messages.error(request, gettext("Can not comment canceled approval workflow."))
             return redirect(self.get_return_url(request, instance))
 
         if request.method == "GET":
@@ -700,7 +716,7 @@ class ApprovalWorkflowStageUIViewSet(
             approval_workflow_stage_response.state = ApprovalWorkflowStateChoices.COMMENT
         approval_workflow_stage_response.save()
         instance.refresh_from_db()
-        messages.success(request, f"You commented {instance}.")
+        messages.success(request, gettext("You commented %(instance)s.") % {"instance": instance})
         return redirect(self.get_return_url(request))
 
 
@@ -744,7 +760,7 @@ class ApproverDashboardView(ObjectListViewMixin):
         """
         messages.info(
             request,
-            "You are viewing a dashboard of approval workflow stages that are pending for your approval.",
+            gettext("You are viewing a dashboard of approval workflow stages that are pending for your approval."),
         )
         return super().list(request, *args, **kwargs)
 
@@ -791,7 +807,7 @@ class ApproveeDashboardView(ObjectListViewMixin):
         """
         messages.info(
             request,
-            "You are viewing a dashboard of approval workflows that are requested by you.",
+            gettext("You are viewing a dashboard of approval workflows that are requested by you."),
         )
         return super().list(request, *args, **kwargs)
 
@@ -871,7 +887,7 @@ class ComputedFieldUIViewSet(NautobotUIViewSet):
                 exclude_fields=["template"],
             ),
             object_detail.ObjectTextPanel(
-                label="Template",
+                label=_("Template"),
                 section=SectionChoices.FULL_WIDTH,
                 weight=100,
                 object_field="template",
@@ -933,14 +949,14 @@ class ConfigContextUIViewSet(NautobotUIViewSet):
             object_detail.Panel(
                 weight=100,
                 section=SectionChoices.FULL_WIDTH,
-                label="Data",
+                label=_("Data"),
                 header_extra_content_template_path="extras/inc/configcontext_format.html",
                 body_content_template_path="extras/inc/configcontext_data.html",
             ),
             AssignmentObjectFieldsPanel(
                 weight=200,
                 section=SectionChoices.RIGHT_HALF,
-                label="Assignment",
+                label=_("Assignment"),
                 fields=[
                     "locations",
                     "roles",
@@ -1046,7 +1062,7 @@ class ConfigContextSchemaUIViewSet(NautobotUIViewSet):
             ConfigContextSchemaDataPanel(
                 weight=100,
                 section=SectionChoices.RIGHT_HALF,
-                label="Data Schema",
+                label=_("Data Schema"),
                 header_extra_content_template_path="extras/inc/configcontext_format.html",
                 body_content_template_path="extras/inc/json_data.html",
             ),
@@ -1078,7 +1094,7 @@ class ConfigContextSchemaUIViewSet(NautobotUIViewSet):
                 object_detail.ObjectsTablePanel(
                     section=SectionChoices.FULL_WIDTH,
                     weight=100,
-                    table_title="Config Contexts",
+                    table_title=_("Config Contexts"),
                     table_class=tables.ConfigContextTable,
                     table_filter="config_context_schema",
                     related_field_name="schema",
@@ -1095,7 +1111,7 @@ class ConfigContextSchemaUIViewSet(NautobotUIViewSet):
                 object_detail.ObjectsTablePanel(
                     section=SectionChoices.FULL_WIDTH,
                     weight=200,
-                    table_title="Devices",
+                    table_title=_("Devices"),
                     table_class=DeviceTable,
                     table_filter="local_config_context_schema",
                     tab_id="validation",
@@ -1113,7 +1129,7 @@ class ConfigContextSchemaUIViewSet(NautobotUIViewSet):
                 object_detail.ObjectsTablePanel(
                     section=SectionChoices.FULL_WIDTH,
                     weight=300,
-                    table_title="Virtual Machines",
+                    table_title=_("Virtual Machines"),
                     table_class=VirtualMachineTable,
                     table_filter="local_config_context_schema",
                     tab_id="validation",
@@ -1135,7 +1151,7 @@ class ConfigContextSchemaUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=300,
                 tab_id="validation",
-                label="Validation",
+                label=_("Validation"),
                 url_name="extras:configcontextschema_validation",
                 panels=tuple(validation_panels),
             ),
@@ -1204,7 +1220,7 @@ class ContactUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.RIGHT_HALF,
                 table_class=tables.TeamTable,
                 table_filter="contacts",
-                table_title="Assigned Teams",
+                table_title=_("Assigned Teams"),
                 exclude_columns=["actions"],
                 add_button_route=None,
             ),
@@ -1213,7 +1229,7 @@ class ContactUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.FULL_WIDTH,
                 table_class=tables.ContactAssociationTable,
                 table_filter="contact",
-                table_title="Contact For",
+                table_title=_("Contact For"),
                 add_button_route=None,
                 enable_related_link=False,
             ),
@@ -1375,7 +1391,7 @@ class CustomFieldUIViewSet(NautobotUIViewSet):
             object_detail.DataTablePanel(
                 weight=200,
                 section=SectionChoices.LEFT_HALF,
-                label="Custom Field Choices",
+                label=_("Custom Field Choices"),
                 context_data_key="choices_data",
                 context_columns_key="columns",
                 context_column_headers_key="header",
@@ -1383,7 +1399,7 @@ class CustomFieldUIViewSet(NautobotUIViewSet):
             object_detail.ObjectFieldsPanel(
                 section=SectionChoices.RIGHT_HALF,
                 weight=100,
-                label="Assignment",
+                label=_("Assignment"),
                 fields=[
                     "content_types",
                 ],
@@ -1392,7 +1408,7 @@ class CustomFieldUIViewSet(NautobotUIViewSet):
             object_detail.ObjectFieldsPanel(
                 section=SectionChoices.RIGHT_HALF,
                 weight=200,
-                label="Validation Rules",
+                label=_("Validation Rules"),
                 fields=["validation_minimum", "validation_maximum", "validation_regex"],
                 value_transforms={
                     "validation_regex": [lambda val: None if val == "" else val, helpers.pre_tag],
@@ -1560,7 +1576,7 @@ class CustomLinkUIViewSet(NautobotUIViewSet):
     object_detail_content = object_detail.ObjectDetailContent(
         panels=[
             object_detail.ObjectFieldsPanel(
-                label="Custom Link",
+                label=_("Custom Link"),
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
                 fields=[
@@ -1578,7 +1594,7 @@ class CustomLinkUIViewSet(NautobotUIViewSet):
                 },
             ),
             object_detail.ObjectTextPanel(
-                label="Text",
+                label=_("Text"),
                 section=SectionChoices.LEFT_HALF,
                 weight=200,
                 object_field="text",
@@ -1654,13 +1670,13 @@ class DynamicGroupUIViewSet(NautobotUIViewSet):
                 fields=["name", "description", "content_type", "group_type", "tenant"],
             ),
             FilterBaseTextPanel(
-                label="Filter",
+                label=_("Filter"),
                 section=SectionChoices.RIGHT_HALF,
                 weight=100,
                 render_as=object_detail.ObjectTextPanel.RenderOptions.JSON,
             ),
             FilterQueryLogicBaseTextPanel(
-                label="Filter Query Logic",
+                label=_("Filter Query Logic"),
                 section=SectionChoices.FULL_WIDTH,
                 weight=100,
                 render_as=object_detail.ObjectTextPanel.RenderOptions.CODE,
@@ -1670,7 +1686,7 @@ class DynamicGroupUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.FULL_WIDTH,
                 context_table_key="ancestors_table",
                 related_field_name="ancestors",
-                table_title="Ancestors",
+                table_title=_("Ancestors"),
                 add_button_route=None,
             ),
             AncestorDescendantObjectsTablePanel(
@@ -1678,7 +1694,7 @@ class DynamicGroupUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.FULL_WIDTH,
                 context_table_key="descendants_table",
                 related_field_name="descendants",
-                table_title="Descendants",
+                table_title=_("Descendants"),
                 add_button_route=None,
                 related_list_url_name="extras:dynamicgroup_list",
             ),
@@ -1687,7 +1703,7 @@ class DynamicGroupUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_DATACOMPLIANCE_TAB + 50,
                 tab_id="members",
-                label="Members",
+                label=_("Members"),
                 url_name="extras:dynamicgroup_members",
                 related_object_attribute="members",
             ),
@@ -1791,7 +1807,7 @@ class DynamicGroupUIViewSet(NautobotUIViewSet):
             filter_form = context.get("filter_form")
             if not filter_form or not filter_form.is_valid():
                 form.add_error(None, "Errors encountered when saving Dynamic Group associations. See below.")
-                raise ValidationError("invalid dynamic group filter_form")
+                raise ValidationError(_("invalid dynamic group filter_form"))
             try:
                 obj.set_filter(filter_form.cleaned_data)
             except ValidationError as err:
@@ -1810,8 +1826,10 @@ class DynamicGroupUIViewSet(NautobotUIViewSet):
             if obj.group_type != DynamicGroupTypeChoices.TYPE_STATIC:
                 messages.warning(
                     self.request,
-                    "Dynamic Group membership is not automatically recalculated after creating/editing the group, "
-                    'as it may take some time to complete. You can use the "Refresh Members" button when ready.',
+                    gettext(
+                        "Dynamic Group membership is not automatically recalculated after creating/editing the group, "
+                        'as it may take some time to complete. You can use the "Refresh Members" button when ready.'
+                    ),
                 )
 
         # Process the formsets for children
@@ -1825,7 +1843,7 @@ class DynamicGroupUIViewSet(NautobotUIViewSet):
                     if msg not in added_errors:
                         form.add_error(None, msg)
                         added_errors.add(msg)
-            raise ValidationError("invalid DynamicGroupMembershipFormSet")
+            raise ValidationError(_("invalid DynamicGroupMembershipFormSet"))
 
         if commit and children:
             children.save()
@@ -2029,19 +2047,19 @@ class ExportTemplateUIViewSet(NautobotUIViewSet):
     object_detail_content = object_detail.ObjectDetailContent(
         panels=[
             object_detail.ObjectFieldsPanel(
-                label="Details",
+                label=_("Details"),
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
                 fields=["name", "owner", "description"],
             ),
             object_detail.ObjectFieldsPanel(
-                label="Template",
+                label=_("Template"),
                 section=SectionChoices.LEFT_HALF,
                 weight=200,
                 fields=["content_type", "mime_type", "file_extension"],
             ),
             object_detail.ObjectTextPanel(
-                label="Code Template",
+                label=_("Code Template"),
                 section=SectionChoices.RIGHT_HALF,
                 weight=100,
                 object_field="template_code",
@@ -2116,7 +2134,7 @@ def git_repository_sync_view(request, pk, dry_run):
         return HttpResponseForbidden()
     except CeleryWorkerNotRunningException:
         repository = get_object_or_404(GitRepository.objects.restrict(request.user, "change"), pk=pk)
-        messages.error(request, "Unable to run job: Celery worker process not running.")
+        messages.error(request, gettext("Unable to run job: Celery worker process not running."))
         return redirect(repository.get_absolute_url(), permanent=False)
 
     repository.sync(user=request.user, dry_run=dry_run)
@@ -2147,7 +2165,7 @@ def check_and_call_git_repository_function(request, pk, func):
         return HttpResponseForbidden()
     except CeleryWorkerNotRunningException:
         repository = get_object_or_404(GitRepository.objects.restrict(request.user, "change"), pk=pk)
-        messages.error(request, "Unable to run job: Celery worker process not running.")
+        messages.error(request, gettext("Unable to run job: Celery worker process not running."))
         return redirect(repository.get_absolute_url(), permanent=False)
 
     func(repository, request.user)
@@ -2202,10 +2220,12 @@ class GitRepositoryObjectFieldsPanel(object_detail.ObjectFieldsPanel):
             branch_display = format_html("<code>{}</code>", value)
             if obj.current_head:
                 branch_display = format_html(
-                    "{} (checked out locally at commit <code>{}</code>)", branch_display, obj.current_head
+                    gettext("{branch} (checked out locally at commit <code>{commit}</code>)"),
+                    branch=branch_display,
+                    commit=obj.current_head,
                 )
             else:
-                branch_display = format_html("{} (not locally checked out yet)", branch_display)
+                branch_display = format_html(gettext("{branch} (not locally checked out yet)"), branch=branch_display)
             return branch_display
         return super().render_value(key, value, context)
 
@@ -2218,27 +2238,31 @@ class GitRepositoryUIViewSet(NautobotUIViewSet):
     filterset_class = filters.GitRepositoryFilterSet
     serializer_class = serializers.GitRepositorySerializer
     table_class = tables.GitRepositoryTable
-    view_titles = Titles(titles={"result": "{{ object.display|default:object }} - Synchronization Status"})
+    view_titles = Titles(
+        titles={
+            "result": "{% blocktrans with object=object.display|default:object %}{{ object }} - Synchronization Status{% endblocktrans %}"
+        }
+    )
 
     object_detail_content = object_detail.ObjectDetailContent(
         panels=(
             GitRepositoryObjectFieldsPanel(
                 weight=100,
                 section=SectionChoices.LEFT_HALF,
-                label="Repository Details",
+                label=_("Repository Details"),
                 fields=["remote_url", "branch", "secrets_group"],
             ),
             DatasourceContentsPanel(
                 weight=100,
                 section=SectionChoices.RIGHT_HALF,
-                label="Provided Data Types",
+                label=_("Provided Data Types"),
             ),
         ),
         extra_tabs=(
             object_detail.DistinctViewTab(
                 weight=900,
                 tab_id="result",
-                label="Synchronization Status",
+                label=_("Synchronization Status"),
                 url_name="extras:gitrepository_result",
                 related_object_attribute="result",
             ),
@@ -2248,7 +2272,7 @@ class GitRepositoryUIViewSet(NautobotUIViewSet):
                 weight=100,
                 color=ButtonActionColorChoices.INFO,
                 link_name="extras:gitrepository_dryrun",
-                label="Dry-Run",
+                label=_("Dry-Run"),
                 icon="mdi-book-refresh",
                 required_permissions=["extras.change_gitrepository"],
             ),
@@ -2256,7 +2280,7 @@ class GitRepositoryUIViewSet(NautobotUIViewSet):
                 weight=200,
                 color=ButtonActionColorChoices.RUN,
                 link_name="extras:gitrepository_sync",
-                label="Sync",
+                label=_("Sync"),
                 icon="mdi-source-branch-sync",
                 required_permissions=["extras.change_gitrepository"],
             ),
@@ -2358,7 +2382,7 @@ class GraphQLQueryUIViewSet(NautobotUIViewSet):
     object_detail_content = object_detail.ObjectDetailContent(
         panels=(
             object_detail.ObjectFieldsPanel(
-                label="Query",
+                label=_("Query"),
                 weight=100,
                 section=SectionChoices.LEFT_HALF,
                 fields=["name", "query", "variables"],
@@ -2446,7 +2470,7 @@ class JobUIViewSet(NautobotUIViewSet):
             object_detail.ObjectFieldsPanel(
                 weight=100,
                 section=SectionChoices.LEFT_HALF,
-                label="Source Code",
+                label=_("Source Code"),
                 fields=[
                     "module_name",
                     "job_class_name",
@@ -2460,7 +2484,7 @@ class JobUIViewSet(NautobotUIViewSet):
             jobs_ui.JobObjectFieldsPanel(
                 weight=200,
                 section=SectionChoices.LEFT_HALF,
-                label="Job",
+                label=_("Job"),
                 fields=["grouping", "name", "description", "enabled"],
                 value_transforms={
                     "description": [helpers.render_markdown],
@@ -2470,14 +2494,14 @@ class JobUIViewSet(NautobotUIViewSet):
                 weight=100,
                 section=SectionChoices.FULL_WIDTH,
                 table_class=tables.JobResultTable,
-                table_title="Job Results",
+                table_title=_("Job Results"),
                 table_filter="job_model",
                 exclude_columns=["name", "job_model"],
             ),
             jobs_ui.JobObjectFieldsPanel(
                 weight=100,
                 section=SectionChoices.RIGHT_HALF,
-                label="Properties",
+                label=_("Properties"),
                 fields=[
                     "console_log_default",
                     "supports_dryrun",
@@ -2497,7 +2521,7 @@ class JobUIViewSet(NautobotUIViewSet):
             jobs_ui.JobRunScheduleButton(
                 weight=100,
                 link_name="extras:job_run",
-                label="Run/Schedule",
+                label=_("Run/Schedule"),
                 icon="mdi-play",
                 color=ButtonActionColorChoices.RUN,
                 required_permissions=["extras.job_run"],
@@ -2571,15 +2595,19 @@ class JobUIViewSet(NautobotUIViewSet):
             messages.success(
                 request,
                 format_html(
-                    "Job '{}' successfully submitted for approval. <a href=\"{}\">View Approval Request</a>",
-                    scheduled_job.name,
-                    approval_url,
+                    gettext(
+                        "Job '{name}' successfully submitted for approval. <a href=\"{url}\">View Approval Request</a>"
+                    ),
+                    name=scheduled_job.name,
+                    url=approval_url,
                 ),
             )
             response = render(request, "extras/htmx/job_modal_close.html")
             patch_vary_headers(response, ["HX-Request"])
             return response
-        messages.success(request, f"Job '{scheduled_job.name}' successfully submitted for approval")
+        messages.success(
+            request, gettext("Job '%(name)s' successfully submitted for approval") % {"name": scheduled_job.name}
+        )
         return redirect(return_url or approval_url)
 
     def _handle_scheduled_job_response(self, request, scheduled_job, return_url):
@@ -2589,15 +2617,15 @@ class JobUIViewSet(NautobotUIViewSet):
             messages.success(
                 request,
                 format_html(
-                    "Job '{}' successfully scheduled. <a href=\"{}\">View Scheduled Job</a>",
-                    scheduled_job.name,
-                    scheduled_job.get_absolute_url(),
+                    gettext("Job '{name}' successfully scheduled. <a href=\"{url}\">View Scheduled Job</a>"),
+                    name=scheduled_job.name,
+                    url=scheduled_job.get_absolute_url(),
                 ),
             )
             response = render(request, "extras/htmx/job_modal_close.html")
             patch_vary_headers(response, ["HX-Request"])
             return response
-        messages.success(request, f"Job '{scheduled_job.name}' successfully scheduled")
+        messages.success(request, gettext("Job '%(name)s' successfully scheduled") % {"name": scheduled_job.name})
         return redirect(return_url or "extras:scheduledjob_list")
 
     def _handle_immediate_execution(
@@ -2645,8 +2673,8 @@ class JobUIViewSet(NautobotUIViewSet):
             messages.info(
                 request,
                 format_html(
-                    'Job enqueued. <a href="{}">Click here for the results.</a>',
-                    job_result.get_absolute_url(),
+                    gettext('Job enqueued. <a href="{url}">Click here for the results.</a>'),
+                    url=job_result.get_absolute_url(),
                 ),
             )
             return redirect(return_url)
@@ -2664,7 +2692,8 @@ class JobUIViewSet(NautobotUIViewSet):
                 except TemplateDoesNotExist as err:
                     messages.error(
                         self.request,
-                        f'Unable to render requested custom HTMX job template "{job_class.htmx_template_name}": {err}',
+                        gettext('Unable to render requested custom HTMX job template "%(template_name)s": %(err)s')
+                        % {"template_name": job_class.htmx_template_name, "err": err},
                     )
         elif job_class is not None and job_class.template_name:
             try:
@@ -2672,7 +2701,9 @@ class JobUIViewSet(NautobotUIViewSet):
                 template_name = job_class.template_name
             except TemplateDoesNotExist as err:
                 messages.error(
-                    self.request, f'Unable to render requested custom job template "{job_class.template_name}": {err}'
+                    self.request,
+                    gettext('Unable to render requested custom job template "%(template_name)s": %(err)s')
+                    % {"template_name": job_class.template_name, "err": err},
                 )
         return template_name
 
@@ -2785,14 +2816,18 @@ class JobUIViewSet(NautobotUIViewSet):
                 except JobResult.DoesNotExist:
                     messages.warning(
                         request,
-                        f"JobResult {job_result_pk} not found, cannot use it to pre-populate inputs.",
+                        gettext("JobResult %(job_result_pk)s not found, cannot use it to pre-populate inputs.")
+                        % {"job_result_pk": job_result_pk},
                     )
 
             job_form = job_class.as_form(initial=initial)
             job_execution_form = job_class.as_execution_form(initial=initial)
 
         except RuntimeError as err:
-            messages.error(request, f"Unable to run or schedule '{job_model}': {err}")
+            messages.error(
+                request,
+                gettext("Unable to run or schedule '%(job_model)s': %(err)s") % {"job_model": job_model, "err": err},
+            )
             return redirect("extras:job_list")
 
         schedule_form = forms.JobScheduleForm(initial=initial)
@@ -2844,21 +2879,23 @@ class JobUIViewSet(NautobotUIViewSet):
 
         # Allow execution only if the job is runnable.
         if not job_model.installed or job_class is None:
-            messages.error(request, "Unable to run or schedule job: Job is not presently installed.")
+            messages.error(request, gettext("Unable to run or schedule job: Job is not presently installed."))
         elif not job_model.enabled:
-            messages.error(request, "Unable to run or schedule job: Job is not enabled to be run.")
+            messages.error(request, gettext("Unable to run or schedule job: Job is not enabled to be run."))
         elif (
             job_model.has_sensitive_variables
             and request.POST.get("_schedule_type") != JobExecutionType.TYPE_IMMEDIATELY
         ):
-            messages.error(request, "Unable to schedule job: Job may have sensitive input variables.")
+            messages.error(request, gettext("Unable to schedule job: Job may have sensitive input variables."))
         elif job_form_is_valid and job_execution_form_is_valid and schedule_form_is_valid:
             if job_queue.queue_type == JobQueueTypeChoices.TYPE_CELERY and not get_worker_count(queue=job_queue):
                 messages.warning(
                     request,
                     format_html(
-                        "No celery workers found for queue {}, job may never run unless a worker is started.",
-                        job_queue,
+                        gettext(
+                            "No celery workers found for queue {queue}, job may never run unless a worker is started."
+                        ),
+                        queue=job_queue,
                     ),
                 )
 
@@ -2888,9 +2925,11 @@ class JobUIViewSet(NautobotUIViewSet):
                 if job_model.has_sensitive_variables and scheduled_job_has_approval_workflow:
                     messages.error(
                         request,
-                        "Unable to run or schedule job: "
-                        "This job is flagged as possibly having sensitive variables but also has an applicable approval workflow definition."
-                        "Modify or remove the approval workflow definition or modify the job to set `has_sensitive_variables` to False.",
+                        gettext(
+                            "Unable to run or schedule job: "
+                            "This job is flagged as possibly having sensitive variables but also has an applicable approval workflow definition."
+                            "Modify or remove the approval workflow definition or modify the job to set `has_sensitive_variables` to False."
+                        ),
                     )
                     scheduled_job.delete()
                     del scheduled_job
@@ -2988,7 +3027,7 @@ class JobQueueUIViewSet(NautobotUIViewSet):
             object_detail.ObjectsTablePanel(
                 weight=100,
                 section=SectionChoices.FULL_WIDTH,
-                table_title="Assigned Jobs",
+                table_title=_("Assigned Jobs"),
                 table_class=tables.JobTable,
                 table_filter="job_queues",
             ),
@@ -3065,10 +3104,10 @@ class SavedViewUIViewSet(
         message = ""
         if new_global_default_view.is_global_default:
             message = format_html(
-                '<br>The global default saved view for "{}" is set to <a href="{}">{}</a>',
-                view_name,
-                new_global_default_view.get_absolute_url(),
-                new_global_default_view.name,
+                gettext('<br>The global default saved view for "{view}" is set to <a href="{url}">{name}</a>'),
+                view=view_name,
+                url=new_global_default_view.get_absolute_url(),
+                name=new_global_default_view.name,
             )
         return message
 
@@ -3096,7 +3135,9 @@ class SavedViewUIViewSet(
         UserSavedViewAssociation.objects.create(user=user, saved_view=sv, view_name=sv.view)
         list_view_url = sv.get_absolute_url()
         messages.success(
-            request, f"Successfully set current view '{sv.name}' as the default '{sv.view}' view for user {user}"
+            request,
+            gettext("Successfully set current view '%(name)s' as the default '%(view)s' view for user %(user)s")
+            % {"name": sv.name, "view": sv.view, "user": user},
         )
         return redirect(list_view_url)
 
@@ -3110,7 +3151,9 @@ class SavedViewUIViewSet(
             pass
         else:
             messages.error(
-                request, f"You do not have the required permission to modify this Saved View owned by {sv.owner}"
+                request,
+                gettext("You do not have the required permission to modify this Saved View owned by %(owner)s")
+                % {"owner": sv.owner},
             )
             return redirect(self.get_return_url(request, obj=sv))
         table_changes_pending = request.GET.get("table_changes_pending", False)
@@ -3154,7 +3197,7 @@ class SavedViewUIViewSet(
 
         sv.validated_save()
         list_view_url = sv.get_absolute_url()
-        messages.success(request, f"Successfully updated current view {sv.name}")
+        messages.success(request, gettext("Successfully updated current view %(name)s") % {"name": sv.name})
         return redirect(list_view_url)
 
     def create(self, request, *args, **kwargs):
@@ -3182,7 +3225,7 @@ class SavedViewUIViewSet(
         try:
             reverse(view_name)
         except NoReverseMatch:
-            messages.error(request, f"Invalid view name {view_name} specified.")
+            messages.error(request, gettext("Invalid view name %(view_name)s specified.") % {"view_name": view_name})
             if derived_view_pk:
                 return redirect(self.get_return_url(request, obj=derived_instance))
             else:
@@ -3192,7 +3235,11 @@ class SavedViewUIViewSet(
         try:
             sv = SavedView.objects.create(name=name, owner=request.user, view=view_name, is_shared=is_shared)
         except IntegrityError:
-            messages.error(request, f"You already have a Saved View named '{name}' for this view '{view_name}'")
+            messages.error(
+                request,
+                gettext("You already have a Saved View named '%(name)s' for this view '%(view_name)s'")
+                % {"name": name, "view_name": view_name},
+            )
             if derived_view_pk:
                 return redirect(self.get_return_url(request, obj=derived_instance))
             else:
@@ -3251,7 +3298,9 @@ class SavedViewUIViewSet(
             pass
         else:
             messages.error(
-                request, f"You do not have the required permission to delete this Saved View owned by {sv.owner}"
+                request,
+                gettext("You do not have the required permission to delete this Saved View owned by %(owner)s")
+                % {"owner": sv.owner},
             )
             return redirect(self.get_return_url(request, obj=sv))
         return super().destroy(request, *args, **kwargs)
@@ -3272,7 +3321,7 @@ class ScheduledJobUIViewSet(
     extra_detail_view_action_buttons = [
         object_detail.ExtraDetailViewActionButton(
             action="assume_ownership",
-            label="Assume Ownership",
+            label=_("Assume Ownership"),
             icon="mdi-account-arrow-right",
             link_name="extras:scheduledjob_assume_ownership",
             template_path="components/button/post_extradetailviewactionbutton.html",
@@ -3351,7 +3400,7 @@ class ScheduledJobUIViewSet(
                 key_transforms={"decision_date": "Decision Date", "user": "Requester"},
             ),
             ScheduledJobFieldsPanel(
-                label="Scheduling",
+                label=_("Scheduling"),
                 weight=200,
                 section=SectionChoices.LEFT_HALF,
                 fields=(
@@ -3367,13 +3416,13 @@ class ScheduledJobUIViewSet(
                 value_transforms={"state": [render_state]},
             ),
             UserInputsPanel(
-                label="User Inputs",
+                label=_("User Inputs"),
                 weight=100,
                 section=SectionChoices.RIGHT_HALF,
             ),
             object_detail.ObjectTextPanel(
                 weight=200,
-                label="Celery Keyword Arguments",
+                label=_("Celery Keyword Arguments"),
                 section=SectionChoices.RIGHT_HALF,
                 object_field="celery_kwargs",
                 render_as=object_detail.ObjectTextPanel.RenderOptions.JSON,
@@ -3436,7 +3485,7 @@ class ScheduledJobUIViewSet(
         """Reassign this scheduled job's owner to the requesting user and re-enable it."""
         obj = self.get_object()
         if obj.user_id == request.user.id:
-            messages.info(request, f"You already own scheduled job '{obj.name}'.")
+            messages.info(request, gettext("You already own scheduled job '%(name)s'.") % {"name": obj.name})
             return redirect(obj.get_absolute_url())
         # Defensively confirm the requester can run this specific Job — the UI hides the
         # button in this case but a direct POST could still reach here.
@@ -3444,7 +3493,10 @@ class ScheduledJobUIViewSet(
             obj.job_model is None
             or not JobModel.objects.restrict(request.user, "run").filter(pk=obj.job_model_id).exists()
         ):
-            messages.error(request, f"You do not have permission to run the job '{obj.job_model}'.")
+            messages.error(
+                request,
+                gettext("You do not have permission to run the job '%(job_model)s'.") % {"job_model": obj.job_model},
+            )
             return redirect(obj.get_absolute_url())
 
         obj.user = request.user
@@ -3452,7 +3504,7 @@ class ScheduledJobUIViewSet(
             obj.enabled = True
             obj.state = ScheduledJobStateChoices.ACTIVE
         obj.validated_save()
-        messages.success(request, f"You are now the owner of scheduled job '{obj.name}'.")
+        messages.success(request, gettext("You are now the owner of scheduled job '%(name)s'.") % {"name": obj.name})
         return redirect(obj.get_absolute_url())
 
 
@@ -3623,7 +3675,7 @@ class JobRunButton(JobResultButton):
         rerun = bool(get_obj_from_context(context).task_kwargs)
         return {
             **super().get_extra_context(context),
-            "label": "Re-Run" if rerun else "Run",
+            "label": _("Re-Run") if rerun else _("Run"),
             "color": ButtonActionColorChoices.RERUN if rerun else ButtonActionColorChoices.RUN,
             "icon": "mdi-repeat" if rerun else "mdi-play",
         }
@@ -3696,7 +3748,7 @@ class JobResultUIViewSet(
     object_detail_content = object_detail.ObjectDetailContent(
         panels=[
             JobResultSummaryPanel(
-                label="Summary of Results",
+                label=_("Summary of Results"),
                 weight=100,
                 fields=[
                     "job_description",
@@ -3725,7 +3777,7 @@ class JobResultUIViewSet(
             JobRunButton(weight=100),
             JobResultButton(
                 weight=120,
-                label="Export Logs",
+                label=_("Export Logs"),
                 color=ButtonActionColorChoices.EXPORT,
                 icon="mdi-database-export",
                 required_permissions=["extras.view_joblogentry"],
@@ -3735,7 +3787,7 @@ class JobResultUIViewSet(
             ),
             JobResultButton(
                 weight=130,
-                label="Export Console Logs",
+                label=_("Export Console Logs"),
                 color=ButtonActionColorChoices.EXPORT,
                 icon="mdi-database-export",
                 required_permissions=["extras.view_jobconsoleentry"],
@@ -3746,7 +3798,7 @@ class JobResultUIViewSet(
             ),
             JobResultButton(
                 weight=140,
-                label="Cancel Job",
+                label=_("Cancel Job"),
                 color=ButtonActionColorChoices.DELETE,
                 icon="mdi-close-circle",
                 # No required_permissions: the submitter can cancel without cancel_job,
@@ -3769,7 +3821,7 @@ class JobResultUIViewSet(
                 weight=object_detail.Tab.WEIGHT_ADVANCED_TAB + 50,
                 url_name="extras:jobresult_job_console_entries",
                 tab_id="job_console_entries",
-                label="Console Log",
+                label=_("Console Log"),
                 layout=object_detail.LayoutChoices.ONE_OVER_TWO,
                 panels=[],  # rendered directly in job_console_entries view for now
                 required_permissions=["extras.view_jobconsoleentry"],
@@ -3782,28 +3834,28 @@ class JobResultUIViewSet(
     advanced_tab.panels = (
         *advanced_tab.panels,
         object_detail.ObjectTextPanel(
-            label="Job Keyword Arguments",
+            label=_("Job Keyword Arguments"),
             section=SectionChoices.LEFT_HALF,
             weight=300,
             object_field="task_kwargs",
             render_as=object_detail.ObjectTextPanel.RenderOptions.JSON,
         ),
         object_detail.ObjectTextPanel(
-            label="Job Positional Arguments",
+            label=_("Job Positional Arguments"),
             section=SectionChoices.LEFT_HALF,
             weight=400,
             object_field="task_args",
             render_as=object_detail.ObjectTextPanel.RenderOptions.JSON,
         ),
         object_detail.ObjectTextPanel(
-            label="Job Celery Keyword Arguments",
+            label=_("Job Celery Keyword Arguments"),
             section=SectionChoices.LEFT_HALF,
             weight=500,
             object_field="celery_kwargs",
             render_as=object_detail.ObjectTextPanel.RenderOptions.JSON,
         ),
         JobResultCancelPanel(
-            label="Cancel Details",
+            label=_("Cancel Details"),
             section=SectionChoices.RIGHT_HALF,
             weight=100,
             fields=[
@@ -3816,7 +3868,7 @@ class JobResultUIViewSet(
             },
         ),
         object_detail.ObjectFieldsPanel(
-            label="Worker",
+            label=_("Worker"),
             section=SectionChoices.RIGHT_HALF,
             weight=200,
             fields=[
@@ -3825,11 +3877,14 @@ class JobResultUIViewSet(
                 "task_name",
                 "meta",
             ],
+            # `queue` is a property rather than a model field, so `render_key()` cannot pick a
+            # `verbose_name` off it and falls back to title-casing the attribute name in English.
+            key_transforms={"queue": _("Queue")},
             # Poll for updates while the job is running so worker details populate without a manual refresh.
             body_wrapper_template_path="extras/inc/jobresult_summary_panel.html",
         ),
         object_detail.ObjectTextPanel(
-            label="Traceback",
+            label=_("Traceback"),
             section=SectionChoices.RIGHT_HALF,
             weight=300,
             object_field="traceback",
@@ -4074,13 +4129,13 @@ class JobResultUIViewSet(
         job_result = self.get_object()
 
         if not user_can_cancel_job_result(request.user, job_result):
-            messages.error(request, "You do not have permission to cancel this job.")
+            messages.error(request, gettext("You do not have permission to cancel this job."))
             return redirect(job_result.get_absolute_url())
 
         strategy = CancelFactory.get_strategy(job_result.queue_type)
 
         if not job_result.is_unready_state:
-            messages.info(request, "Job is already finished. Nothing to do.")
+            messages.info(request, gettext("Job is already finished. Nothing to do."))
             return redirect(job_result.get_absolute_url())
 
         job_liveness_state = strategy.liveness(job_result)
@@ -4101,9 +4156,9 @@ class JobResultUIViewSet(
             messages.error(request, result["error"])
         else:
             if result["canceled"]:
-                messages.success(request, "Job canceled.")
+                messages.success(request, gettext("Job canceled."))
             else:
-                messages.info(request, "Job finished before it could be canceled. No action was taken.")
+                messages.info(request, gettext("Job finished before it could be canceled. No action was taken."))
 
         return redirect(job_result.get_absolute_url())
 
@@ -4161,7 +4216,7 @@ class ObjectChangeUIViewSet(ObjectDetailViewMixin, ObjectListViewMixin):
     object_detail_content = object_detail.ObjectDetailContent(
         panels=(
             ChangeObjectFieldsPanel(
-                label="Change",
+                label=_("Change"),
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
                 fields=(
@@ -4176,14 +4231,14 @@ class ObjectChangeUIViewSet(ObjectDetailViewMixin, ObjectListViewMixin):
                 ),
             ),
             object_detail.ObjectTextPanel(
-                label="Object Data",
+                label=_("Object Data"),
                 section=SectionChoices.LEFT_HALF,
                 weight=200,
                 object_field="object_data",
                 render_as=object_detail.ObjectTextPanel.RenderOptions.JSON,
             ),
             object_detail.TextPanel(
-                label="Difference",
+                label=_("Difference"),
                 section=SectionChoices.RIGHT_HALF,
                 weight=100,
                 render_placeholder=False,
@@ -4191,7 +4246,7 @@ class ObjectChangeUIViewSet(ObjectDetailViewMixin, ObjectListViewMixin):
                 header_extra_content_template_path="extras/inc/objectchange_diff_header.html",
             ),
             object_detail.ObjectsTablePanel(
-                table_title="Related Changes",
+                table_title=_("Related Changes"),
                 section=SectionChoices.FULL_WIDTH,
                 weight=300,
                 context_table_key="related_changes_table",
@@ -4335,13 +4390,13 @@ class MetadataTypeUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.LEFT_HALF,
                 weight=200,
                 context_table_key="choices",
-                table_title="Choices",
+                table_title=_("Choices"),
             ),
             object_detail.ObjectFieldsPanel(
                 section=SectionChoices.RIGHT_HALF,
                 weight=100,
                 fields=["content_types"],
-                label="Assignment",
+                label=_("Assignment"),
             ),
         ),
     )
@@ -4459,7 +4514,7 @@ class ObjectMetadataUIViewSet(
             if not (ct_id and obj_id):
                 messages.warning(
                     request,
-                    "Object metadata must be created from the parent object's detail view (Metadata tab).",
+                    gettext("Object metadata must be created from the parent object's detail view (Metadata tab)."),
                 )
                 return redirect(self.get_return_url(request))
             try:
@@ -4475,7 +4530,7 @@ class ObjectMetadataUIViewSet(
                 )
                 messages.warning(
                     request,
-                    "Cannot create metadata: the requested assigned object does not exist.",
+                    gettext("Cannot create metadata: the requested assigned object does not exist."),
                 )
                 return redirect(self.get_return_url(request))
         return super().create(request, *args, **kwargs)
@@ -4535,7 +4590,7 @@ class NoteUIViewSet(
                 fields=["user", "assigned_object_type", "assigned_object"],
             ),
             object_detail.ObjectTextPanel(
-                label="Text",
+                label=_("Text"),
                 section=SectionChoices.LEFT_HALF,
                 weight=200,
                 object_field="note",
@@ -4648,7 +4703,7 @@ class RelationshipUIViewSet(NautobotUIViewSet):
     object_detail_content = object_detail.ObjectDetailContent(
         panels=(
             object_detail.ObjectFieldsPanel(
-                label="Relationship",
+                label=_("Relationship"),
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
                 fields="__all__",
@@ -4664,13 +4719,13 @@ class RelationshipUIViewSet(NautobotUIViewSet):
                 ],
             ),
             object_detail.ObjectFieldsPanel(
-                label="Source Attributes",
+                label=_("Source Attributes"),
                 section=SectionChoices.RIGHT_HALF,
                 weight=100,
                 fields=["source_type", "source_label", "source_hidden", "source_filter"],
             ),
             object_detail.ObjectFieldsPanel(
-                label="Destination Attributes",
+                label=_("Destination Attributes"),
                 section=SectionChoices.RIGHT_HALF,
                 weight=200,
                 fields=["destination_type", "destination_label", "destination_hidden", "destination_filter"],
@@ -4852,12 +4907,12 @@ class SecretUIViewSet(
                 weight=100, section=SectionChoices.LEFT_HALF, fields="__all__", exclude_fields=["parameters"]
             ),
             object_detail.KeyValueTablePanel(
-                weight=200, section=SectionChoices.LEFT_HALF, label="Parameters", context_data_key="parameters"
+                weight=200, section=SectionChoices.LEFT_HALF, label=_("Parameters"), context_data_key="parameters"
             ),
             object_detail.ObjectsTablePanel(
                 weight=100,
                 section=SectionChoices.RIGHT_HALF,
-                table_title="Groups containing this secret",
+                table_title=_("Groups containing this secret"),
                 table_class=tables.SecretsGroupTable,
                 table_attribute="secrets_groups",
                 distinct=True,
@@ -4868,7 +4923,7 @@ class SecretUIViewSet(
         extra_buttons=[
             object_detail.Button(
                 weight=100,
-                label="Check Secret",
+                label=_("Check Secret"),
                 icon="mdi-test-tube",
                 javascript_template_path="extras/secret_check.js",
                 attributes={"onClick": "checkSecret()"},
@@ -4911,7 +4966,7 @@ class SecretsGroupUIViewSet(NautobotUIViewSet):
     object_detail_content = object_detail.ObjectDetailContent(
         panels=(
             object_detail.ObjectFieldsPanel(
-                label="Secrets Group Details",
+                label=_("Secrets Group Details"),
                 fields=["description"],
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
@@ -4921,7 +4976,7 @@ class SecretsGroupUIViewSet(NautobotUIViewSet):
                 table_filter="secrets_group",
                 related_field_name="secrets_groups",
                 related_list_url_name="extras:secret_list",
-                table_title="Secrets",
+                table_title=_("Secrets"),
                 section=SectionChoices.LEFT_HALF,
                 weight=200,
             ),
@@ -5021,7 +5076,7 @@ class TagUIViewSet(NautobotUIViewSet):
                 weight=100,
                 section=SectionChoices.RIGHT_HALF,
                 table_class=tables.TaggedItemTable,
-                table_title="Tagged Objects",
+                table_title=_("Tagged Objects"),
                 table_filter="tag",
                 select_related_fields=["content_type"],
                 prefetch_related_fields=["content_object"],
@@ -5072,7 +5127,7 @@ class TeamUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.RIGHT_HALF,
                 table_class=tables.ContactTable,
                 table_filter="teams",
-                table_title="Assigned Contacts",
+                table_title=_("Assigned Contacts"),
                 exclude_columns=["actions"],
                 add_button_route=None,
             ),
@@ -5081,7 +5136,7 @@ class TeamUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.FULL_WIDTH,
                 table_class=tables.ContactAssociationTable,
                 table_filter="team",
-                table_title="Contact For",
+                table_title=_("Contact For"),
                 add_button_route=None,
                 enable_related_link=False,
             ),
@@ -5106,26 +5161,26 @@ class WebhookUIViewSet(NautobotUIViewSet):
     object_detail_content = object_detail.ObjectDetailContent(
         panels=[
             object_detail.ObjectFieldsPanel(
-                label="Webhook",
+                label=_("Webhook"),
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
                 fields=("name", "content_types", "type_create", "type_update", "type_delete", "enabled"),
             ),
             object_detail.ObjectFieldsPanel(
-                label="HTTP",
+                label=_("HTTP"),
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
                 fields=("http_method", "http_content_type", "payload_url", "additional_headers"),
                 value_transforms={"additional_headers": [partial(helpers.pre_tag, format_empty_value=False)]},
             ),
             object_detail.ObjectFieldsPanel(
-                label="Security",
+                label=_("Security"),
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
                 fields=("secret", "ssl_verification", "ca_file_path"),
             ),
             object_detail.ObjectTextPanel(
-                label="Body Template",
+                label=_("Body Template"),
                 section=SectionChoices.RIGHT_HALF,
                 weight=100,
                 object_field="body_template",

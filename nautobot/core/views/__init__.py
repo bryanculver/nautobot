@@ -30,6 +30,7 @@ from django.template import loader, RequestContext, Template
 from django.template.exceptions import TemplateDoesNotExist
 from django.urls import NoReverseMatch, resolve, Resolver404, reverse
 from django.utils.encoding import smart_str
+from django.utils.translation import gettext_lazy as _
 from django.views.csrf import csrf_failure as _csrf_failure
 from django.views.decorators.csrf import requires_csrf_token
 from django.views.defaults import ERROR_500_TEMPLATE_NAME, page_not_found
@@ -134,7 +135,7 @@ class HomeView(AccessMixin, TemplateView):
         context = self.get_context_data()
         context.update(
             {
-                "title": "Home",
+                "title": _("Home"),
                 "new_release": new_release,
             }
         )
@@ -289,7 +290,7 @@ class MediaView(AccessMixin, View):
 
 class WorkerStatusView(UserPassesTestMixin, UIComponentsMixin, TemplateView):
     template_name = "utilities/worker_status.html"
-    view_titles = Titles(titles={"*": "Nautobot Worker Status"})
+    view_titles = Titles(titles={"*": _("Nautobot Worker Status")})
 
     def test_func(self):
         return self.request.user.is_staff
@@ -409,12 +410,12 @@ class WorkerStatusView(UserPassesTestMixin, UIComponentsMixin, TemplateView):
 
 class ThemePreviewView(LoginRequiredMixin, UIComponentsMixin, TemplateView):
     template_name = "utilities/theme_preview.html"
-    view_titles = Titles(titles={"*": "Nautobot Theme Preview"})
+    view_titles = Titles(titles={"*": _("Nautobot Theme Preview")})
     breadcrumbs = Breadcrumbs(
         items={
             "generic": [
-                ViewNameBreadcrumbItem(view_name="home", label="Nautobot"),
-                ViewNameBreadcrumbItem(view_name="theme_preview", label="Theme Preview"),
+                ViewNameBreadcrumbItem(view_name="home", label=_("Nautobot")),
+                ViewNameBreadcrumbItem(view_name="theme_preview", label=_("Theme Preview")),
             ],
         },
     )
@@ -672,7 +673,7 @@ def csrf_failure(request, reason="", template_name="403_csrf_failure.html"):
 
 
 class CustomGraphQLView(LoginRequiredMixin, UIComponentsMixin, GraphQLView):
-    view_titles = Titles(titles={"*": "GraphiQL"})
+    view_titles = Titles(titles={"*": _("GraphiQL")})
 
     def render_graphiql(self, request, **data):
         query_name = request.GET.get("name")
@@ -784,7 +785,7 @@ class AboutView(AccessMixin, UIComponentsMixin, TemplateView):
     """
 
     template_name = "about.html"
-    view_titles = Titles(titles={"*": "About Nautobot"})
+    view_titles = Titles(titles={"*": _("About Nautobot")})
 
     def get(self, request, *args, **kwargs):
         # Redirect user to login page if not authenticated
@@ -831,4 +832,4 @@ class RenderJinjaView(LoginRequiredMixin, TemplateView):
     """Render a Jinja template with context data."""
 
     template_name = "utilities/render_jinja2.html"
-    extra_context = {"view_titles": Titles(titles={"*": "Jinja Template Renderer"})}
+    extra_context = {"view_titles": Titles(titles={"*": _("Jinja Template Renderer")})}

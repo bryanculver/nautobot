@@ -3,6 +3,7 @@ import re
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_ipv46_address
 from django.db.models import ProtectedError, Q
+from django.utils.translation import gettext
 import netaddr
 
 from nautobot.core.models.querysets import LocationToLocationsQuerySetMixin, RestrictedQuerySet
@@ -351,7 +352,9 @@ class PrefixQuerySet(LocationToLocationsQuerySetMixin, BaseNetworkQuerySet):
         try:
             return netaddr.IPNetwork(str(value))
         except netaddr.AddrFormatError as err:
-            raise ValidationError({"cidr": f"{value} does not appear to be an IPv4 or IPv6 network."}) from err
+            raise ValidationError(
+                {"cidr": gettext("%(value)s does not appear to be an IPv4 or IPv6 network.") % {"value": value}}
+            ) from err
 
     def get_closest_parent(self, cidr, shortest_prefix_length=0, include_self=False):
         """
@@ -370,7 +373,12 @@ class PrefixQuerySet(LocationToLocationsQuerySetMixin, BaseNetworkQuerySet):
         try:
             shortest_prefix_length = int(shortest_prefix_length)
         except ValueError:
-            raise ValidationError({"shortest_prefix_length": f"Invalid prefix_length: {shortest_prefix_length}."})
+            raise ValidationError(
+                {
+                    "shortest_prefix_length": gettext("Invalid prefix_length: %(shortest_prefix_length)s.")
+                    % {"shortest_prefix_length": shortest_prefix_length}
+                }
+            )
 
         # Prepare the queryset filter
         lookup_kwargs = {
@@ -432,7 +440,9 @@ class IPAddressQuerySet(BaseNetworkQuerySet):
             try:
                 netaddr.IPNetwork(cidr)
             except netaddr.AddrFormatError as err:
-                raise ValidationError(f"{cidr} does not appear to be an IPv4 or IPv6 network.") from err
+                raise ValidationError(
+                    gettext("%(cidr)s does not appear to be an IPv4 or IPv6 network.") % {"cidr": cidr}
+                ) from err
             parent = Prefix.objects.filter(namespace=namespace).get_closest_parent(cidr=cidr, include_self=True)
             kwargs["parent"] = parent
         return super().get_or_create(defaults=defaults, **kwargs)

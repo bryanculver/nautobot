@@ -14,6 +14,7 @@ from django.db import models
 from django.db.models import Model
 from django.forms.widgets import TextInput
 from django.utils.html import format_html
+from django.utils.translation import gettext, gettext_lazy as _
 from jinja2 import TemplateError, TemplateSyntaxError
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
@@ -130,7 +131,7 @@ class ComputedFieldManager(BaseManager.from_queryset(RestrictedQuerySet)):
                 errors.extend(message_list)
 
         if errors:
-            raise ValidationError(f"Template validation failed - {'; '.join(errors)}")
+            raise ValidationError(gettext("Template validation failed - %(errors)s") % {"errors": "; ".join(errors)})
 
 
 @extras_features("graphql")
@@ -151,37 +152,47 @@ class ComputedField(
         on_delete=models.CASCADE,
         limit_choices_to=FeatureQuery("custom_fields"),
         related_name="computed_fields",
+        verbose_name=_("content type"),
     )
     key = AutoSlugField(
         populate_from="label",
-        help_text="Internal field name. Please use underscores rather than dashes in this key.",
+        help_text=_("Internal field name. Please use underscores rather than dashes in this key."),
         slugify_function=slugify_dashes_to_underscores,
+        verbose_name=_("key"),
     )
     output_type = models.CharField(
         max_length=50,
         choices=ComputedFieldTypeChoices,
         default=ComputedFieldTypeChoices.TYPE_TEXT,
-        help_text="How the rendered result is to be output, by default it is as Plain Text",
+        help_text=_("How the rendered result is to be output, by default it is as Plain Text"),
+        verbose_name=_("output type"),
     )
     grouping = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        help_text="Human-readable grouping that this computed field belongs to.",
+        help_text=_("Human-readable grouping that this computed field belongs to."),
+        verbose_name=_("grouping"),
     )
-    label = models.CharField(max_length=CHARFIELD_MAX_LENGTH, help_text="Name of the field as displayed to users")
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    template = models.TextField(max_length=500, help_text="Jinja2 template code for field value")
+    label = models.CharField(
+        max_length=CHARFIELD_MAX_LENGTH, help_text=_("Name of the field as displayed to users"), verbose_name=_("label")
+    )
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
+    template = models.TextField(
+        max_length=500, help_text=_("Jinja2 template code for field value"), verbose_name=_("template")
+    )
     fallback_value = models.CharField(
         max_length=500,
         blank=True,
-        help_text="Fallback value (if any) to be output for the field in the case of a template rendering error.",
+        help_text=_("Fallback value (if any) to be output for the field in the case of a template rendering error."),
+        verbose_name=_("fallback value"),
     )
-    weight = models.PositiveSmallIntegerField(default=100)
+    weight = models.PositiveSmallIntegerField(default=100, verbose_name=_("weight"))
     advanced_ui = models.BooleanField(
         default=False,
-        verbose_name="Move to Advanced tab",
-        help_text="Hide this field from the object's primary information tab. "
-        'It will appear in the "Advanced" tab instead.',
+        verbose_name=_("Move to Advanced tab"),
+        help_text=_(
+            'Hide this field from the object\'s primary information tab. It will appear in the "Advanced" tab instead.'
+        ),
     )
 
     objects = ComputedFieldManager()
@@ -222,12 +233,17 @@ class ComputedField(
         try:
             validate_jinja2(self.template)
         except TemplateSyntaxError as exc:
-            raise ValidationError({"template": f"Template syntax error on line {exc.lineno}: {exc.message}"})
+            raise ValidationError(
+                {
+                    "template": gettext("Template syntax error on line %(lineno)s: %(message)s")
+                    % {"lineno": exc.lineno, "message": exc.message}
+                }
+            )
         except TemplateError as exc:
-            raise ValidationError({"template": f"Template error: {exc}"})
+            raise ValidationError({"template": gettext("Template error: %(exc)s") % {"exc": exc}})
         except Exception as exc:
             # System-level exceptions (very rare) - memory, recursion, encoding issues
-            raise ValidationError(f"Template validation failed: {exc}")
+            raise ValidationError(gettext("Template validation failed: %(exc)s") % {"exc": exc})
 
 
 class CustomFieldModel(models.Model):
@@ -349,7 +365,10 @@ class CustomFieldModel(models.Model):
                     value,
                 )
             except ValidationError as e:
-                raise ValidationError(f"Invalid value for custom field '{field_key}': {e.message}")
+                raise ValidationError(
+                    gettext("Invalid value for custom field '%(field_key)s': %(message)s")
+                    % {"field_key": field_key, "message": e.message}
+                )
 
         # Check for missing values, erroring on required ones and populating non-required ones automatically
         for cf in custom_fields.values():
@@ -357,7 +376,7 @@ class CustomFieldModel(models.Model):
                 if cf.default is not None:
                     self._custom_field_data[cf.key] = cf.default
                 elif cf.required:
-                    raise ValidationError(f"Missing required custom field '{cf.key}'.")
+                    raise ValidationError(gettext("Missing required custom field '%(key)s'.") % {"key": cf.key})
 
     clean.alters_data = True
 
@@ -595,92 +614,109 @@ class CustomField(
     content_types = models.ManyToManyField(
         to=ContentType,
         related_name="custom_fields",
-        verbose_name="Object(s)",
+        verbose_name=_("Object(s)"),
         limit_choices_to=FeatureQuery("custom_fields"),
-        help_text="The object(s) to which this field applies.",
+        help_text=_("The object(s) to which this field applies."),
     )
     grouping = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        help_text="Human-readable grouping that this custom field belongs to.",
+        help_text=_("Human-readable grouping that this custom field belongs to."),
+        verbose_name=_("grouping"),
     )
     type = models.CharField(
         max_length=50,
         choices=CustomFieldTypeChoices,
         default=CustomFieldTypeChoices.TYPE_TEXT,
-        help_text="The type of value(s) allowed for this field.",
+        help_text=_("The type of value(s) allowed for this field."),
+        verbose_name=_("type"),
     )
     label = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
-        help_text="Name of the field as displayed to users.",
+        help_text=_("Name of the field as displayed to users."),
         blank=False,
+        verbose_name=_("label"),
     )
     key = AutoSlugField(
         blank=True,
         max_length=CHARFIELD_MAX_LENGTH,
         separator="_",
         populate_from="label",
-        help_text="Internal field name. Please use underscores rather than dashes in this key.",
+        help_text=_("Internal field name. Please use underscores rather than dashes in this key."),
         slugify_function=slugify_dashes_to_underscores,
+        verbose_name=_("key"),
     )
     description = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH, blank=True, help_text="A helpful description for this field."
+        max_length=CHARFIELD_MAX_LENGTH,
+        blank=True,
+        help_text=_("A helpful description for this field."),
+        verbose_name=_("description"),
     )
     required = models.BooleanField(
         default=False,
-        help_text="If true, this field is required when creating new objects or editing an existing object.",
+        help_text=_("If true, this field is required when creating new objects or editing an existing object."),
+        verbose_name=_("required"),
     )
     # todoindex:
     filter_logic = models.CharField(
         max_length=50,
         choices=CustomFieldFilterLogicChoices,
         default=CustomFieldFilterLogicChoices.FILTER_LOOSE,
-        help_text="Loose matches any instance of a given string; Exact matches the entire field.",
+        help_text=_("Loose matches any instance of a given string; Exact matches the entire field."),
+        verbose_name=_("filter logic"),
     )
     default = models.JSONField(
         encoder=DjangoJSONEncoder,
         blank=True,
         null=True,
         help_text=(
-            'Default value for the field (must be a JSON value). Encapsulate strings with double quotes (e.g. "Foo").'
+            _(
+                'Default value for the field (must be a JSON value). Encapsulate strings with double quotes (e.g. "Foo").'
+            )
         ),
+        verbose_name=_("default"),
     )
     weight = models.PositiveSmallIntegerField(
-        default=100, help_text="Fields with higher weights appear lower in a form."
+        default=100, help_text=_("Fields with higher weights appear lower in a form."), verbose_name=_("weight")
     )
     validation_minimum = models.BigIntegerField(
         blank=True,
         null=True,
-        verbose_name="Minimum value",
-        help_text="Minimum allowed value (for numeric fields) or length (for text fields).",
+        verbose_name=_("Minimum value"),
+        help_text=_("Minimum allowed value (for numeric fields) or length (for text fields)."),
     )
     validation_maximum = models.BigIntegerField(
         blank=True,
         null=True,
-        verbose_name="Maximum value",
-        help_text="Maximum allowed value (for numeric fields) or length (for text fields).",
+        verbose_name=_("Maximum value"),
+        help_text=_("Maximum allowed value (for numeric fields) or length (for text fields)."),
     )
     validation_regex = models.CharField(
         blank=True,
         validators=[validate_regex],
         max_length=500,
-        verbose_name="Validation regex",
-        help_text="Regular expression to enforce on text field values. Use ^ and $ to force matching of entire string. "
-        "For example, <code>^[A-Z]{3}$</code> will limit values to exactly three uppercase letters. Regular "
-        "expression on select and multi-select will be applied at <code>Custom Field Choices</code> definition.",
+        verbose_name=_("Validation regex"),
+        help_text=_(
+            "Regular expression to enforce on text field values. Use ^ and $ to force matching of entire string. "
+            "For example, <code>^[A-Z]{3}$</code> will limit values to exactly three uppercase letters. Regular "
+            "expression on select and multi-select will be applied at <code>Custom Field Choices</code> definition."
+        ),
     )
     advanced_ui = models.BooleanField(
         default=False,
-        verbose_name="Move to Advanced tab",
-        help_text="Hide this field from the object's primary information tab. "
-        'It will appear in the "Advanced" tab instead.',
+        verbose_name=_("Move to Advanced tab"),
+        help_text=_(
+            'Hide this field from the object\'s primary information tab. It will appear in the "Advanced" tab instead.'
+        ),
     )
 
     scope_filter = models.JSONField(
         encoder=DjangoJSONEncoder,
         editable=False,
         default=dict,
-        help_text="A JSON-encoded dictionary of filter parameters defining possible objects that can use this custom field.",
+        help_text=_(
+            "A JSON-encoded dictionary of filter parameters defining possible objects that can use this custom field."
+        ),
     )
 
     objects = CustomFieldManager()
@@ -772,28 +808,33 @@ class CustomField(
             database_object = self.__class__.objects.get(pk=self.pk)
 
             if self.key != database_object.key:
-                raise ValidationError({"key": "Key cannot be changed once created"})
+                raise ValidationError({"key": _("Key cannot be changed once created")})
 
             if self.type != database_object.type:
-                raise ValidationError({"type": "Type cannot be changed once created"})
+                raise ValidationError({"type": _("Type cannot be changed once created")})
 
         # Validate the field's default value (if any)
         if self.default is not None:
             try:
                 self.default = self.validate(self.default)
             except ValidationError as err:
-                raise ValidationError({"default": f'Invalid default value "{self.default}": {err.message}'})
+                raise ValidationError(
+                    {
+                        "default": gettext('Invalid default value "%(default)s": %(message)s')
+                        % {"default": self.default, "message": err.message}
+                    }
+                )
 
         # Minimum/maximum values can be set only for fields that support them
         if self.validation_minimum is not None and self.type not in CustomFieldTypeChoices.MIN_MAX_TYPES:
-            raise ValidationError({"validation_minimum": "A minimum value may not be set for fields of this type"})
+            raise ValidationError({"validation_minimum": _("A minimum value may not be set for fields of this type")})
         if self.validation_maximum is not None and self.type not in CustomFieldTypeChoices.MIN_MAX_TYPES:
-            raise ValidationError({"validation_maximum": "A maximum value may not be set for fields of this type"})
+            raise ValidationError({"validation_maximum": _("A maximum value may not be set for fields of this type")})
 
         # Regex validation can be set only for text, url, select and multi-select fields
         if self.validation_regex and self.type not in CustomFieldTypeChoices.REGEX_TYPES:
             raise ValidationError(
-                {"validation_regex": "Regular expression validation is not supported for fields of this type"}
+                {"validation_regex": _("Regular expression validation is not supported for fields of this type")}
             )
 
         # Choices can be set only on selection fields
@@ -801,7 +842,7 @@ class CustomField(
             CustomFieldTypeChoices.TYPE_SELECT,
             CustomFieldTypeChoices.TYPE_MULTISELECT,
         ):
-            raise ValidationError("Choices may be set only for custom selection fields.")
+            raise ValidationError(_("Choices may be set only for custom selection fields."))
 
         # A selection field's default (if any) must be present in its available choices
         if (
@@ -810,11 +851,16 @@ class CustomField(
             and self.default not in self.custom_field_choices.values_list("value", flat=True)
         ):
             raise ValidationError(
-                {"default": f"The specified default value ({self.default}) is not listed as an available choice."}
+                {
+                    "default": gettext(
+                        "The specified default value (%(default)s) is not listed as an available choice."
+                    )
+                    % {"default": self.default}
+                }
             )
 
         if self.required and self.scope_filter:
-            raise ValidationError({"required": "Scope filter can't be set, if field is required."})
+            raise ValidationError({"required": _("Scope filter can't be set, if field is required.")})
 
     def to_form_field(
         self,
@@ -911,7 +957,10 @@ class CustomField(
                 field.validators = [
                     RegexValidator(
                         regex=self.validation_regex,
-                        message=format_html("Values must match this regex: <code>{}</code>", self.validation_regex),
+                        message=format_html(
+                            _("Values must match this regex: <code>{regex}</code>"),
+                            regex=self.validation_regex,
+                        ),
                     )
                 ]
 
@@ -978,42 +1027,66 @@ class CustomField(
                 CustomFieldTypeChoices.TYPE_MARKDOWN,
             ):
                 if not isinstance(value, str):
-                    raise ValidationError("Value must be a string")
+                    raise ValidationError(_("Value must be a string"))
                 if self.validation_minimum is not None and len(value) < self.validation_minimum:
-                    raise ValidationError(f"Value must be at least {self.validation_minimum} characters in length")
+                    raise ValidationError(
+                        gettext("Value must be at least %(validation_minimum)s characters in length")
+                        % {"validation_minimum": self.validation_minimum}
+                    )
                 if self.validation_maximum is not None and len(value) > self.validation_maximum:
-                    raise ValidationError(f"Value must not exceed {self.validation_maximum} characters in length")
+                    raise ValidationError(
+                        gettext("Value must not exceed %(validation_maximum)s characters in length")
+                        % {"validation_maximum": self.validation_maximum}
+                    )
                 if self.validation_regex and not re.search(self.validation_regex, value):
-                    raise ValidationError(f"Value must match regex '{self.validation_regex}'")
+                    raise ValidationError(
+                        gettext("Value must match regex '%(validation_regex)s'")
+                        % {"validation_regex": self.validation_regex}
+                    )
 
             # Validate JSON
             elif self.type == CustomFieldTypeChoices.TYPE_JSON:
                 if self.validation_regex or self.validation_minimum is not None or self.validation_maximum is not None:
                     json_value = json.dumps(value)
                     if self.validation_minimum is not None and len(json_value) < self.validation_minimum:
-                        raise ValidationError(f"Value must be at least {self.validation_minimum} characters in length")
+                        raise ValidationError(
+                            gettext("Value must be at least %(validation_minimum)s characters in length")
+                            % {"validation_minimum": self.validation_minimum}
+                        )
                     if self.validation_maximum is not None and len(json_value) > self.validation_maximum:
-                        raise ValidationError(f"Value must not exceed {self.validation_maximum} characters in length")
+                        raise ValidationError(
+                            gettext("Value must not exceed %(validation_maximum)s characters in length")
+                            % {"validation_maximum": self.validation_maximum}
+                        )
                     if self.validation_regex and not re.search(self.validation_regex, json_value):
-                        raise ValidationError(f"Value must match regex '{self.validation_regex}'")
+                        raise ValidationError(
+                            gettext("Value must match regex '%(validation_regex)s'")
+                            % {"validation_regex": self.validation_regex}
+                        )
 
             # Validate integer
             elif self.type == CustomFieldTypeChoices.TYPE_INTEGER:
                 try:
                     value = int(value)
                 except ValueError:
-                    raise ValidationError("Value must be an integer.")
+                    raise ValidationError(_("Value must be an integer."))
                 if self.validation_minimum is not None and value < self.validation_minimum:
-                    raise ValidationError(f"Value must be at least {self.validation_minimum}")
+                    raise ValidationError(
+                        gettext("Value must be at least %(validation_minimum)s")
+                        % {"validation_minimum": self.validation_minimum}
+                    )
                 if self.validation_maximum is not None and value > self.validation_maximum:
-                    raise ValidationError(f"Value must not exceed {self.validation_maximum}")
+                    raise ValidationError(
+                        gettext("Value must not exceed %(validation_maximum)s")
+                        % {"validation_maximum": self.validation_maximum}
+                    )
 
             # Validate boolean
             elif self.type == CustomFieldTypeChoices.TYPE_BOOLEAN:
                 try:
                     value = is_truthy(value)
                 except ValueError as exc:
-                    raise ValidationError("Value must be true or false.") from exc
+                    raise ValidationError(_("Value must be true or false.")) from exc
 
             # Validate date
             elif self.type == CustomFieldTypeChoices.TYPE_DATE:
@@ -1021,7 +1094,7 @@ class CustomField(
                     try:
                         datetime.strptime(value, "%Y-%m-%d")
                     except ValueError:
-                        raise ValidationError("Date values must be in the format YYYY-MM-DD.")
+                        raise ValidationError(_("Date values must be in the format YYYY-MM-DD."))
 
             # Validate datetime
             elif self.type == CustomFieldTypeChoices.TYPE_DATETIME:
@@ -1029,7 +1102,7 @@ class CustomField(
                     try:
                         value = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
                     except ValueError:
-                        raise ValidationError("DateTime values must be in ISO 8601 format.")
+                        raise ValidationError(_("DateTime values must be in ISO 8601 format."))
                 if value.tzinfo:
                     value = value.astimezone(datetime_timezone.utc)
                 else:
@@ -1039,18 +1112,22 @@ class CustomField(
             # Validate selected choice
             elif self.type == CustomFieldTypeChoices.TYPE_SELECT:
                 if value not in self.choices:
-                    raise ValidationError(f"Invalid choice ({value}). Available choices are: {', '.join(self.choices)}")
+                    raise ValidationError(
+                        gettext("Invalid choice (%(value)s). Available choices are: %(choices)s")
+                        % {"value": value, "choices": ", ".join(self.choices)}
+                    )
 
             elif self.type == CustomFieldTypeChoices.TYPE_MULTISELECT:
                 if isinstance(value, str):
                     value = value.split(",")
                 if not set(value).issubset(self.choices):
                     raise ValidationError(
-                        f"Invalid choice(s) ({value}). Available choices are: {', '.join(self.choices)}"
+                        gettext("Invalid choice(s) (%(value)s). Available choices are: %(choices)s")
+                        % {"value": value, "choices": ", ".join(self.choices)}
                     )
 
         elif self.required and enforce_required:
-            raise ValidationError("Required field cannot be empty.")
+            raise ValidationError(_("Required field cannot be empty."))
 
         return value
 
@@ -1164,9 +1241,12 @@ class CustomFieldChoice(BaseModel, ChangeLoggedModel):
         limit_choices_to=models.Q(
             type__in=[CustomFieldTypeChoices.TYPE_SELECT, CustomFieldTypeChoices.TYPE_MULTISELECT]
         ),
+        verbose_name=_("custom field"),
     )
-    value = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
-    weight = models.PositiveSmallIntegerField(default=100, help_text="Higher weights appear later in the list")
+    value = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("value"))
+    weight = models.PositiveSmallIntegerField(
+        default=100, help_text=_("Higher weights appear later in the list"), verbose_name=_("weight")
+    )
 
     documentation_static_path = "docs/user-guide/platform-functionality/customfield.html"
     is_metadata_associable_model = False
@@ -1180,15 +1260,24 @@ class CustomFieldChoice(BaseModel, ChangeLoggedModel):
 
     def clean(self):
         if self.custom_field.type not in (CustomFieldTypeChoices.TYPE_SELECT, CustomFieldTypeChoices.TYPE_MULTISELECT):
-            raise ValidationError("Custom field choices can only be assigned to selection fields.")
+            raise ValidationError(_("Custom field choices can only be assigned to selection fields."))
 
         if self.custom_field.validation_minimum is not None and len(self.value) < self.custom_field.validation_minimum:
-            raise ValidationError(f"Value must be at least {self.custom_field.validation_minimum} characters long.")
+            raise ValidationError(
+                gettext("Value must be at least %(validation_minimum)s characters long.")
+                % {"validation_minimum": self.custom_field.validation_minimum}
+            )
         if self.custom_field.validation_maximum is not None and len(self.value) > self.custom_field.validation_maximum:
-            raise ValidationError(f"Value must not exceed {self.custom_field.validation_maximum} characters long.")
+            raise ValidationError(
+                gettext("Value must not exceed %(validation_maximum)s characters long.")
+                % {"validation_maximum": self.custom_field.validation_maximum}
+            )
 
         if not re.search(self.custom_field.validation_regex, self.value):
-            raise ValidationError(f"Value must match regex {self.custom_field.validation_regex} got {self.value}.")
+            raise ValidationError(
+                gettext("Value must match regex %(validation_regex)s got %(value)s.")
+                % {"validation_regex": self.custom_field.validation_regex, "value": self.value}
+            )
 
     def save(self, *args, **kwargs):
         """

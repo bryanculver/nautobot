@@ -1,6 +1,7 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 from taggit.models import GenericUUIDTaggedItemBase
 
 from nautobot.core.choices import ColorChoices
@@ -46,17 +47,12 @@ class Tag(
     SavedViewMixin,
     BaseModel,
 ):
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
     content_types = models.ManyToManyField(
-        to=ContentType,
-        related_name="tags",
-        limit_choices_to=TaggableClassesQuery(),
+        to=ContentType, related_name="tags", limit_choices_to=TaggableClassesQuery(), verbose_name=_("content types")
     )
-    color = ColorField(default=ColorChoices.COLOR_GREY)
-    description = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH,
-        blank=True,
-    )
+    color = ColorField(default=ColorChoices.COLOR_GREY, verbose_name=_("color"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     objects = BaseManager.from_queryset(TagQuerySet)()
 
@@ -87,7 +83,9 @@ class Tag(
 
 
 class TaggedItem(BaseModel, GenericUUIDTaggedItemBase):
-    tag = models.ForeignKey(to=Tag, related_name="%(app_label)s_%(class)s_items", on_delete=models.CASCADE)
+    tag = models.ForeignKey(
+        to=Tag, related_name="%(app_label)s_%(class)s_items", on_delete=models.CASCADE, verbose_name=_("tag")
+    )
 
     documentation_static_path = "docs/user-guide/platform-functionality/tag.html"
     is_metadata_associable_model = False

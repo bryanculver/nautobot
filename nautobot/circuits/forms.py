@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.cloud.models import CloudNetwork
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
@@ -55,22 +56,22 @@ class ProviderForm(NautobotModelForm):
             "admin_contact": SmallTextarea(attrs={"rows": 5}),
         }
         help_texts = {
-            "name": "Full name of the provider",
-            "asn": "BGP autonomous system number (if applicable)",
-            "portal_url": "URL of the provider's customer support portal",
-            "noc_contact": "NOC email address and phone number",
-            "admin_contact": "Administrative contact email address and phone number",
+            "name": _("Full name of the provider"),
+            "asn": _("BGP autonomous system number (if applicable)"),
+            "portal_url": _("URL of the provider's customer support portal"),
+            "noc_contact": _("NOC email address and phone number"),
+            "admin_contact": _("Administrative contact email address and phone number"),
         }
 
 
 class ProviderBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
     pk = forms.ModelMultipleChoiceField(queryset=Provider.objects.all(), widget=forms.MultipleHiddenInput)
-    asn = forms.IntegerField(required=False, label="ASN")
-    account = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False, label="Account number")
-    portal_url = forms.URLField(required=False, label="Portal")
-    noc_contact = forms.CharField(required=False, widget=SmallTextarea, label="NOC contact")
-    admin_contact = forms.CharField(required=False, widget=SmallTextarea, label="Admin contact")
-    comments = CommentField(widget=SmallTextarea, label="Comments")
+    asn = forms.IntegerField(required=False, label=_("ASN"))
+    account = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False, label=_("Account number"))
+    portal_url = forms.URLField(required=False, label=_("Portal"))
+    noc_contact = forms.CharField(required=False, widget=SmallTextarea, label=_("NOC contact"))
+    admin_contact = forms.CharField(required=False, widget=SmallTextarea, label=_("Admin contact"))
+    comments = CommentField(widget=SmallTextarea, label=_("Comments"))
 
     class Meta:
         nullable_fields = [
@@ -86,8 +87,8 @@ class ProviderBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
 class ProviderFilterForm(NautobotFilterForm, LocatableModelFilterFormMixin):
     model = Provider
     field_order = ["q"]
-    q = forms.CharField(required=False, label="Search")
-    asn = forms.IntegerField(required=False, label="ASN")
+    q = forms.CharField(required=False, label=_("Search"))
+    asn = forms.IntegerField(required=False, label=_("ASN"))
     tags = TagFilterField(model)
 
 
@@ -98,7 +99,7 @@ class ProviderFilterForm(NautobotFilterForm, LocatableModelFilterFormMixin):
 
 class ProviderNetworkForm(NautobotModelForm):
     provider = DynamicModelChoiceField(queryset=Provider.objects.all())
-    comments = CommentField(label="Comments")
+    comments = CommentField(label=_("Comments"))
 
     class Meta:
         model = ProviderNetwork
@@ -116,7 +117,7 @@ class ProviderNetworkBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
     pk = forms.ModelMultipleChoiceField(queryset=ProviderNetwork.objects.all(), widget=forms.MultipleHiddenInput)
     provider = DynamicModelChoiceField(queryset=Provider.objects.all(), required=False)
     description = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False)
-    comments = CommentField(widget=SmallTextarea, label="Comments")
+    comments = CommentField(widget=SmallTextarea, label=_("Comments"))
 
     class Meta:
         nullable_fields = [
@@ -128,9 +129,9 @@ class ProviderNetworkBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
 class ProviderNetworkFilterForm(NautobotFilterForm):
     model = ProviderNetwork
     field_order = ["q", "provider"]
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     provider = DynamicModelMultipleChoiceField(
-        queryset=Provider.objects.all(), required=False, label="Provider", to_field_name="name"
+        queryset=Provider.objects.all(), required=False, label=_("Provider"), to_field_name="name"
     )
     tags = TagFilterField(model)
 
@@ -157,7 +158,7 @@ class CircuitTypeForm(NautobotModelForm):
 
 class CircuitTypeFilterForm(NautobotFilterForm):
     model = CircuitType
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     name = forms.CharField(required=False)
 
 
@@ -187,8 +188,8 @@ class CircuitForm(NautobotModelForm, TenancyForm):
             "tags",
         ]
         help_texts = {
-            "cid": "Unique circuit ID",
-            "commit_rate": "Committed rate",
+            "cid": _("Unique circuit ID"),
+            "commit_rate": _("Committed rate"),
         }
         widgets = {
             "install_date": DatePicker(),
@@ -199,10 +200,10 @@ class CircuitBulkEditForm(TagsBulkEditFormMixin, StatusModelBulkEditFormMixin, N
     pk = forms.ModelMultipleChoiceField(queryset=Circuit.objects.all(), widget=forms.MultipleHiddenInput)
     circuit_type = DynamicModelChoiceField(queryset=CircuitType.objects.all(), required=False)
     provider = DynamicModelChoiceField(queryset=Provider.objects.all(), required=False)
-    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False)
-    commit_rate = forms.IntegerField(required=False, label="Commit rate (Kbps)")
+    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False, label=_("Tenant"))
+    commit_rate = forms.IntegerField(required=False, label=_("Commit rate (Kbps)"))
     description = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False)
-    comments = CommentField(widget=SmallTextarea, label="Comments")
+    comments = CommentField(widget=SmallTextarea, label=_("Comments"))
 
     class Meta:
         nullable_fields = [
@@ -232,7 +233,7 @@ class CircuitFilterForm(
         "tenant",
         "commit_rate",
     ]
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     circuit_type = DynamicModelMultipleChoiceField(
         queryset=CircuitType.objects.all(), to_field_name="name", required=False
     )
@@ -242,15 +243,15 @@ class CircuitFilterForm(
         required=False,
         query_params={"provider": "$provider"},
         to_field_name="name",
-        label="Provider Network",
+        label=_("Provider Network"),
     )
     cloud_network = DynamicModelMultipleChoiceField(
         queryset=CloudNetwork.objects.all(),
         required=False,
         to_field_name="name",
-        label="Cloud Network",
+        label=_("Cloud Network"),
     )
-    commit_rate = forms.IntegerField(required=False, min_value=0, label="Commit rate (Kbps)")
+    commit_rate = forms.IntegerField(required=False, min_value=0, label=_("Commit rate (Kbps)"))
     tags = TagFilterField(model)
 
 
@@ -266,10 +267,10 @@ class CircuitTerminationBulkEditForm(TagsBulkEditFormMixin, LocatableModelBulkEd
     )
     provider_network = DynamicModelChoiceField(queryset=ProviderNetwork.objects.all(), required=False)
     cloud_network = DynamicModelChoiceField(queryset=CloudNetwork.objects.all(), required=False)
-    port_speed = forms.IntegerField(required=False, min_value=0, label="Port Speed (Kbps)")
-    upstream_speed = forms.IntegerField(required=False, min_value=0, label="Upstream Speed (Kbps)")
-    xconnect_id = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False, label="Cross-connect ID")
-    pp_info = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False, label="Patch Panel/Port(s)")
+    port_speed = forms.IntegerField(required=False, min_value=0, label=_("Port Speed (Kbps)"))
+    upstream_speed = forms.IntegerField(required=False, min_value=0, label=_("Upstream Speed (Kbps)"))
+    xconnect_id = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False, label=_("Cross-connect ID"))
+    pp_info = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False, label=_("Patch Panel/Port(s)"))
     description = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False)
 
     class Meta:
@@ -288,9 +289,11 @@ class CircuitTerminationBulkEditForm(TagsBulkEditFormMixin, LocatableModelBulkEd
 
 class CircuitTerminationForm(LocatableModelFormMixin, NautobotModelForm):
     provider_network = DynamicModelChoiceField(
-        queryset=ProviderNetwork.objects.all(), required=False, label="Provider Network"
+        queryset=ProviderNetwork.objects.all(), required=False, label=_("Provider Network")
     )
-    cloud_network = DynamicModelChoiceField(queryset=CloudNetwork.objects.all(), required=False, label="Cloud Network")
+    cloud_network = DynamicModelChoiceField(
+        queryset=CloudNetwork.objects.all(), required=False, label=_("Cloud Network")
+    )
 
     class Meta:
         model = CircuitTermination
@@ -307,9 +310,9 @@ class CircuitTerminationForm(LocatableModelFormMixin, NautobotModelForm):
             "tags",
         ]
         help_texts = {
-            "port_speed": "Physical circuit speed",
-            "xconnect_id": "ID of the local cross-connect",
-            "pp_info": "Patch panel ID and port number(s)",
+            "port_speed": _("Physical circuit speed"),
+            "xconnect_id": _("ID of the local cross-connect"),
+            "pp_info": _("Patch panel ID and port number(s)"),
         }
         widgets = {
             "term_side": forms.HiddenInput(),
@@ -318,7 +321,7 @@ class CircuitTerminationForm(LocatableModelFormMixin, NautobotModelForm):
 
 class CircuitTerminationFilterForm(LocatableModelFilterFormMixin, NautobotFilterForm):
     model = CircuitTermination
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     circuit = DynamicModelMultipleChoiceField(queryset=Circuit.objects.all(), to_field_name="cid", required=False)
     provider_network = DynamicModelMultipleChoiceField(
         queryset=ProviderNetwork.objects.all(), to_field_name="name", required=False
@@ -326,4 +329,6 @@ class CircuitTerminationFilterForm(LocatableModelFilterFormMixin, NautobotFilter
     cloud_network = DynamicModelMultipleChoiceField(
         queryset=CloudNetwork.objects.all(), to_field_name="name", required=False
     )
-    has_cable = forms.NullBooleanField(required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES))
+    has_cable = forms.NullBooleanField(
+        required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES), label=_("Has cable")
+    )

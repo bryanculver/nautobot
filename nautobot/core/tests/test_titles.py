@@ -2,10 +2,13 @@
 Unit tests for titles.py following Nautobot testing conventions.
 """
 
+import re
+
 from django.template import Context
+from django.utils import translation
 
 from nautobot.core.testing import TestCase
-from nautobot.core.ui.titles import DEFAULT_TITLES, Titles
+from nautobot.core.ui.titles import DEFAULT_TITLES, Titles, TRANSLATABLE_TITLE_MESSAGES
 from nautobot.dcim.models import LocationType
 
 
@@ -18,7 +21,7 @@ class TitlesTestCase(TestCase):
     def test_init_with_defaults(self):
         """Test that Titles initializes with default titles."""
         self.assertEqual(self.titles.titles, DEFAULT_TITLES)
-        self.assertEqual(self.titles.template_plugins, ["helpers"])
+        self.assertEqual(self.titles.template_plugins, ["helpers", "i18n"])
 
     def test_init_with_custom_titles(self):
         """Test that custom titles override defaults."""
@@ -31,14 +34,14 @@ class TitlesTestCase(TestCase):
     def test_init_with_custom_plugins(self):
         """Test initialization with custom template plugins."""
         custom_plugins = ["custom_plugin", "another_plugin"]
-        expected_plugins = ["helpers", "custom_plugin", "another_plugin"]
+        expected_plugins = ["helpers", "i18n", "custom_plugin", "another_plugin"]
         titles = Titles(template_plugins=custom_plugins)
         self.assertEqual(titles.template_plugins, expected_plugins)
 
     def test_template_plugins_str(self):
         """Test template plugin string generation."""
         titles = Titles(template_plugins=["plugin1", "plugin2"])
-        expected = "{% load helpers %}{% load plugin1 %}{% load plugin2 %}"
+        expected = "{% load helpers %}{% load i18n %}{% load plugin1 %}{% load plugin2 %}"
         self.assertEqual(titles.template_plugins_str, expected)
 
     def test_render_various_actions_html(self):
@@ -165,3 +168,68 @@ class TitlesTestCase(TestCase):
 
         rendered_title = TitlesSubClass().render(context)
         self.assertEqual(rendered_title, "Devices")
+
+
+class TitlesTranslationTestCase(TestCase):
+    """
+    The prose in `DEFAULT_TITLES` must be translatable, and must stay extractable.
+
+    Those title templates are Django template strings held in a Python literal. `makemessages`
+    cannot see `{% blocktrans %}` inside a Python string, so the same messages are declared
+    separately with `gettext_noop` in `TRANSLATABLE_TITLE_MESSAGES`. These tests are what stop the
+    two drifting apart.
+    """
+
+    # Maps each translatable title template to the msgid it should produce.
+    EXPECTED_MSGIDS = {
+        "destroy": "Delete %(verbose_name)s?",
+        "create": "Add a new %(verbose_name)s",
+        "update": "Editing %(verbose_name)s %(object)s",
+        "bulk_destroy": "Delete %(count)s %(verbose_name_plural)s?",
+        "bulk_rename": "Renaming %(count)s %(verbose_name_plural)s on %(parent_name)s",
+        "bulk_update": "Editing %(count)s %(verbose_name_plural)s",
+        "approve": "Approve %(verbose_name)s?",
+        "deny": "Deny %(verbose_name)s?",
+    }
+
+    def test_translatable_titles_are_extractable(self):
+        """Every blocktrans msgid in DEFAULT_TITLES must also be declared for extraction."""
+        for action, msgid in self.EXPECTED_MSGIDS.items():
+            with self.subTest(action=action):
+                self.assertIn(
+                    msgid,
+                    TRANSLATABLE_TITLE_MESSAGES,
+                    f"the {action!r} title renders msgid {msgid!r}, which is not declared in "
+                    "TRANSLATABLE_TITLE_MESSAGES and would therefore never be extracted",
+                )
+
+    def test_no_stale_extraction_declarations(self):
+        """And nothing declared for extraction should be unreachable from a title."""
+        for msgid in TRANSLATABLE_TITLE_MESSAGES:
+            with self.subTest(msgid=msgid):
+                self.assertIn(msgid, self.EXPECTED_MSGIDS.values())
+
+    def test_every_prose_title_is_wrapped(self):
+        """A title containing prose must go through blocktrans, not render English directly."""
+        for action, template in DEFAULT_TITLES.items():
+            with self.subTest(action=action):
+                # Remove whole blocktrans blocks (tag, body, and closing tag), then any remaining
+                # tags and variables. Whatever letters survive are prose rendered untranslated.
+                bare = re.sub(r"{%\s*blocktrans.*?{%\s*endblocktrans\s*%}", "", template, flags=re.S)
+                bare = re.sub(r"{%.*?%}|{{.*?}}", "", bare)
+                if re.search(r"[A-Za-z]", bare):
+                    self.fail(f"the {action!r} title has untranslated prose outside blocktrans: {bare.strip()!r}")
+
+    def test_titles_render_translated(self):
+        """End-to-end: the rendered title actually changes with the active language."""
+        titles = Titles()
+        context = Context({"view_action": "create", "verbose_name": "device"})
+        with translation.override("en"):
+            english = titles.render(context, mode="plain")
+        self.assertEqual(english, "Add a new device")
+
+        # Uses Nautobot's own catalog, so this asserts the message really is registered.
+        with translation.override("de"):
+            german = titles.render(Context({"view_action": "create", "verbose_name": "Gerät"}), mode="plain")
+        self.assertNotEqual(german, "Add a new Gerät")
+        self.assertIn("Gerät", german)

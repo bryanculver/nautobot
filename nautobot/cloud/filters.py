@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.cloud import models
 from nautobot.core.filters import (
     BaseFilterSet,
@@ -88,7 +90,7 @@ class CloudNetworkFilterSet(NautobotFilterSet):
     )
     parent = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.CloudNetwork.objects.all(),
-        label="Parent cloud network (name or ID)",
+        label=_("Parent cloud network (name or ID)"),
     )
     prefixes = PrefixFilter()
 

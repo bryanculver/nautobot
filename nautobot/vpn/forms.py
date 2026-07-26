@@ -3,6 +3,7 @@
 import logging
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.apps.forms import (
     add_blank_choice,
@@ -42,8 +43,8 @@ class VPNProfileForm(NautobotModelForm, TenancyForm):  # pylint: disable=too-man
     secrets_group = DynamicModelChoiceField(
         queryset=SecretsGroup.objects.all(),
         required=False,
-        label="Secrets Group",
-        help_text="Secrets Group for the VPN Profile.",
+        label=_("Secrets Group"),
+        help_text=_("Secrets Group for the VPN Profile."),
     )
 
     class Meta:
@@ -70,19 +71,19 @@ class VPNProfileBulkEditForm(RoleModelBulkEditFormMixin, TagsBulkEditFormMixin, 
     """VPNProfile bulk edit form."""
 
     pk = forms.ModelMultipleChoiceField(queryset=models.VPNProfile.objects.all(), widget=forms.MultipleHiddenInput)
-    description = forms.CharField(required=False, label="Description")
-    keepalive_interval = forms.IntegerField(min_value=0, required=False, label="Keepalive Interval (seconds)")
-    keepalive_retries = forms.IntegerField(min_value=0, required=False, label="Keepalive Retries")
+    description = forms.CharField(required=False, label=_("Description"))
+    keepalive_interval = forms.IntegerField(min_value=0, required=False, label=_("Keepalive Interval (seconds)"))
+    keepalive_retries = forms.IntegerField(min_value=0, required=False, label=_("Keepalive Retries"))
     keepalive_enabled = forms.NullBooleanField(
-        required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES), label="Keepalive Enabled"
+        required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES), label=_("Keepalive Enabled")
     )
     nat_traversal = forms.NullBooleanField(
-        required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES), label="NAT Traversal"
+        required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES), label=_("NAT Traversal")
     )
     tenant = DynamicModelChoiceField(
         required=False,
         queryset=Tenant.objects.all(),
-        label="Tenant",
+        label=_("Tenant"),
     )
 
     class Meta:
@@ -125,31 +126,31 @@ class VPNProfileFilterForm(NautobotFilterForm, RoleModelFilterFormMixin, Tenancy
 
     model = models.VPNProfile
 
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     vpn_phase1_policies = DynamicModelMultipleChoiceField(
         required=False,
         queryset=models.VPNPhase1Policy.objects.all(),
-        label="Phase 1 Policies",
+        label=_("Phase 1 Policies"),
     )
     vpn_phase2_policies = DynamicModelMultipleChoiceField(
         required=False,
         queryset=models.VPNPhase2Policy.objects.all(),
-        label="Phase 2 Policies",
+        label=_("Phase 2 Policies"),
     )
     keepalive_enabled = forms.NullBooleanField(
         required=False,
         widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES),
-        label="Keepalive Enabled",
+        label=_("Keepalive Enabled"),
     )
     nat_traversal = forms.NullBooleanField(
         required=False,
         widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES),
-        label="NAT Traversal Enabled",
+        label=_("NAT Traversal Enabled"),
     )
     secrets_group = DynamicModelMultipleChoiceField(
         required=False,
         queryset=SecretsGroup.objects.all(),
-        label="Secrets Group",
+        label=_("Secrets Group"),
     )
     tags = TagFilterField(model)
 
@@ -173,13 +174,13 @@ class VPNPhase1PolicyForm(NautobotModelForm, TenancyForm):  # pylint: disable=to
         required=False,
         choices=add_blank_choice(choices.IkeVersionChoices),
         widget=StaticSelect2,
-        label="IKE Version",
+        label=_("IKE Version"),
     )
     authentication_method = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(choices.AuthenticationMethodChoices),
         widget=StaticSelect2,
-        label="Authentication Method",
+        label=_("Authentication Method"),
     )
 
     class Meta:
@@ -193,33 +194,33 @@ class VPNPhase1PolicyBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm): 
     """VPNPhase1Policy bulk edit form."""
 
     pk = forms.ModelMultipleChoiceField(queryset=models.VPNPhase1Policy.objects.all(), widget=forms.MultipleHiddenInput)
-    description = forms.CharField(required=False, label="Description")
+    description = forms.CharField(required=False, label=_("Description"))
     ike_version = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(choices.IkeVersionChoices),
         widget=StaticSelect2,
-        label="Ike Version",
+        label=_("Ike Version"),
     )
     aggressive_mode = forms.NullBooleanField(
-        required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES), label="Aggressive Mode"
+        required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES), label=_("Aggressive Mode")
     )
     encryption_algorithm = JSONArrayFormField(
         choices=choices.EncryptionAlgorithmChoices,
         base_field=forms.CharField(),
         required=False,
-        label="Encryption Algorithm",
+        label=_("Encryption Algorithm"),
     )
     integrity_algorithm = JSONArrayFormField(
         choices=choices.IntegrityAlgorithmChoices,
         base_field=forms.CharField(),
         required=False,
-        label="Integrity Algorithm",
+        label=_("Integrity Algorithm"),
     )
     dh_group = JSONArrayFormField(
         choices=choices.DhGroupChoices,
         base_field=forms.CharField(),
         required=False,
-        label="Dh Group",
+        label=_("Dh Group"),
     )
     lifetime_seconds = forms.IntegerField(
         min_value=0,
@@ -233,7 +234,7 @@ class VPNPhase1PolicyBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm): 
         required=False,
         choices=add_blank_choice(choices.AuthenticationMethodChoices),
         widget=StaticSelect2,
-        label="Authentication Method",
+        label=_("Authentication Method"),
     )
 
     class Meta:
@@ -257,42 +258,42 @@ class VPNPhase1PolicyFilterForm(NautobotFilterForm, TenancyFilterForm):  # pylin
 
     model = models.VPNPhase1Policy
 
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     ike_version = forms.ChoiceField(
         required=False,
         initial=choices.IkeVersionChoices.ike_v2,
         choices=choices.IkeVersionChoices.CHOICES,
         widget=StaticSelect2,
-        label="IKE Version",
+        label=_("IKE Version"),
     )
     aggressive_mode = forms.NullBooleanField(
         required=False,
         widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES),
-        label="IKEv1 Aggressive Mode Enabled",
+        label=_("IKEv1 Aggressive Mode Enabled"),
     )
     encryption_algorithm = forms.MultipleChoiceField(
         required=False,
         choices=choices.EncryptionAlgorithmChoices.CHOICES,
         widget=StaticSelect2Multiple(),
-        label="Encryption Algorithm",
+        label=_("Encryption Algorithm"),
     )
     integrity_algorithm = forms.MultipleChoiceField(
         required=False,
         choices=choices.IntegrityAlgorithmChoices.CHOICES,
         widget=StaticSelect2Multiple(),
-        label="Integrity Algorithm",
+        label=_("Integrity Algorithm"),
     )
     dh_group = forms.MultipleChoiceField(
         required=False,
         choices=choices.DhGroupChoices.CHOICES,
         widget=StaticSelect2Multiple(),
-        label="Diffie-Hellman Group",
+        label=_("Diffie-Hellman Group"),
     )
     authentication_method = forms.MultipleChoiceField(
         required=False,
         choices=choices.AuthenticationMethodChoices.CHOICES,
         widget=StaticSelect2Multiple(),
-        label="Authentication Method",
+        label=_("Authentication Method"),
     )
     tags = TagFilterField(model)
 
@@ -323,24 +324,24 @@ class VPNPhase2PolicyBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm): 
     """VPNPhase2Policy bulk edit form."""
 
     pk = forms.ModelMultipleChoiceField(queryset=models.VPNPhase2Policy.objects.all(), widget=forms.MultipleHiddenInput)
-    description = forms.CharField(required=False, label="Description")
+    description = forms.CharField(required=False, label=_("Description"))
     encryption_algorithm = JSONArrayFormField(
         choices=choices.EncryptionAlgorithmChoices,
         base_field=forms.CharField(),
         required=False,
-        label="Encryption Algorithm",
+        label=_("Encryption Algorithm"),
     )
     integrity_algorithm = JSONArrayFormField(
         choices=choices.IntegrityAlgorithmChoices,
         base_field=forms.CharField(),
         required=False,
-        label="Integrity Algorithm",
+        label=_("Integrity Algorithm"),
     )
     pfs_group = JSONArrayFormField(
         choices=choices.DhGroupChoices,
         base_field=forms.CharField(),
         required=False,
-        label="Pfs Group",
+        label=_("Pfs Group"),
     )
     lifetime = forms.IntegerField(
         min_value=0,
@@ -365,24 +366,24 @@ class VPNPhase2PolicyFilterForm(NautobotFilterForm, TenancyFilterForm):  # pylin
 
     model = models.VPNPhase2Policy
 
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     encryption_algorithm = forms.MultipleChoiceField(
         required=False,
         choices=choices.EncryptionAlgorithmChoices.CHOICES,
         widget=StaticSelect2Multiple(),
-        label="Encryption Algorithm",
+        label=_("Encryption Algorithm"),
     )
     integrity_algorithm = forms.MultipleChoiceField(
         required=False,
         choices=choices.IntegrityAlgorithmChoices.CHOICES,
         widget=StaticSelect2Multiple(),
-        label="Integrity Algorithm",
+        label=_("Integrity Algorithm"),
     )
     pfs_group = forms.MultipleChoiceField(
         required=False,
         choices=choices.DhGroupChoices.CHOICES,
         widget=StaticSelect2Multiple(),
-        label="PFS Group",
+        label=_("PFS Group"),
     )
     tags = TagFilterField(model)
 
@@ -402,15 +403,15 @@ class VPNForm(NautobotModelForm, TenancyForm):  # pylint: disable=too-many-ances
     vpn_profile = DynamicModelChoiceField(
         queryset=models.VPNProfile.objects.all(),
         required=False,
-        label="VPN Profile",
+        label=_("VPN Profile"),
     )
     service_type = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(choices.VPNServiceTypeChoices),
         widget=StaticSelect2,
-        label="Service Type",
+        label=_("Service Type"),
     )
-    vpn_id = forms.CharField(required=False, label="Identifier")
+    vpn_id = forms.CharField(required=False, label=_("Identifier"))
     status = DynamicModelChoiceField(
         queryset=Status.objects.all(),
         required=False,
@@ -430,24 +431,24 @@ class VPNBulkEditForm(
     """VPN bulk edit form."""
 
     pk = forms.ModelMultipleChoiceField(queryset=models.VPN.objects.all(), widget=forms.MultipleHiddenInput)
-    description = forms.CharField(required=False, label="Description")
+    description = forms.CharField(required=False, label=_("Description"))
     vpn_profile = DynamicModelChoiceField(
         queryset=models.VPNProfile.objects.all(),
         required=False,
-        label="VPN Profile",
+        label=_("VPN Profile"),
     )
     tenant = DynamicModelChoiceField(
         queryset=Tenant.objects.all(),
         required=False,
-        label="Tenant",
+        label=_("Tenant"),
     )
     service_type = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(choices.VPNServiceTypeChoices),
         widget=StaticSelect2,
-        label="Service Type",
+        label=_("Service Type"),
     )
-    vpn_id = forms.CharField(required=False, label="Identifier")
+    vpn_id = forms.CharField(required=False, label=_("Identifier"))
 
     class Meta:
         """Meta attributes."""
@@ -467,18 +468,18 @@ class VPNFilterForm(NautobotFilterForm, RoleModelFilterFormMixin, TenancyFilterF
 
     model = models.VPN
 
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     vpn_profile = DynamicModelMultipleChoiceField(
         required=False,
         queryset=models.VPNProfile.objects.all(),
-        label="VPN Profile",
+        label=_("VPN Profile"),
     )
     service_type = forms.MultipleChoiceField(
         choices=choices.VPNServiceTypeChoices,
         required=False,
         widget=StaticSelect2Multiple(),
     )
-    vpn_id = forms.CharField(required=False, label="Identifier")
+    vpn_id = forms.CharField(required=False, label=_("Identifier"))
     tags = TagFilterField(model)
 
     field_order = [
@@ -498,28 +499,28 @@ class VPNTunnelForm(NautobotModelForm, TenancyForm):  # pylint: disable=too-many
     vpn_profile = DynamicModelChoiceField(
         queryset=models.VPNProfile.objects.all(),
         required=False,
-        label="VPN Profile",
+        label=_("VPN Profile"),
     )
     vpn = DynamicModelChoiceField(
         queryset=models.VPN.objects.all(),
         required=False,
-        label="VPN",
+        label=_("VPN"),
     )
     encapsulation = forms.ChoiceField(
         required=True,
         choices=add_blank_choice(choices.EncapsulationChoices),
         widget=StaticSelect2,
-        label="Encapsulation",
+        label=_("Encapsulation"),
     )
     endpoint_a = DynamicModelChoiceField(
         queryset=models.VPNTunnelEndpoint.objects.all(),
         required=False,
-        label="Endpoint A",
+        label=_("Endpoint A"),
     )
     endpoint_z = DynamicModelChoiceField(
         queryset=models.VPNTunnelEndpoint.objects.all(),
         required=False,
-        label="Endpoint Z",
+        label=_("Endpoint Z"),
     )
 
     class Meta:
@@ -533,32 +534,32 @@ class VPNTunnelBulkEditForm(RoleModelBulkEditFormMixin, TagsBulkEditFormMixin, N
     """VPNTunnel bulk edit form."""
 
     pk = forms.ModelMultipleChoiceField(queryset=models.VPNTunnel.objects.all(), widget=forms.MultipleHiddenInput)
-    description = forms.CharField(required=False, label="Description")
+    description = forms.CharField(required=False, label=_("Description"))
     vpn_profile = DynamicModelChoiceField(
         queryset=models.VPNProfile.objects.all(),
         required=False,
-        label="VPN Profile",
+        label=_("VPN Profile"),
     )
     vpn = DynamicModelChoiceField(
         queryset=models.VPN.objects.all(),
         required=False,
-        label="VPN",
+        label=_("VPN"),
     )
     secrets_group = DynamicModelChoiceField(
         queryset=SecretsGroup.objects.all(),
         required=False,
-        label="Secrets Group",
+        label=_("Secrets Group"),
     )
     encapsulation = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(choices.EncapsulationChoices),
         widget=StaticSelect2,
-        label="Encapsulation",
+        label=_("Encapsulation"),
     )
     tenant = DynamicModelChoiceField(
         queryset=Tenant.objects.all(),
         required=False,
-        label="Tenant",
+        label=_("Tenant"),
     )
 
     class Meta:
@@ -578,37 +579,37 @@ class VPNTunnelFilterForm(NautobotFilterForm, RoleModelFilterFormMixin, StatusMo
 
     model = models.VPNTunnel
 
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     vpn = DynamicModelMultipleChoiceField(
         required=False,
         queryset=models.VPN.objects.all(),
-        label="VPN",
+        label=_("VPN"),
     )
     vpn_profile = DynamicModelMultipleChoiceField(
         required=False,
         queryset=models.VPNProfile.objects.all(),
-        label="VPN Profile",
+        label=_("VPN Profile"),
     )
     endpoint_a = DynamicModelMultipleChoiceField(
         required=False,
         queryset=models.VPNTunnelEndpoint.objects.all(),
-        label="Endpoint A",
+        label=_("Endpoint A"),
     )
     endpoint_z = DynamicModelMultipleChoiceField(
         required=False,
         queryset=models.VPNTunnelEndpoint.objects.all(),
-        label="Endpoint Z",
+        label=_("Endpoint Z"),
     )
     encapsulation = forms.MultipleChoiceField(
         required=False,
         choices=choices.EncapsulationChoices.CHOICES,
-        label="Encapsulation",
+        label=_("Encapsulation"),
         widget=StaticSelect2Multiple(),
     )
     secrets_group = DynamicModelMultipleChoiceField(
         required=False,
         queryset=SecretsGroup.objects.all(),
-        label="Secrets Group",
+        label=_("Secrets Group"),
     )
     tags = TagFilterField(model)
 
@@ -633,12 +634,12 @@ class VPNTunnelEndpointForm(NautobotModelForm, TenancyForm):  # pylint: disable=
     device = DynamicModelChoiceField(
         queryset=Device.objects.all(),
         required=False,
-        label="Device",
+        label=_("Device"),
     )
     source_interface = DynamicModelChoiceField(
         queryset=Interface.objects.all(),
         required=False,
-        label="Source Interface",
+        label=_("Source Interface"),
         query_params={
             "device": "$device",
         },
@@ -646,7 +647,7 @@ class VPNTunnelEndpointForm(NautobotModelForm, TenancyForm):  # pylint: disable=
     source_ipaddress = DynamicModelChoiceField(
         queryset=IPAddress.objects.all(),
         required=False,
-        label="Source IP Address",
+        label=_("Source IP Address"),
         query_params={
             "interfaces": "$source_interface",
         },
@@ -654,32 +655,32 @@ class VPNTunnelEndpointForm(NautobotModelForm, TenancyForm):  # pylint: disable=
     tunnel_interface = DynamicModelChoiceField(
         queryset=Interface.objects.all(),
         required=False,
-        label="Tunnel Interface",
+        label=_("Tunnel Interface"),
         query_params={
             "device": "$device",
             "type": InterfaceTypeChoices.TYPE_TUNNEL,
         },
-        help_text="Interface must be of type Tunnel",
+        help_text=_("Interface must be of type Tunnel"),
     )
     vpn_profile = DynamicModelChoiceField(
         queryset=models.VPNProfile.objects.all(),
         required=False,
-        label="VPN Profile",
-        help_text="VPN Profile for the tunnel endpoint.",
+        label=_("VPN Profile"),
+        help_text=_("VPN Profile for the tunnel endpoint."),
     )
     protected_prefixes = DynamicModelMultipleChoiceField(
         queryset=Prefix.objects.all(),
         required=False,
-        label="Protected Prefixes",
-        help_text="Protected Prefixes behind the tunnel endpoint.",
+        label=_("Protected Prefixes"),
+        help_text=_("Protected Prefixes behind the tunnel endpoint."),
     )
     protected_prefixes_dg = DynamicModelMultipleChoiceField(
         queryset=DynamicGroup.objects.all(),
         required=False,
-        label="Protected Prefixes Dynamic Group",
+        label=_("Protected Prefixes Dynamic Group"),
         to_field_name="name",
         query_params={"content_type": "ipam.prefix"},
-        help_text="Protected Prefixes behind the tunnel endpoint.",
+        help_text=_("Protected Prefixes behind the tunnel endpoint."),
     )
 
     class Meta:
@@ -698,13 +699,13 @@ class VPNTunnelEndpointBulkEditForm(RoleModelBulkEditFormMixin, TagsBulkEditForm
     vpn_profile = DynamicModelChoiceField(
         queryset=models.VPNProfile.objects.all(),
         required=False,
-        label="VPN Profile",
-        help_text="VPN Profile for the tunnel endpoint.",
+        label=_("VPN Profile"),
+        help_text=_("VPN Profile for the tunnel endpoint."),
     )
     tenant = DynamicModelChoiceField(
         queryset=Tenant.objects.all(),
         required=False,
-        label="Tenant",
+        label=_("Tenant"),
     )
 
     class Meta:
@@ -721,16 +722,16 @@ class VPNTunnelEndpointFilterForm(NautobotFilterForm, RoleModelFilterFormMixin, 
 
     model = models.VPNTunnelEndpoint
 
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     vpn_profile = DynamicModelMultipleChoiceField(
         required=False,
         queryset=models.VPNProfile.objects.all(),
-        label="VPN Profile",
+        label=_("VPN Profile"),
     )
     device = DynamicModelMultipleChoiceField(
         required=False,
         queryset=Device.objects.all(),
-        label="Device",
+        label=_("Device"),
     )
     tags = TagFilterField(model)
 
@@ -755,22 +756,22 @@ class VPNTerminationForm(NautobotModelForm):
     vpn = DynamicModelChoiceField(
         queryset=models.VPN.objects.all(),
         required=True,
-        label="VPN",
+        label=_("VPN"),
     )
     vlan = DynamicModelChoiceField(
         queryset=VLAN.objects.all(),
         required=False,
-        label="VLAN",
+        label=_("VLAN"),
     )
     interface = DynamicModelChoiceField(
         queryset=Interface.objects.all(),
         required=False,
-        label="Interface",
+        label=_("Interface"),
     )
     vm_interface = DynamicModelChoiceField(
         queryset=VMInterface.objects.all(),
         required=False,
-        label="VM Interface",
+        label=_("VM Interface"),
     )
 
     class Meta:
@@ -782,7 +783,7 @@ class VPNTerminationForm(NautobotModelForm):
         cleaned_data = self.cleaned_data
         selected = [field for field in ("vlan", "interface", "vm_interface") if cleaned_data.get(field)]
         if len(selected) != 1:
-            raise forms.ValidationError("Exactly one of VLAN, interface, or VM interface must be selected.")
+            raise forms.ValidationError(_("Exactly one of VLAN, interface, or VM interface must be selected."))
         return cleaned_data
 
 
@@ -793,7 +794,7 @@ class VPNTerminationBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):  
     vpn = DynamicModelChoiceField(
         queryset=models.VPN.objects.all(),
         required=False,
-        label="VPN",
+        label=_("VPN"),
     )
 
     class Meta:
@@ -807,25 +808,25 @@ class VPNTerminationFilterForm(NautobotFilterForm):
     """Filter form for VPNTermination list view."""
 
     model = models.VPNTermination
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     vpn = DynamicModelMultipleChoiceField(
         queryset=models.VPN.objects.all(),
         required=False,
-        label="VPN",
+        label=_("VPN"),
     )
     vlan = DynamicModelMultipleChoiceField(
         queryset=VLAN.objects.all(),
         required=False,
-        label="VLAN",
+        label=_("VLAN"),
     )
     interface = DynamicModelMultipleChoiceField(
         queryset=Interface.objects.all(),
         required=False,
-        label="Interface",
+        label=_("Interface"),
     )
     vm_interface = DynamicModelMultipleChoiceField(
         queryset=VMInterface.objects.all(),
         required=False,
-        label="VM Interface",
+        label=_("VM Interface"),
     )
     tags = TagFilterField(model)

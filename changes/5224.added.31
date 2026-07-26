@@ -1,0 +1,1 @@
+Marked the remaining form field labels as translatable, including the contacts, teams and dynamic groups fields that mixins add at run time.

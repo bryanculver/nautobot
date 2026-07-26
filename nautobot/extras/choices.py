@@ -1,4 +1,5 @@
 from celery import states
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.choices import ChoiceSet
 
@@ -22,11 +23,11 @@ class ApprovalWorkflowStateChoices(ChoiceSet):
     COMMENT = "Comment"
 
     CHOICES = (
-        (PENDING, "Pending"),
-        (APPROVED, "Approved"),
-        (DENIED, "Denied"),
-        (CANCELED, "Canceled"),
-        (COMMENT, "Comment"),
+        (PENDING, _("Pending")),
+        (APPROVED, _("Approved")),
+        (DENIED, _("Denied")),
+        (CANCELED, _("Canceled")),
+        (COMMENT, _("Comment")),
     )
     CSS_CLASSES = {
         PENDING: "info",
@@ -51,10 +52,10 @@ class BannerClassChoices(ChoiceSet):
     CLASS_DANGER = "danger"
 
     CHOICES = (
-        (CLASS_SUCCESS, "Success"),
-        (CLASS_INFO, "Info"),
-        (CLASS_WARNING, "Warning"),
-        (CLASS_DANGER, "Danger"),
+        (CLASS_SUCCESS, _("Success")),
+        (CLASS_INFO, _("Info")),
+        (CLASS_WARNING, _("Warning")),
+        (CLASS_DANGER, _("Danger")),
     )
 
 
@@ -72,10 +73,10 @@ class ContactAssociationRoleChoices(ChoiceSet):
     ROLE_ON_SITE = "on site"
 
     CHOICES = (
-        (ROLE_ADMINISTRATIVE, "Administrative"),
-        (ROLE_BILLING, "Billing"),
-        (ROLE_SUPPORT, "Support"),
-        (ROLE_ON_SITE, "On Site"),
+        (ROLE_ADMINISTRATIVE, _("Administrative")),
+        (ROLE_BILLING, _("Billing")),
+        (ROLE_SUPPORT, _("Support")),
+        (ROLE_ON_SITE, _("On Site")),
     )
 
 
@@ -87,9 +88,9 @@ class ContactAssociationStatusChoices(ChoiceSet):
     STATUS_ACTIVE = "active"
 
     CHOICES = (
-        (STATUS_PRIMARY, "Primary"),
-        (STATUS_SECONDARY, "Secondary"),
-        (STATUS_ACTIVE, "Active"),
+        (STATUS_PRIMARY, _("Primary")),
+        (STATUS_SECONDARY, _("Secondary")),
+        (STATUS_ACTIVE, _("Active")),
     )
 
 
@@ -104,9 +105,9 @@ class CustomFieldFilterLogicChoices(ChoiceSet):
     FILTER_EXACT = "exact"
 
     CHOICES = (
-        (FILTER_DISABLED, "Disabled"),
-        (FILTER_LOOSE, "Loose"),
-        (FILTER_EXACT, "Exact"),
+        (FILTER_DISABLED, _("Disabled")),
+        (FILTER_LOOSE, _("Loose")),
+        (FILTER_EXACT, _("Exact")),
     )
 
 
@@ -123,16 +124,16 @@ class CustomFieldTypeChoices(ChoiceSet):
     TYPE_DATETIME = "datetime"
 
     CHOICES = (
-        (TYPE_TEXT, "Text"),
-        (TYPE_INTEGER, "Integer"),
-        (TYPE_BOOLEAN, "Boolean (true/false)"),
-        (TYPE_DATE, "Date"),
-        (TYPE_DATETIME, "Date/time"),
-        (TYPE_URL, "URL"),
-        (TYPE_SELECT, "Selection"),
-        (TYPE_MULTISELECT, "Multiple selection"),
-        (TYPE_JSON, "JSON"),
-        (TYPE_MARKDOWN, "Markdown"),
+        (TYPE_TEXT, _("Text")),
+        (TYPE_INTEGER, _("Integer")),
+        (TYPE_BOOLEAN, _("Boolean (true/false)")),
+        (TYPE_DATE, _("Date")),
+        (TYPE_DATETIME, _("Date/time")),
+        (TYPE_URL, _("URL")),
+        (TYPE_SELECT, _("Selection")),
+        (TYPE_MULTISELECT, _("Multiple selection")),
+        (TYPE_JSON, _("JSON")),
+        (TYPE_MARKDOWN, _("Markdown")),
     )
 
     # Types that support validation_minimum/validation_maximum
@@ -162,8 +163,8 @@ class ComputedFieldTypeChoices(ChoiceSet):
     TYPE_MARKDOWN = "markdown"
 
     CHOICES = (
-        (TYPE_TEXT, "Text"),
-        (TYPE_MARKDOWN, "Markdown"),
+        (TYPE_TEXT, _("Text")),
+        (TYPE_MARKDOWN, _("Markdown")),
     )
 
 
@@ -182,13 +183,13 @@ class ButtonClassChoices(ChoiceSet):
     CLASS_LINK = "link"
 
     CHOICES = (
-        (CLASS_DEFAULT, "Default"),
-        (CLASS_PRIMARY, "Primary (blue)"),
-        (CLASS_SUCCESS, "Success (green)"),
-        (CLASS_INFO, "Info (blue)"),
-        (CLASS_WARNING, "Warning (orange)"),
-        (CLASS_DANGER, "Danger (red)"),
-        (CLASS_LINK, "None (link)"),
+        (CLASS_DEFAULT, _("Default")),
+        (CLASS_PRIMARY, _("Primary (blue)")),
+        (CLASS_SUCCESS, _("Success (green)")),
+        (CLASS_INFO, _("Info (blue)")),
+        (CLASS_WARNING, _("Warning (orange)")),
+        (CLASS_DANGER, _("Danger (red)")),
+        (CLASS_LINK, _("None (link)")),
     )
 
 
@@ -203,9 +204,9 @@ class DynamicGroupTypeChoices(ChoiceSet):
     TYPE_STATIC = "static"
 
     CHOICES = (
-        (TYPE_DYNAMIC_FILTER, "Filter-defined"),
-        (TYPE_DYNAMIC_SET, "Group of groups"),
-        (TYPE_STATIC, "Static assignment"),
+        (TYPE_DYNAMIC_FILTER, _("Filter-defined")),
+        (TYPE_DYNAMIC_SET, _("Group of groups")),
+        (TYPE_STATIC, _("Static assignment")),
     )
 
 
@@ -215,9 +216,9 @@ class DynamicGroupOperatorChoices(ChoiceSet):
     OPERATOR_DIFFERENCE = "difference"
 
     CHOICES = (
-        (OPERATOR_UNION, "Include (OR)"),
-        (OPERATOR_INTERSECTION, "Restrict (AND)"),
-        (OPERATOR_DIFFERENCE, "Exclude (NOT)"),
+        (OPERATOR_UNION, _("Include (OR)")),
+        (OPERATOR_INTERSECTION, _("Restrict (AND)")),
+        (OPERATOR_DIFFERENCE, _("Exclude (NOT)")),
     )
 
 
@@ -235,12 +236,12 @@ class JobExecutionType(ChoiceSet):
     TYPE_CUSTOM = "custom"
 
     CHOICES = (
-        (TYPE_IMMEDIATELY, "Once immediately"),
-        (TYPE_FUTURE, "Once in the future"),
-        (TYPE_HOURLY, "Recurring hourly"),
-        (TYPE_DAILY, "Recurring daily"),
-        (TYPE_WEEKLY, "Recurring weekly"),
-        (TYPE_CUSTOM, "Recurring custom"),
+        (TYPE_IMMEDIATELY, _("Once immediately")),
+        (TYPE_FUTURE, _("Once in the future")),
+        (TYPE_HOURLY, _("Recurring hourly")),
+        (TYPE_DAILY, _("Recurring daily")),
+        (TYPE_WEEKLY, _("Recurring weekly")),
+        (TYPE_CUSTOM, _("Recurring custom")),
     )
 
     SCHEDULE_CHOICES = (
@@ -270,8 +271,8 @@ class JobQueueTypeChoices(ChoiceSet):
     TYPE_KUBERNETES = "kubernetes"
 
     CHOICES = (
-        (TYPE_CELERY, "Celery"),
-        (TYPE_KUBERNETES, "Kubernetes"),
+        (TYPE_CELERY, _("Celery")),
+        (TYPE_KUBERNETES, _("Kubernetes")),
     )
 
 
@@ -352,13 +353,13 @@ class LogLevelChoices(ChoiceSet):
     LOG_CRITICAL = "critical"
 
     CHOICES = (
-        (LOG_DEBUG, "Debug"),
-        (LOG_INFO, "Info"),
-        (LOG_SUCCESS, "Success"),
-        (LOG_WARNING, "Warning"),
-        (LOG_FAILURE, "Failure"),
-        (LOG_ERROR, "Error"),
-        (LOG_CRITICAL, "Critical"),
+        (LOG_DEBUG, _("Debug")),
+        (LOG_INFO, _("Info")),
+        (LOG_SUCCESS, _("Success")),
+        (LOG_WARNING, _("Warning")),
+        (LOG_FAILURE, _("Failure")),
+        (LOG_ERROR, _("Error")),
+        (LOG_CRITICAL, _("Critical")),
     )
 
     CSS_CLASSES = {
@@ -383,9 +384,9 @@ class JobConsoleEntryOutputTypeChoices(ChoiceSet):
     TYPE_STDERR = "stderr"
 
     CHOICES = (
-        (TYPE_OUTPUT, "Output"),
-        (TYPE_STDOUT, "Standard output"),
-        (TYPE_STDERR, "Standard error"),
+        (TYPE_OUTPUT, _("Output")),
+        (TYPE_STDOUT, _("Standard output")),
+        (TYPE_STDERR, _("Standard error")),
     )
 
 
@@ -400,9 +401,9 @@ class JobCancelTypeChoices(ChoiceSet):
     TYPE_ABANDONED = "abandoned"
 
     CHOICES = (
-        (TYPE_TERMINATED, "Terminated"),
-        (TYPE_REAPED, "Reaped"),
-        (TYPE_ABANDONED, "Abandoned"),
+        (TYPE_TERMINATED, _("Terminated")),
+        (TYPE_REAPED, _("Reaped")),
+        (TYPE_ABANDONED, _("Abandoned")),
     )
 
 
@@ -420,12 +421,12 @@ class ScheduledJobStateChoices(ChoiceSet):
     ERRORED = "errored"
 
     CHOICES = (
-        (ACTIVE, "Active"),
-        (PENDING, "Pending Approval"),
-        (DENIED, "Approval Denied"),
-        (CANCELED, "Approval Canceled"),
-        (COMPLETED, "Completed"),
-        (ERRORED, "Errored"),
+        (ACTIVE, _("Active")),
+        (PENDING, _("Pending Approval")),
+        (DENIED, _("Approval Denied")),
+        (CANCELED, _("Approval Canceled")),
+        (COMPLETED, _("Completed")),
+        (ERRORED, _("Errored")),
     )
 
 
@@ -447,9 +448,9 @@ class MetadataTypeDataTypeChoices(CustomFieldTypeChoices):
 
     CHOICES = (
         *CustomFieldTypeChoices.CHOICES,
-        (TYPE_CONTACT_TEAM, "Contact or Team"),
+        (TYPE_CONTACT_TEAM, _("Contact or Team")),
         # TODO: these should be migrated to CustomFieldTypeChoices and support added in CustomField data
-        (TYPE_FLOAT, "Floating point number"),
+        (TYPE_FLOAT, _("Floating point number")),
     )
 
     MIN_MAX_TYPES = (
@@ -469,9 +470,9 @@ class ObjectChangeActionChoices(ChoiceSet):
     ACTION_DELETE = "delete"
 
     CHOICES = (
-        (ACTION_CREATE, "Created"),
-        (ACTION_UPDATE, "Updated"),
-        (ACTION_DELETE, "Deleted"),
+        (ACTION_CREATE, _("Created")),
+        (ACTION_UPDATE, _("Updated")),
+        (ACTION_DELETE, _("Deleted")),
     )
 
     CSS_CLASSES = {
@@ -489,11 +490,11 @@ class ObjectChangeEventContextChoices(ChoiceSet):
     CONTEXT_UNKNOWN = "unknown"
 
     CHOICES = (
-        (CONTEXT_WEB, "Web"),
-        (CONTEXT_JOB, "Job"),
-        (CONTEXT_JOB_HOOK, "Job hook"),
-        (CONTEXT_ORM, "ORM"),
-        (CONTEXT_UNKNOWN, "Unknown"),
+        (CONTEXT_WEB, _("Web")),
+        (CONTEXT_JOB, _("Job")),
+        (CONTEXT_JOB_HOOK, _("Job hook")),
+        (CONTEXT_ORM, _("ORM")),
+        (CONTEXT_UNKNOWN, _("Unknown")),
     )
 
 
@@ -508,9 +509,9 @@ class RelationshipRequiredSideChoices(ChoiceSet):
     DESTINATION_SIDE_REQUIRED = "destination"
 
     CHOICES = (
-        (NEITHER_SIDE_REQUIRED, "Neither side required"),
-        (SOURCE_SIDE_REQUIRED, "Source objects MUST implement this relationship"),
-        (DESTINATION_SIDE_REQUIRED, "Destination objects MUST implement this relationship"),
+        (NEITHER_SIDE_REQUIRED, _("Neither side required")),
+        (SOURCE_SIDE_REQUIRED, _("Source objects MUST implement this relationship")),
+        (DESTINATION_SIDE_REQUIRED, _("Destination objects MUST implement this relationship")),
     )
 
 
@@ -520,9 +521,9 @@ class RelationshipSideChoices(ChoiceSet):
     SIDE_PEER = "peer"  # for symmetric / non-directional relationships
 
     CHOICES = (
-        (SIDE_SOURCE, "Source"),
-        (SIDE_DESTINATION, "Destination"),
-        (SIDE_PEER, "Peer"),
+        (SIDE_SOURCE, _("Source")),
+        (SIDE_DESTINATION, _("Destination")),
+        (SIDE_PEER, _("Peer")),
     )
 
     OPPOSITE = {
@@ -540,11 +541,11 @@ class RelationshipTypeChoices(ChoiceSet):
     TYPE_MANY_TO_MANY_SYMMETRIC = "symmetric-many-to-many"
 
     CHOICES = (
-        (TYPE_ONE_TO_ONE, "One to One"),
-        (TYPE_ONE_TO_ONE_SYMMETRIC, "Symmetric One to One"),
-        (TYPE_ONE_TO_MANY, "One to Many"),
-        (TYPE_MANY_TO_MANY, "Many to Many"),
-        (TYPE_MANY_TO_MANY_SYMMETRIC, "Symmetric Many to Many"),
+        (TYPE_ONE_TO_ONE, _("One to One")),
+        (TYPE_ONE_TO_ONE_SYMMETRIC, _("Symmetric One to One")),
+        (TYPE_ONE_TO_MANY, _("One to Many")),
+        (TYPE_MANY_TO_MANY, _("Many to Many")),
+        (TYPE_MANY_TO_MANY_SYMMETRIC, _("Symmetric Many to Many")),
     )
 
 
@@ -592,17 +593,17 @@ class SecretsGroupSecretTypeChoices(ChoiceSet):
     TYPE_USERNAME = "username"
 
     CHOICES = (
-        (TYPE_AUTHKEY, "Authentication Key"),
-        (TYPE_AUTHPROTOCOL, "Authentication Protocol"),
-        (TYPE_KEY, "Key"),
-        (TYPE_NOTES, "Notes"),
-        (TYPE_PASSWORD, "Password"),
-        (TYPE_PRIVALGORITHM, "Private Algorithm"),
-        (TYPE_PRIVKEY, "Private Key"),
-        (TYPE_SECRET, "Secret"),
-        (TYPE_TOKEN, "Token"),
-        (TYPE_URL, "URL"),
-        (TYPE_USERNAME, "Username"),
+        (TYPE_AUTHKEY, _("Authentication Key")),
+        (TYPE_AUTHPROTOCOL, _("Authentication Protocol")),
+        (TYPE_KEY, _("Key")),
+        (TYPE_NOTES, _("Notes")),
+        (TYPE_PASSWORD, _("Password")),
+        (TYPE_PRIVALGORITHM, _("Private Algorithm")),
+        (TYPE_PRIVKEY, _("Private Key")),
+        (TYPE_SECRET, _("Secret")),
+        (TYPE_TOKEN, _("Token")),
+        (TYPE_URL, _("URL")),
+        (TYPE_USERNAME, _("Username")),
     )
 
 

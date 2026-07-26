@@ -27,6 +27,7 @@ from django.db.models import Model
 from django.db.models.query import QuerySet
 from django.forms import ValidationError
 from django.utils.functional import classproperty
+from django.utils.translation import gettext, gettext_lazy as _
 import netaddr
 from prometheus_client import Counter
 import yaml
@@ -519,7 +520,7 @@ class BaseJob:
             form.order_fields(cls.field_order)
 
         if approval_view:
-            for _, field in form.fields.items():
+            for _field_name, field in form.fields.items():
                 field.disabled = True
 
         return form
@@ -538,17 +539,18 @@ class BaseJob:
         form.fields["_profile"] = forms.BooleanField(
             required=False,
             initial=False,
-            label="Profile job execution",
-            help_text="Profiles the job execution using cProfile and attaches a report to the job result",
+            label=_("Profile job execution"),
+            help_text=_("Profiles the job execution using cProfile and attaches a report to the job result"),
         )
         form.fields["_profile"].widget.attrs["class"] = "form-check-input"
 
         form.fields["_console_log"] = forms.BooleanField(
             required=False,
             initial=False,
-            label="Console Log execution",
-            help_text="When enabled, the job runs in a subprocess and streams stdout/stderr "
-            "to the console in real time.",
+            label=_("Console Log execution"),
+            help_text=_(
+                "When enabled, the job runs in a subprocess and streams stdout/stderr to the console in real time."
+            ),
         )
         form.fields["_console_log"].widget.attrs["class"] = "form-check-input"
         # If the class already exists there may be overrides, so we have to check this.
@@ -564,8 +566,8 @@ class BaseJob:
             form.fields["_ignore_singleton_lock"] = forms.BooleanField(
                 required=False,
                 initial=False,
-                label="Ignore singleton lock",
-                help_text="Allow this singleton job to run even when another instance is already running",
+                label=_("Ignore singleton lock"),
+                help_text=_("Allow this singleton job to run even when another instance is already running"),
             )
             form.fields["_ignore_singleton_lock"].widget.attrs["class"] = "form-check-input"
 
@@ -581,8 +583,8 @@ class BaseJob:
             queryset=job_queue_queryset,
             query_params=job_queue_params,
             required=False,
-            help_text="The job queue to route this job to",
-            label="Job queue",
+            help_text=_("The job queue to route this job to"),
+            label=_("Job queue"),
         )
 
         console_log_default = cls.console_log_default
@@ -602,7 +604,7 @@ class BaseJob:
 
         if approval_view:
             # Set `disabled=True` on all fields
-            for _, field in form.fields.items():
+            for _field_name, field in form.fields.items():
                 field.disabled = True
 
         return form
@@ -697,7 +699,7 @@ class BaseJob:
 
             if value is None:
                 if var.field_attrs.get("required"):
-                    raise ValidationError(f"{field_name} is a required field")
+                    raise ValidationError(gettext("%(field_name)s is a required field") % {"field_name": field_name})
                 else:
                     return_data[field_name] = value
                     continue
@@ -736,11 +738,11 @@ class BaseJob:
         cls_vars = cls._get_vars()
 
         if not isinstance(data, dict):
-            raise ValidationError("Job data needs to be a dict")
+            raise ValidationError(_("Job data needs to be a dict"))
 
         for k in data:
             if k not in cls_vars:
-                raise ValidationError({k: "Job data contained an unknown property"})
+                raise ValidationError({k: _("Job data contained an unknown property")})
 
         # defer validation to the form object
         f = cls.as_form(data=cls.deserialize_data(data), files=files)

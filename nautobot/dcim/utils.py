@@ -7,6 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.html import format_html, format_html_join
+from django.utils.translation import gettext, gettext_lazy as _
 from netutils.lib_mapper import NAME_TO_ALL_LIB_MAPPER, NAME_TO_LIB_MAPPER_REVERSE
 
 from nautobot.core.choices import ColorChoices
@@ -124,7 +125,10 @@ def validate_interface_tagged_vlans(instance, model, pk_set):
 
     if instance.mode != InterfaceModeChoices.MODE_TAGGED:
         raise ValidationError(
-            {"tagged_vlans": f"Mode must be set to {InterfaceModeChoices.MODE_TAGGED} when specifying tagged_vlans"}
+            {
+                "tagged_vlans": gettext("Mode must be set to %(MODE_TAGGED)s when specifying tagged_vlans")
+                % {"MODE_TAGGED": InterfaceModeChoices.MODE_TAGGED}
+            }
         )
 
     # Filter the model objects based on the primary keys passed in kwargs and exclude the ones that have
@@ -142,9 +146,10 @@ def validate_interface_tagged_vlans(instance, model, pk_set):
         raise ValidationError(
             {
                 "tagged_vlans": (
-                    f"Tagged VLAN with names {list(tagged_vlans.values_list('name', flat=True))} must all belong to the "
-                    "same location as the interface's parent device, "
-                    "one of the parent locations of the interface's parent device's location, or it must be global."
+                    gettext(
+                        "Tagged VLAN with names %(name)s must all belong to the same location as the interface's parent device, one of the parent locations of the interface's parent device's location, or it must be global."
+                    )
+                    % {"name": list(tagged_vlans.values_list("name", flat=True))}
                 )
             }
         )
@@ -179,7 +184,8 @@ def render_software_version_and_image_files(instance, software_version, context)
         )
     if overridden_software_image_files.exists():
         display += format_html(
-            "<br><strong>Software Image Files Overridden:</strong>\n<ul>{}</ul>",
+            "<br><strong>{}</strong>\n<ul>{}</ul>",
+            gettext("Software Image Files Overridden:"),
             format_html_join(
                 "\n", "<li>{}</li>", [[hyperlinked_object(img)] for img in overridden_software_image_files.all()]
             ),
@@ -248,12 +254,17 @@ def validate_cable_breakout_mapping(mapping: list, a_connectors=None, b_connecto
     """
 
     if not isinstance(mapping, list):
-        raise ValidationError({"mapping": "Mapping must be a JSON array."})
+        raise ValidationError({"mapping": _("Mapping must be a JSON array.")})
 
     if total_lanes is not None and len(mapping) != total_lanes:
-        raise ValidationError({"mapping": f"Expected {total_lanes} lane definitions, but got {len(mapping)}."})
+        raise ValidationError(
+            {
+                "mapping": gettext("Expected %(total_lanes)s lane definitions, but got %(count)s.")
+                % {"total_lanes": total_lanes, "count": len(mapping)}
+            }
+        )
     elif not mapping:
-        raise ValidationError({"mapping": "Empty mapping is not permitted."})
+        raise ValidationError({"mapping": _("Empty mapping is not permitted.")})
 
     required_keys = {"a_connector", "a_position", "b_connector", "b_position"}
     optional_keys = {"label"}
@@ -261,21 +272,31 @@ def validate_cable_breakout_mapping(mapping: list, a_connectors=None, b_connecto
     # First pass: structural checks (types, keys) so we can safely derive dimensions below.
     for i, entry in enumerate(mapping):
         if not isinstance(entry, dict):
-            raise ValidationError({"mapping": f"Entry {i} must be a JSON object."})
+            raise ValidationError({"mapping": gettext("Entry %(i)s must be a JSON object.") % {"i": i}})
 
         missing_keys = required_keys - set(entry.keys())
         if missing_keys:
             raise ValidationError(
-                {"mapping": f"Entry {i} is missing required keys: {', '.join(sorted(missing_keys))}."}
+                {
+                    "mapping": gettext("Entry %(i)s is missing required keys: %(missing_keys)s.")
+                    % {"i": i, "missing_keys": ", ".join(sorted(missing_keys))}
+                }
             )
 
         unknown_keys = set(entry.keys()) - required_keys - optional_keys
         if unknown_keys:
-            raise ValidationError({"mapping": f"Entry {i} has unknown keys: {', '.join(sorted(unknown_keys))}"})
+            raise ValidationError(
+                {
+                    "mapping": gettext("Entry %(i)s has unknown keys: %(unknown_keys)s")
+                    % {"i": i, "unknown_keys": ", ".join(sorted(unknown_keys))}
+                }
+            )
 
         for key in required_keys:
             if not isinstance(entry[key], int) or entry[key] < 1:
-                raise ValidationError({"mapping": f"Entry {i} key '{key}' must be a positive integer."})
+                raise ValidationError(
+                    {"mapping": gettext("Entry %(i)s key '%(key)s' must be a positive integer.") % {"i": i, "key": key}}
+                )
 
     if a_connectors is None:
         a_connectors = max(e["a_connector"] for e in mapping)
@@ -301,29 +322,55 @@ def validate_cable_breakout_mapping(mapping: list, a_connectors=None, b_connecto
         # Range checks - note that we already checked for typing and for values less than 1 in the first pass above
         if a_connector > a_connectors:
             raise ValidationError(
-                {"mapping": f"Entry {i}: a_connector {a_connector} out of range [1, {a_connectors}]."}
+                {
+                    "mapping": gettext("Entry %(i)s: a_connector %(a_connector)s out of range [1, %(a_connectors)s].")
+                    % {"i": i, "a_connector": a_connector, "a_connectors": a_connectors}
+                }
             )
         if a_position > a_positions:
-            raise ValidationError({"mapping": f"Entry {i}: a_position {a_position} out of range [1, {a_positions}]."})
+            raise ValidationError(
+                {
+                    "mapping": gettext("Entry %(i)s: a_position %(a_position)s out of range [1, %(a_positions)s].")
+                    % {"i": i, "a_position": a_position, "a_positions": a_positions}
+                }
+            )
         if b_connector > b_connectors:
             raise ValidationError(
-                {"mapping": f"Entry {i}: b_connector {b_connector} out of range [1, {b_connectors}]."}
+                {
+                    "mapping": gettext("Entry %(i)s: b_connector %(b_connector)s out of range [1, %(b_connectors)s].")
+                    % {"i": i, "b_connector": b_connector, "b_connectors": b_connectors}
+                }
             )
         if b_position > b_positions:
-            raise ValidationError({"mapping": f"Entry {i}: b_position {b_position} out of range [1, {b_positions}]."})
+            raise ValidationError(
+                {
+                    "mapping": gettext("Entry %(i)s: b_position %(b_position)s out of range [1, %(b_positions)s].")
+                    % {"i": i, "b_position": b_position, "b_positions": b_positions}
+                }
+            )
 
         # Uniqueness checks
         a_pair = (a_connector, a_position)
         if a_pair in seen_a_pairs:
             raise ValidationError(
-                {"mapping": f"Entry {i}: Duplicate A-side (connector, position) pair: ({a_connector}, {a_position})."}
+                {
+                    "mapping": gettext(
+                        "Entry %(i)s: Duplicate A-side (connector, position) pair: (%(a_connector)s, %(a_position)s)."
+                    )
+                    % {"i": i, "a_connector": a_connector, "a_position": a_position}
+                }
             )
         seen_a_pairs.add(a_pair)
 
         b_pair = (b_connector, b_position)
         if b_pair in seen_b_pairs:
             raise ValidationError(
-                {"mapping": f"Entry {i}: Duplicate B-side (connector, position) pair: ({b_connector}, {b_position})."}
+                {
+                    "mapping": gettext(
+                        "Entry %(i)s: Duplicate B-side (connector, position) pair: (%(b_connector)s, %(b_position)s)."
+                    )
+                    % {"i": i, "b_connector": b_connector, "b_position": b_position}
+                }
             )
         seen_b_pairs.add(b_pair)
 
@@ -331,9 +378,13 @@ def validate_cable_breakout_mapping(mapping: list, a_connectors=None, b_connecto
             entry["label"] = str(i)
         label = entry["label"]
         if not isinstance(label, str):
-            raise ValidationError({"mapping": f"Entry {i}: Label {label} must be a string"})
+            raise ValidationError(
+                {"mapping": gettext("Entry %(i)s: Label %(label)s must be a string") % {"i": i, "label": label}}
+            )
         if label in seen_labels:
-            raise ValidationError({"mapping": f"Entry {i}: Duplicate label: {label}"})
+            raise ValidationError(
+                {"mapping": gettext("Entry %(i)s: Duplicate label: %(label)s") % {"i": i, "label": label}}
+            )
         seen_labels.add(label)
 
     return mapping, a_connectors, b_connectors, total_lanes
@@ -400,10 +451,13 @@ def validate_cable_termination(termination, cable_id=None):
         return
 
     if isinstance(termination, Interface) and termination.type in NONCONNECTABLE_IFACE_TYPES:
-        raise ValidationError(f"Cables cannot be terminated to {termination.get_type_display()} interfaces")
+        raise ValidationError(
+            gettext("Cables cannot be terminated to %(get_type_display)s interfaces")
+            % {"get_type_display": termination.get_type_display()}
+        )
 
     if isinstance(termination, CircuitTermination) and termination.provider_network_id is not None:
-        raise ValidationError("Circuit terminations attached to a provider network may not be cabled.")
+        raise ValidationError(_("Circuit terminations attached to a provider network may not be cabled."))
 
     if termination.present_in_database:
         # Re-query through the join table rather than trusting an in-memory cable reference (which may be stale).
@@ -414,7 +468,10 @@ def validate_cable_termination(termination, cable_id=None):
             .first()
         )
         if current_cable_id and current_cable_id != cable_id:
-            raise ValidationError(f"{termination} already has a cable attached (#{current_cable_id})")
+            raise ValidationError(
+                gettext("%(termination)s already has a cable attached (#%(current_cable_id)s)")
+                % {"termination": termination, "current_cable_id": current_cable_id}
+            )
 
 
 # Cable disconnect utilities

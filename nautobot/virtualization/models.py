@@ -1,6 +1,7 @@
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.models import BaseManager
@@ -41,8 +42,8 @@ class ClusterType(OrganizationalModel):
     A type of Cluster.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     class Meta:
         ordering = ["name"]
@@ -65,8 +66,8 @@ class ClusterGroup(OrganizationalModel):
     An organizational group of Clusters.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     class Meta:
         ordering = ["name"]
@@ -93,14 +94,17 @@ class Cluster(PrimaryModel):
     A cluster of VirtualMachines. Each Cluster may optionally be associated with one or more Devices.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    cluster_type = models.ForeignKey(to=ClusterType, on_delete=models.PROTECT, related_name="clusters")
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    cluster_type = models.ForeignKey(
+        to=ClusterType, on_delete=models.PROTECT, related_name="clusters", verbose_name=_("cluster type")
+    )
     cluster_group = models.ForeignKey(
         to=ClusterGroup,
         on_delete=models.PROTECT,
         related_name="clusters",
         blank=True,
         null=True,
+        verbose_name=_("cluster group"),
     )
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -108,6 +112,7 @@ class Cluster(PrimaryModel):
         related_name="clusters",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
     location = models.ForeignKey(
         to="dcim.Location",
@@ -115,8 +120,9 @@ class Cluster(PrimaryModel):
         related_name="clusters",
         blank=True,
         null=True,
+        verbose_name=_("location"),
     )
-    comments = models.TextField(blank=True)
+    comments = models.TextField(blank=True, verbose_name=_("comments"))
 
     clone_fields = [
         "cluster_type",
@@ -138,7 +144,10 @@ class Cluster(PrimaryModel):
         if self.location is not None:
             if ContentType.objects.get_for_model(self) not in self.location.location_type.content_types.all():
                 raise ValidationError(
-                    {"location": f'Clusters may not associate to locations of type "{self.location.location_type}".'}
+                    {
+                        "location": gettext('Clusters may not associate to locations of type "%(location_type)s".')
+                        % {"location_type": self.location.location_type}
+                    }
                 )
 
 
@@ -164,6 +173,7 @@ class VirtualMachine(PrimaryModel, ConfigContextModel):
         to="virtualization.Cluster",
         on_delete=models.PROTECT,
         related_name="virtual_machines",
+        verbose_name=_("cluster"),
     )
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -171,6 +181,7 @@ class VirtualMachine(PrimaryModel, ConfigContextModel):
         related_name="virtual_machines",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
     platform = models.ForeignKey(
         to="dcim.Platform",
@@ -178,17 +189,18 @@ class VirtualMachine(PrimaryModel, ConfigContextModel):
         related_name="virtual_machines",
         blank=True,
         null=True,
+        verbose_name=_("platform"),
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True)
-    status = StatusField(blank=False, null=False)
-    role = RoleField(blank=True, null=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True, verbose_name=_("name"))
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
+    role = RoleField(blank=True, null=True, verbose_name=_("role"))
     primary_ip4 = models.ForeignKey(
         to="ipam.IPAddress",
         on_delete=models.SET_NULL,
         related_name="+",
         blank=True,
         null=True,
-        verbose_name="Primary IPv4",
+        verbose_name=_("Primary IPv4"),
     )
     primary_ip6 = models.ForeignKey(
         to="ipam.IPAddress",
@@ -196,26 +208,27 @@ class VirtualMachine(PrimaryModel, ConfigContextModel):
         related_name="+",
         blank=True,
         null=True,
-        verbose_name="Primary IPv6",
+        verbose_name=_("Primary IPv6"),
     )
-    vcpus = models.PositiveSmallIntegerField(blank=True, null=True, verbose_name="vCPUs")
-    memory = models.PositiveIntegerField(blank=True, null=True, verbose_name="Memory (MB)")
-    disk = models.PositiveIntegerField(blank=True, null=True, verbose_name="Disk (GB)")
-    comments = models.TextField(blank=True)
+    vcpus = models.PositiveSmallIntegerField(blank=True, null=True, verbose_name=_("vCPUs"))
+    memory = models.PositiveIntegerField(blank=True, null=True, verbose_name=_("Memory (MB)"))
+    disk = models.PositiveIntegerField(blank=True, null=True, verbose_name=_("Disk (GB)"))
+    comments = models.TextField(blank=True, verbose_name=_("comments"))
     software_version = models.ForeignKey(
         to="dcim.SoftwareVersion",
         on_delete=models.PROTECT,
         related_name="virtual_machines",
         blank=True,
         null=True,
-        help_text="The software version installed on this virtual machine",
+        help_text=_("The software version installed on this virtual machine"),
+        verbose_name=_("software version"),
     )
     software_image_files = models.ManyToManyField(
         to="dcim.SoftwareImageFile",
         related_name="virtual_machines",
         blank=True,
-        verbose_name="Software Image Files",
-        help_text="Override the software image files associated with the software version for this virtual machine",
+        verbose_name=_("Software Image Files"),
+        help_text=_("Override the software image files associated with the software version for this virtual machine"),
     )
 
     objects = BaseManager.from_queryset(ConfigContextModelQuerySet)()
@@ -258,7 +271,9 @@ class VirtualMachine(PrimaryModel, ConfigContextModel):
         if self.tenant is None and VirtualMachine.objects.exclude(pk=self.pk).filter(
             name=self.name, cluster=self.cluster, tenant__isnull=True
         ):
-            raise ValidationError({"name": "A virtual machine with this name already exists in the assigned cluster."})
+            raise ValidationError(
+                {"name": _("A virtual machine with this name already exists in the assigned cluster.")}
+            )
 
         super().validate_unique(exclude)
 
@@ -273,10 +288,10 @@ class VirtualMachine(PrimaryModel, ConfigContextModel):
             if ip is not None:
                 if field == "primary_ip4":
                     if ip.ip_version != 4:
-                        raise ValidationError({f"{field}": f"{ip} is not an IPv4 address."})
+                        raise ValidationError({f"{field}": gettext("%(ip)s is not an IPv4 address.") % {"ip": ip}})
                 else:
                     if ip.ip_version != 6:
-                        raise ValidationError({f"{field}": f"{ip} is not an IPv6 address."})
+                        raise ValidationError({f"{field}": gettext("%(ip)s is not an IPv6 address.") % {"ip": ip}})
                 if IPAddressToInterface.objects.filter(ip_address=ip, vm_interface__in=vm_interfaces).exists():
                     pass
                 elif (
@@ -288,7 +303,12 @@ class VirtualMachine(PrimaryModel, ConfigContextModel):
                     pass
                 else:
                     raise ValidationError(
-                        {f"{field}": f"The specified IP address ({ip}) is not assigned to this virtual machine."}
+                        {
+                            f"{field}": gettext(
+                                "The specified IP address (%(ip)s) is not assigned to this virtual machine."
+                            )
+                            % {"ip": ip}
+                        }
                     )
 
     @property
@@ -329,8 +349,9 @@ class VMInterface(PrimaryModel, BaseInterface):
         to="virtualization.VirtualMachine",
         on_delete=models.CASCADE,
         related_name="interfaces",
+        verbose_name=_("virtual machine"),
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True, verbose_name=_("name"))
     _name = NaturalOrderingField(
         target_field="name",
         naturalize_function=naturalize_interface,
@@ -338,20 +359,20 @@ class VMInterface(PrimaryModel, BaseInterface):
         blank=True,
         db_index=True,
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     untagged_vlan = models.ForeignKey(
         to="ipam.VLAN",
         on_delete=models.SET_NULL,
         related_name="vminterfaces_as_untagged",
         null=True,
         blank=True,
-        verbose_name="Untagged VLAN",
+        verbose_name=_("Untagged VLAN"),
     )
     tagged_vlans = models.ManyToManyField(
         to="ipam.VLAN",
         related_name="vminterfaces_as_tagged",
         blank=True,
-        verbose_name="Tagged VLANs",
+        verbose_name=_("Tagged VLANs"),
     )
     vrf = models.ForeignKey(
         to="ipam.VRF",
@@ -359,18 +380,18 @@ class VMInterface(PrimaryModel, BaseInterface):
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
-        verbose_name="VRF",
+        verbose_name=_("VRF"),
     )
     ip_addresses = models.ManyToManyField(
         to="ipam.IPAddress",
         through="ipam.IPAddressToInterface",
         related_name="vm_interfaces",
         blank=True,
-        verbose_name="IP Addresses",
+        verbose_name=_("IP Addresses"),
     )
 
     class Meta:
-        verbose_name = "VM interface"
+        verbose_name = _("VM interface")
         ordering = ("virtual_machine", CollateAsChar("_name"))
         unique_together = ("virtual_machine", "name")
 
@@ -396,7 +417,7 @@ class VMInterface(PrimaryModel, BaseInterface):
 
         # VRF validation
         if self.vrf and self.parent and self.vrf not in self.parent.vrfs.all():
-            raise ValidationError({"vrf": "VRF must be assigned to same Virtual Machine."})
+            raise ValidationError({"vrf": _("VRF must be assigned to same Virtual Machine.")})
 
     @property
     def ip_address_count(self):

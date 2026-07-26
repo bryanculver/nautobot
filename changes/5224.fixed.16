@@ -1,0 +1,1 @@
+Fixed filter labels being frozen in whichever language was active when the filterset class was first built, by composing them lazily so each label renders in the reader's language.

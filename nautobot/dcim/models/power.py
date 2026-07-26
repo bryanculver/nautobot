@@ -2,6 +2,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.models.generics import PrimaryModel
@@ -50,20 +51,33 @@ class PowerPanel(PrimaryModel):
     A distribution point for electrical power; e.g. a data center RPP.
     """
 
-    location = models.ForeignKey(to="dcim.Location", on_delete=models.PROTECT, related_name="power_panels")
-    rack_group = models.ForeignKey(
-        to="RackGroup", on_delete=models.PROTECT, blank=True, null=True, related_name="power_panels"
+    location = models.ForeignKey(
+        to="dcim.Location", on_delete=models.PROTECT, related_name="power_panels", verbose_name=_("location")
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True)
-    panel_type = models.CharField(max_length=30, choices=PowerPanelTypeChoices, blank=True)
+    rack_group = models.ForeignKey(
+        to="RackGroup",
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
+        related_name="power_panels",
+        verbose_name=_("rack group"),
+    )
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True, verbose_name=_("name"))
+    panel_type = models.CharField(
+        max_length=30, choices=PowerPanelTypeChoices, blank=True, verbose_name=_("panel type")
+    )
     breaker_position_count = models.PositiveIntegerField(
-        null=True, blank=True, help_text="Total number of breaker positions in the panel (e.g., 42)"
+        null=True,
+        blank=True,
+        help_text=_("Total number of breaker positions in the panel (e.g., 42)"),
+        verbose_name=_("breaker position count"),
     )
     power_path = models.CharField(
         max_length=20,
         choices=PowerPathChoices,
-        help_text="Physical power distribution redundancy path.",
+        help_text=_("Physical power distribution redundancy path."),
         blank=True,
+        verbose_name=_("power path"),
     )
 
     natural_key_field_names = ["name", "location"]
@@ -83,8 +97,8 @@ class PowerPanel(PrimaryModel):
             if ContentType.objects.get_for_model(self) not in self.location.location_type.content_types.all():
                 raise ValidationError(
                     {
-                        "location": "Power panels may not associate to locations of type "
-                        f'"{self.location.location_type}".'
+                        "location": gettext('Power panels may not associate to locations of type "%(location_type)s".')
+                        % {"location_type": self.location.location_type}
                     }
                 )
 
@@ -97,8 +111,14 @@ class PowerPanel(PrimaryModel):
             ):
                 raise ValidationError(
                     {  # pylint: disable=no-member  # false positive on rack_group.location
-                        "rack_group": f'Rack group "{self.rack_group}" belongs to a location '
-                        f'("{self.rack_group.location}") that does not contain "{self.location}".'
+                        "rack_group": gettext(
+                            'Rack group "%(rack_group)s" belongs to a location ("%(location)s") that does not contain "%(location_2)s".'
+                        )
+                        % {
+                            "rack_group": self.rack_group,
+                            "location": self.rack_group.location,
+                            "location_2": self.location,
+                        }
                     }
                 )
 
@@ -123,7 +143,8 @@ class PowerFeed(PrimaryModel, PathEndpoint, CableTermination):
         to="PowerPanel",
         on_delete=models.PROTECT,
         related_name="power_feeds",
-        help_text="Source panel that originates this power feed",
+        help_text=_("Source panel that originates this power feed"),
+        verbose_name=_("power panel"),
     )
     destination_panel = models.ForeignKey(
         to="PowerPanel",
@@ -131,47 +152,63 @@ class PowerFeed(PrimaryModel, PathEndpoint, CableTermination):
         blank=True,
         null=True,
         related_name="feeders",
-        help_text="Destination panel that receives power from this feed",
+        help_text=_("Destination panel that receives power from this feed"),
+        verbose_name=_("destination panel"),
     )
-    rack = models.ForeignKey(to="Rack", on_delete=models.PROTECT, blank=True, null=True, related_name="power_feeds")
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
-    status = StatusField(blank=False, null=False)
+    rack = models.ForeignKey(
+        to="Rack", on_delete=models.PROTECT, blank=True, null=True, related_name="power_feeds", verbose_name=_("rack")
+    )
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("name"))
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
     type = models.CharField(
-        max_length=50,
-        choices=PowerFeedTypeChoices,
-        default=PowerFeedTypeChoices.TYPE_PRIMARY,
+        max_length=50, choices=PowerFeedTypeChoices, default=PowerFeedTypeChoices.TYPE_PRIMARY, verbose_name=_("type")
     )
     power_path = models.CharField(
         max_length=20,
         choices=PowerPathChoices,
-        help_text="Physical power distribution redundancy path.",
+        help_text=_("Physical power distribution redundancy path."),
         blank=True,
+        verbose_name=_("power path"),
     )
     supply = models.CharField(
         max_length=50,
         choices=PowerFeedSupplyChoices,
         default=PowerFeedSupplyChoices.SUPPLY_AC,
+        verbose_name=_("supply"),
     )
     phase = models.CharField(
         max_length=50,
         choices=PowerFeedPhaseChoices,
         default=PowerFeedPhaseChoices.PHASE_SINGLE,
+        verbose_name=_("phase"),
     )
-    voltage = models.SmallIntegerField(default=POWERFEED_VOLTAGE_DEFAULT, validators=[ExclusionValidator([0])])
-    amperage = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)], default=POWERFEED_AMPERAGE_DEFAULT)
+    voltage = models.SmallIntegerField(
+        default=POWERFEED_VOLTAGE_DEFAULT, validators=[ExclusionValidator([0])], verbose_name=_("voltage")
+    )
+    amperage = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1)], default=POWERFEED_AMPERAGE_DEFAULT, verbose_name=_("amperage")
+    )
     max_utilization = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(100)],
         default=POWERFEED_MAX_UTILIZATION_DEFAULT,
-        help_text="Maximum permissible draw (percentage)",
+        help_text=_("Maximum permissible draw (percentage)"),
+        verbose_name=_("max utilization"),
     )
     breaker_position = models.PositiveIntegerField(
-        null=True, blank=True, help_text="Starting circuit breaker position in panel"
+        null=True,
+        blank=True,
+        help_text=_("Starting circuit breaker position in panel"),
+        verbose_name=_("breaker position"),
     )
     breaker_pole_count = models.PositiveSmallIntegerField(
-        choices=PowerFeedBreakerPoleChoices, blank=True, null=True, help_text="Number of breaker poles"
+        choices=PowerFeedBreakerPoleChoices,
+        blank=True,
+        null=True,
+        help_text=_("Number of breaker poles"),
+        verbose_name=_("breaker pole count"),
     )
     available_power = models.PositiveIntegerField(default=0, editable=False)
-    comments = models.TextField(blank=True)
+    comments = models.TextField(blank=True, verbose_name=_("comments"))
 
     clone_fields = [
         "power_panel",
@@ -211,29 +248,37 @@ class PowerFeed(PrimaryModel, PathEndpoint, CableTermination):
             ) and self.power_panel.location not in self.rack.location.ancestors(include_self=True):  # pylint: disable=no-member
                 raise ValidationError(
                     {
-                        "rack": f'Rack "{self.rack}" ({self.rack.location}) and '  # pylint: disable=no-member
-                        f'power panel "{self.power_panel}" ({self.power_panel.location}) '  # pylint: disable=no-member
-                        f"are not in the same location hierarchy."
+                        "rack": gettext(
+                            'Rack "%(rack)s" (%(location)s) and power panel "%(power_panel)s" (%(location_2)s) are not in the same location hierarchy.'
+                        )
+                        % {
+                            "rack": self.rack,
+                            "location": self.rack.location,
+                            "power_panel": self.power_panel,
+                            "location_2": self.power_panel.location,
+                        }
                     }
                 )
 
         # AC voltage cannot be negative
         if self.voltage < 0 and self.supply == PowerFeedSupplyChoices.SUPPLY_AC:
-            raise ValidationError({"voltage": "Voltage cannot be negative for AC supply"})
+            raise ValidationError({"voltage": _("Voltage cannot be negative for AC supply")})
 
         # Destination panel validation
         if self.destination_panel:
             # Cannot feed into the same panel
             if self.destination_panel == self.power_panel:
-                raise ValidationError({"destination_panel": "A power feed cannot connect a panel to itself"})
+                raise ValidationError({"destination_panel": _("A power feed cannot connect a panel to itself")})
             # TODO: add loop detection when graph structure is implemented for path tracing
 
         # Enforce mutual exclusivity between cable connections and destination_panel
         if self.destination_panel and self.cable:
             raise ValidationError(
                 {
-                    "destination_panel": "Cannot specify a destination panel when the power feed is connected via cable. "
-                    "Power feeds can either connect to a panel OR be cabled to an endpoint, but not both."
+                    "destination_panel": _(
+                        "Cannot specify a destination panel when the power feed is connected via cable. "
+                        "Power feeds can either connect to a panel OR be cabled to an endpoint, but not both."
+                    )
                 }
             )
 
@@ -253,9 +298,15 @@ class PowerFeed(PrimaryModel, PathEndpoint, CableTermination):
                     if max_occupied_position > self.power_panel.breaker_position_count:
                         raise ValidationError(
                             {
-                                "breaker_position": f"Breaker configuration starting at position {self.breaker_position} "
-                                f"with {self.breaker_pole_count} poles would occupy positions {sorted(occupied_positions)}, "
-                                f"but panel only has {self.power_panel.breaker_position_count} breaker positions"
+                                "breaker_position": gettext(
+                                    "Breaker configuration starting at position %(breaker_position)s with %(breaker_pole_count)s poles would occupy positions %(occupied_positions)s, but panel only has %(breaker_position_count)s breaker positions"
+                                )
+                                % {
+                                    "breaker_position": self.breaker_position,
+                                    "breaker_pole_count": self.breaker_pole_count,
+                                    "occupied_positions": sorted(occupied_positions),
+                                    "breaker_position_count": self.power_panel.breaker_position_count,
+                                }
                             }
                         )
 
@@ -268,8 +319,14 @@ class PowerFeed(PrimaryModel, PathEndpoint, CableTermination):
                 if occupied_positions.intersection(feed.get_occupied_positions()):
                     raise ValidationError(
                         {
-                            "breaker_position": f"Breaker position {self.breaker_position} conflicts with "
-                            f'feed "{feed.name}" (occupies {feed.occupied_positions})'
+                            "breaker_position": gettext(
+                                'Breaker position %(breaker_position)s conflicts with feed "%(name)s" (occupies %(occupied_positions)s)'
+                            )
+                            % {
+                                "breaker_position": self.breaker_position,
+                                "name": feed.name,
+                                "occupied_positions": feed.occupied_positions,
+                            }
                         }
                     )
 
@@ -281,8 +338,10 @@ class PowerFeed(PrimaryModel, PathEndpoint, CableTermination):
         # Enforce mutual exclusivity between cable connections and destination_panel
         if self.destination_panel and self.cable:
             raise ValidationError(
-                "Cannot specify a destination panel when the power feed is connected via cable. "
-                "Power feeds can either connect to a panel OR be cabled to an endpoint, but not both."
+                _(
+                    "Cannot specify a destination panel when the power feed is connected via cable. "
+                    "Power feeds can either connect to a panel OR be cabled to an endpoint, but not both."
+                )
             )
 
         # Cache the available_power property on the instance

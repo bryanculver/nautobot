@@ -1,6 +1,5 @@
-import inspect
-
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.cloud.models import CloudAccount, CloudNetwork, CloudResourceType, CloudService
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
@@ -24,7 +23,7 @@ from nautobot.ipam.models import Namespace, Prefix
 class CloudAccountForm(NautobotModelForm):
     provider = DynamicModelChoiceField(
         queryset=Manufacturer.objects.all(),
-        help_text="The Manufacturer instance which represents the Cloud Provider",
+        help_text=_("The Manufacturer instance which represents the Cloud Provider"),
     )
     secrets_group = DynamicModelChoiceField(queryset=SecretsGroup.objects.all(), required=False)
 
@@ -63,7 +62,7 @@ class CloudAccountFilterForm(NautobotFilterForm):
         "secrets_group",
         "tags",
     ]
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     name = MultiValueCharField(required=False)
     account_number = MultiValueCharField(required=False)
     secrets_group = DynamicModelMultipleChoiceField(
@@ -89,15 +88,14 @@ class CloudNetworkForm(NautobotModelForm):
         queryset=CloudAccount.objects.all(),
     )
     cloud_services = DynamicModelMultipleChoiceField(
-        queryset=CloudService.objects.all(),
-        required=False,
+        queryset=CloudService.objects.all(), required=False, label=_("Cloud services")
     )
     parent = DynamicModelChoiceField(
         queryset=CloudNetwork.objects.all(),
         query_params={"parent__isnull": True},
         required=False,
     )
-    namespace = DynamicModelChoiceField(queryset=Namespace.objects.all(), required=False)
+    namespace = DynamicModelChoiceField(queryset=Namespace.objects.all(), required=False, label=_("Namespace"))
     prefixes = DynamicModelMultipleChoiceField(
         queryset=Prefix.objects.all(),
         required=False,
@@ -116,18 +114,18 @@ class CloudNetworkForm(NautobotModelForm):
             "extra_config",
             "tags",
         ]
-        EXTRA_CONFIG_HELP_TEXT = """
-            Optional user-defined <a href="https://json.org/">JSON</a> data for this integration. Example:
-            <pre><code class="language-json">{
-                "key": "value",
-                "key2": [
-                    "value1",
-                    "value2"
-                ]
-            }</code></pre>
-        """
+        EXTRA_CONFIG_HELP_TEXT = _(
+            'Optional user-defined <a href="https://json.org/">JSON</a> data for this integration. Example:\n'
+            '<pre><code class="language-json">{\n'
+            '    "key": "value",\n'
+            '    "key2": [\n'
+            '        "value1",\n'
+            '        "value2"\n'
+            "    ]\n"
+            "}</code></pre>"
+        )
         help_texts = {
-            "extra_config": inspect.cleandoc(EXTRA_CONFIG_HELP_TEXT),
+            "extra_config": EXTRA_CONFIG_HELP_TEXT,
         }
 
     def __init__(self, *args, **kwargs):
@@ -151,7 +149,7 @@ class CloudNetworkBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
     )
     cloud_account = DynamicModelChoiceField(queryset=CloudAccount.objects.all(), required=False)
     description = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False)
-    namespace = DynamicModelChoiceField(queryset=Namespace.objects.all(), required=False)
+    namespace = DynamicModelChoiceField(queryset=Namespace.objects.all(), required=False, label=_("Namespace"))
     add_prefixes = DynamicModelMultipleChoiceField(
         queryset=Prefix.objects.all(), required=False, query_params={"namespace": "$namespace"}
     )
@@ -177,7 +175,7 @@ class CloudNetworkFilterForm(NautobotFilterForm):
         "parent",
         "tags",
     ]
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     name = MultiValueCharField(required=False)
     cloud_resource_type = DynamicModelMultipleChoiceField(
         queryset=CloudResourceType.objects.all(),
@@ -205,11 +203,11 @@ class CloudNetworkFilterForm(NautobotFilterForm):
 class CloudResourceTypeForm(NautobotModelForm):
     provider = DynamicModelChoiceField(
         queryset=Manufacturer.objects.all(),
-        help_text="The Manufacturer instance which represents the Cloud Provider",
+        help_text=_("The Manufacturer instance which represents the Cloud Provider"),
     )
     content_types = MultipleContentTypeField(
         feature="cloud_resource_types",
-        label="Content Type(s)",
+        label=_("Content Type(s)"),
     )
 
     class Meta:
@@ -230,7 +228,7 @@ class CloudResourceTypeBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm)
     content_types = MultipleContentTypeField(
         feature="cloud_resource_types",
         required=False,
-        label="Content Type(s)",
+        label=_("Content Type(s)"),
     )
     description = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False)
 
@@ -249,7 +247,7 @@ class CloudResourceTypeFilterForm(NautobotFilterForm):
         "content_types",
         "tags",
     ]
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     name = MultiValueCharField(required=False)
     provider = DynamicModelMultipleChoiceField(
         queryset=Manufacturer.objects.all(), to_field_name="name", required=False
@@ -258,7 +256,7 @@ class CloudResourceTypeFilterForm(NautobotFilterForm):
         feature="cloud_resource_types",
         required=False,
         choices_as_strings=True,
-        label="Content Type(s)",
+        label=_("Content Type(s)"),
     )
     tags = TagFilterField(model)
 
@@ -322,7 +320,7 @@ class CloudServiceFilterForm(NautobotFilterForm):
         "cloud_resource_type",
         "tags",
     ]
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     name = MultiValueCharField(required=False)
     cloud_account = DynamicModelMultipleChoiceField(
         queryset=CloudAccount.objects.all(), to_field_name="name", required=False

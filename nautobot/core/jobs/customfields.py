@@ -1,6 +1,7 @@
 import json
 
 from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.extras.jobs import (
     BooleanVar,
@@ -22,26 +23,28 @@ class CleanupCustomFieldsData(Job):
 
     field = MultiObjectVar(
         model=CustomField,
-        description="Custom Field(s) to clean up data for. Leave blank to clean up data for all Custom Fields.",
-        label="Custom Field",
+        description=_("Custom Field(s) to clean up data for. Leave blank to clean up data for all Custom Fields."),
+        label=_("Custom Field"),
         required=False,
     )
     content_types = MultiObjectVar(
         model=ContentType,
-        description="Type(s) of objects to act upon. Leave blank to act on all applicable Content Types.",
-        label="Content Types",
+        description=_("Type(s) of objects to act upon. Leave blank to act on all applicable Content Types."),
+        label=_("Content Types"),
         query_params={"can_view": True, "feature": "custom_fields"},
         required=False,
     )
     dryrun = DryRunVar(
-        description="Execute all changes inside a rolled-back transaction. Logs reflect what would have changed. Implies verbose output."
+        description=_(
+            "Execute all changes inside a rolled-back transaction. Logs reflect what would have changed. Implies verbose output."
+        )
     )
     safe_change = BooleanVar(
         default=False,
-        label="Safe changes only",
-        description="Only run the additive provision step; skip any removal or mutation of existing data.",
+        label=_("Safe changes only"),
+        description=_("Only run the additive provision step; skip any removal or mutation of existing data."),
     )
-    verbose = BooleanVar(default=False, label="Verbose output?")
+    verbose = BooleanVar(default=False, label=_("Verbose output?"))
 
     class Meta:
         name = "Cleanup Custom Fields"
@@ -81,26 +84,30 @@ class DeleteCustomFieldData(Job):
     """System Job to delete all stored values for a Custom Field key across a set of Content Types."""
 
     field_key = StringVar(
-        label="Custom Field Key",
-        description="The key of the custom field whose data should be deleted. Ignored when Field Specs are provided.",
+        label=_("Custom Field Key"),
+        description=_(
+            "The key of the custom field whose data should be deleted. Ignored when Field Specs are provided."
+        ),
         required=False,
     )
     content_types = MultiObjectVar(
         model=ContentType,
-        description="Type(s) of objects to act upon. Ignored when Field Specs are provided.",
-        label="Content Types",
+        description=_("Type(s) of objects to act upon. Ignored when Field Specs are provided."),
+        label=_("Content Types"),
         query_params={"can_view": True, "feature": "custom_fields"},
         required=False,
     )
     field_specs = TextVar(
-        label="Field Specs (JSON)",
+        label=_("Field Specs (JSON)"),
         description=(
-            'Optional. JSON list of {"field_key": str, "content_types": [pk, ...]} dicts for bulk use. '
-            "When provided, Field Key and Content Types are ignored."
+            _(
+                'Optional. JSON list of {"field_key": str, "content_types": [pk, ...]} dicts for bulk use. '
+                "When provided, Field Key and Content Types are ignored."
+            )
         ),
         required=False,
     )
-    verbose = BooleanVar(default=False, label="Verbose output?")
+    verbose = BooleanVar(default=False, label=_("Verbose output?"))
 
     class Meta:
         name = "Delete Custom Field Data"
@@ -148,21 +155,23 @@ class ProvisionCustomField(Job):
 
     field = ObjectVar(
         model=CustomField,
-        description="Custom Field to provision.",
-        label="Custom Field",
+        description=_("Custom Field to provision."),
+        label=_("Custom Field"),
         required=True,
     )
     content_types = MultiObjectVar(
         model=ContentType,
-        description="Type(s) of objects to act upon.",
-        label="Content Types",
+        description=_("Type(s) of objects to act upon."),
+        label=_("Content Types"),
         query_params={"can_view": True, "feature": "custom_fields"},
         required=True,
     )
     dryrun = DryRunVar(
-        description="Execute all changes inside a rolled-back transaction. Logs reflect what would have changed. Implies verbose output."
+        description=_(
+            "Execute all changes inside a rolled-back transaction. Logs reflect what would have changed. Implies verbose output."
+        )
     )
-    verbose = BooleanVar(default=False, label="Verbose output?")
+    verbose = BooleanVar(default=False, label=_("Verbose output?"))
 
     class Meta:
         name = "Provision Custom Field"
@@ -188,25 +197,29 @@ class UpdateCustomFieldChoiceData(Job):
 
     field = ObjectVar(
         model=CustomField,
-        description="The Select or Multi-Select Custom Field whose choice value is being renamed. Ignored when Field Specs are provided.",
-        label="Custom Field",
+        description=_(
+            "The Select or Multi-Select Custom Field whose choice value is being renamed. Ignored when Field Specs are provided."
+        ),
+        label=_("Custom Field"),
         required=False,
     )
     old_value = StringVar(
-        label="Old Value",
-        description="The existing choice value to replace. Ignored when Field Specs are provided.",
+        label=_("Old Value"),
+        description=_("The existing choice value to replace. Ignored when Field Specs are provided."),
         required=False,
     )
     new_value = StringVar(
-        label="New Value",
-        description="The new choice value to set in place of the old value. Ignored when Field Specs are provided.",
+        label=_("New Value"),
+        description=_("The new choice value to set in place of the old value. Ignored when Field Specs are provided."),
         required=False,
     )
     field_specs = TextVar(
-        label="Field Specs (JSON)",
+        label=_("Field Specs (JSON)"),
         description=(
-            'Optional. JSON list of {"field_id": str, "old_value": str, "new_value": str} dicts for bulk use. '
-            "When provided, Field, Old Value, and New Value are ignored."
+            _(
+                'Optional. JSON list of {"field_id": str, "old_value": str, "new_value": str} dicts for bulk use. '
+                "When provided, Field, Old Value, and New Value are ignored."
+            )
         ),
         required=False,
     )

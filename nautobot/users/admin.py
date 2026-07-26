@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, ValidationError
 from django.urls import reverse
 from django.utils.html import escape, format_html
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.core.admin import NautobotModelAdmin
 from nautobot.core.utils.permissions import qs_filter_from_constraints
@@ -111,7 +112,7 @@ class LogEntryAdmin(NautobotModelAdmin):
         return link
 
     object_link.admin_order_field = "object_repr"
-    object_link.short_description = "object"
+    object_link.short_description = _("object")
 
 
 @admin.register(User)
@@ -159,7 +160,7 @@ class UserAdmin(UserAdmin_):
 class TokenAdminForm(forms.ModelForm):
     key = forms.CharField(
         required=False,
-        help_text="If no key is provided, one will be generated automatically.",
+        help_text=_("If no key is provided, one will be generated automatically."),
     )
 
     class Meta:
@@ -188,12 +189,14 @@ class ObjectPermissionForm(forms.ModelForm):
         model = ObjectPermission
         fields = ["name", "description", "enabled", "object_types", "groups", "users", "actions", "constraints"]
         help_texts = {
-            "actions": "Actions granted in addition to those listed above",
-            "constraints": "JSON expression of a queryset filter that will return only permitted objects. Leave null "
-            "to match all objects of this type. A list of multiple objects will result in a logical OR "
-            "operation.",
+            "actions": _("Actions granted in addition to those listed above"),
+            "constraints": _(
+                "JSON expression of a queryset filter that will return only permitted objects. Leave null "
+                "to match all objects of this type. A list of multiple objects will result in a logical OR "
+                "operation."
+            ),
         }
-        labels = {"actions": "Additional actions"}
+        labels = {"actions": _("Additional actions")}
         widgets = {"constraints": forms.Textarea(attrs={"class": "vLargeTextField"})}
 
     def __init__(self, *args, **kwargs):
@@ -232,7 +235,7 @@ class ObjectPermissionForm(forms.ModelForm):
 
         # At least one action must be specified
         if not self.cleaned_data["actions"]:
-            raise ValidationError("At least one action must be selected.")
+            raise ValidationError(_("At least one action must be selected."))
 
         # Validate the specified model constraints by attempting to execute a query. We don't care whether the query
         # returns anything; we just want to make sure the specified constraints are valid.
@@ -246,7 +249,9 @@ class ObjectPermissionForm(forms.ModelForm):
                     tokens = {"$user": None}  # setting token to null user ID
                     model.objects.filter(qs_filter_from_constraints(constraints, tokens)).exists()
                 except FieldError as e:
-                    raise ValidationError({"constraints": f"Invalid filter for {model}: {e}"})
+                    raise ValidationError(
+                        {"constraints": gettext("Invalid filter for %(value)s: %(e)s") % {"value": model, "e": e}}
+                    )
 
 
 class ActionListFilter(admin.SimpleListFilter):
@@ -319,17 +324,17 @@ class ObjectPermissionAdmin(NautobotModelAdmin):
     def list_models(self, obj):
         return ", ".join([f"{ct}" for ct in obj.object_types.all()])
 
-    list_models.short_description = "Models"
+    list_models.short_description = _("Models")
 
     def list_users(self, obj):
         return ", ".join([u.username for u in obj.users.all()])
 
-    list_users.short_description = "Users"
+    list_users.short_description = _("Users")
 
     def list_groups(self, obj):
         return ", ".join([g.name for g in obj.groups.all()])
 
-    list_groups.short_description = "Groups"
+    list_groups.short_description = _("Groups")
 
     #
     # Admin actions

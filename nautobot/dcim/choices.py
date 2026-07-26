@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.core.choices import ChoiceSet
 
 #
@@ -13,11 +15,11 @@ class LocationStatusChoices(ChoiceSet):
     STATUS_RETIRED = "retired"
 
     CHOICES = (
-        (STATUS_PLANNED, "Planned"),
-        (STATUS_STAGING, "Staging"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_DECOMMISSIONING, "Decommissioning"),
-        (STATUS_RETIRED, "Retired"),
+        (STATUS_PLANNED, _("Planned")),
+        (STATUS_STAGING, _("Staging")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_DECOMMISSIONING, _("Decommissioning")),
+        (STATUS_RETIRED, _("Retired")),
     )
 
 
@@ -28,10 +30,10 @@ class LocationDataToContactActionChoices(ChoiceSet):
     CREATE_AND_ASSIGN_NEW_TEAM = "create and assign new team"
 
     CHOICES = (
-        (ASSOCIATE_EXISTING_CONTACT, "Associate to existing contact"),
-        (ASSOCIATE_EXISTING_TEAM, "Associate to existing team"),
-        (CREATE_AND_ASSIGN_NEW_CONTACT, "Create and assign new contact"),
-        (CREATE_AND_ASSIGN_NEW_TEAM, "Create and assign new team"),
+        (ASSOCIATE_EXISTING_CONTACT, _("Associate to existing contact")),
+        (ASSOCIATE_EXISTING_TEAM, _("Associate to existing team")),
+        (CREATE_AND_ASSIGN_NEW_CONTACT, _("Create and assign new contact")),
+        (CREATE_AND_ASSIGN_NEW_TEAM, _("Create and assign new team")),
     )
 
 
@@ -51,14 +53,14 @@ class RackTypeChoices(ChoiceSet):
     TYPE_OTHER = "other"
 
     CHOICES = (
-        (TYPE_2POST, "2-post frame"),
-        (TYPE_4POST, "4-post frame"),
-        (TYPE_CABINET, "4-post cabinet"),
-        (TYPE_WALLFRAME, "Wall-mounted frame"),
-        (TYPE_WALLFRAME_VERTICAL, "Wall-mounted frame (vertical)"),
-        (TYPE_WALLCABINET, "Wall-mounted cabinet"),
-        (TYPE_WALLCABINET_VERTICAL, "Wall-mounted cabinet (vertical)"),
-        (TYPE_OTHER, "Other"),
+        (TYPE_2POST, _("2-post frame")),
+        (TYPE_4POST, _("4-post frame")),
+        (TYPE_CABINET, _("4-post cabinet")),
+        (TYPE_WALLFRAME, _("Wall-mounted frame")),
+        (TYPE_WALLFRAME_VERTICAL, _("Wall-mounted frame (vertical)")),
+        (TYPE_WALLCABINET, _("Wall-mounted cabinet")),
+        (TYPE_WALLCABINET_VERTICAL, _("Wall-mounted cabinet (vertical)")),
+        (TYPE_OTHER, _("Other")),
     )
 
 
@@ -69,10 +71,10 @@ class RackWidthChoices(ChoiceSet):
     WIDTH_23IN = 23
 
     CHOICES = (
-        (WIDTH_10IN, "10 inches"),
-        (WIDTH_19IN, "19 inches"),
-        (WIDTH_21IN, "21 inches"),
-        (WIDTH_23IN, "23 inches"),
+        (WIDTH_10IN, _("10 inches")),
+        (WIDTH_19IN, _("19 inches")),
+        (WIDTH_21IN, _("21 inches")),
+        (WIDTH_23IN, _("23 inches")),
     )
 
 
@@ -84,11 +86,11 @@ class RackStatusChoices(ChoiceSet):
     STATUS_DEPRECATED = "deprecated"
 
     CHOICES = (
-        (STATUS_RESERVED, "Reserved"),
-        (STATUS_AVAILABLE, "Available"),
-        (STATUS_PLANNED, "Planned"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_DEPRECATED, "Deprecated"),
+        (STATUS_RESERVED, _("Reserved")),
+        (STATUS_AVAILABLE, _("Available")),
+        (STATUS_PLANNED, _("Planned")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_DEPRECATED, _("Deprecated")),
     )
 
 
@@ -97,8 +99,8 @@ class RackDimensionUnitChoices(ChoiceSet):
     UNIT_INCH = "in"
 
     CHOICES = (
-        (UNIT_MILLIMETER, "Millimeters"),
-        (UNIT_INCH, "Inches"),
+        (UNIT_MILLIMETER, _("Millimeters")),
+        (UNIT_INCH, _("Inches")),
     )
 
 
@@ -120,9 +122,9 @@ class SubdeviceRoleChoices(ChoiceSet):
     ROLE_PARENT_CHILD = "parent-child"
 
     CHOICES = (
-        (ROLE_PARENT, "Parent"),
-        (ROLE_CHILD, "Child"),
-        (ROLE_PARENT_CHILD, "Parent and Child"),
+        (ROLE_PARENT, _("Parent")),
+        (ROLE_CHILD, _("Child")),
+        (ROLE_PARENT_CHILD, _("Parent and Child")),
     )
 
 
@@ -136,8 +138,8 @@ class DeviceFaceChoices(ChoiceSet):
     FACE_REAR = "rear"
 
     CHOICES = (
-        (FACE_FRONT, "Front"),
-        (FACE_REAR, "Rear"),
+        (FACE_FRONT, _("Front")),
+        (FACE_REAR, _("Rear")),
     )
 
 
@@ -151,13 +153,13 @@ class DeviceStatusChoices(ChoiceSet):
     STATUS_DECOMMISSIONING = "decommissioning"
 
     CHOICES = (
-        (STATUS_OFFLINE, "Offline"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_PLANNED, "Planned"),
-        (STATUS_STAGED, "Staged"),
-        (STATUS_FAILED, "Failed"),
-        (STATUS_INVENTORY, "Inventory"),
-        (STATUS_DECOMMISSIONING, "Decommissioning"),
+        (STATUS_OFFLINE, _("Offline")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_PLANNED, _("Planned")),
+        (STATUS_STAGED, _("Staged")),
+        (STATUS_FAILED, _("Failed")),
+        (STATUS_INVENTORY, _("Inventory")),
+        (STATUS_DECOMMISSIONING, _("Decommissioning")),
     )
 
 
@@ -169,9 +171,9 @@ class DeviceUniquenessChoices(ChoiceSet):
     DEFAULT = LOCATION_TENANT_NAME
 
     CHOICES = [
-        (LOCATION_TENANT_NAME, "Location + Tenant + Name"),
-        (NAME, "Device name must be globally unique"),
-        (NONE, "No enforced uniqueness"),
+        (LOCATION_TENANT_NAME, _("Location + Tenant + Name")),
+        (NAME, _("Device name must be globally unique")),
+        (NONE, _("No enforced uniqueness")),
     ]
 
 
@@ -1150,9 +1152,9 @@ class InterfaceModeChoices(ChoiceSet):
     MODE_TAGGED_ALL = "tagged-all"
 
     CHOICES = (
-        (MODE_ACCESS, "Access"),
-        (MODE_TAGGED, "Tagged"),
-        (MODE_TAGGED_ALL, "Tagged (All)"),
+        (MODE_ACCESS, _("Access")),
+        (MODE_TAGGED, _("Tagged")),
+        (MODE_TAGGED_ALL, _("Tagged (All)")),
     )
 
 
@@ -1162,9 +1164,9 @@ class InterfaceDuplexChoices(ChoiceSet):
     DUPLEX_HALF = "half"
 
     CHOICES = (
-        (DUPLEX_AUTO, "Auto"),
-        (DUPLEX_FULL, "Full"),
-        (DUPLEX_HALF, "Half"),
+        (DUPLEX_AUTO, _("Auto")),
+        (DUPLEX_FULL, _("Full")),
+        (DUPLEX_HALF, _("Half")),
     )
 
 
@@ -1213,11 +1215,11 @@ class InterfaceStatusChoices(ChoiceSet):
     STATUS_MAINTENANCE = "maintenance"
 
     CHOICES = (
-        (STATUS_PLANNED, "Planned"),
-        (STATUS_FAILED, "Failed"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_DECOMMISSIONING, "Decommissioning"),
-        (STATUS_MAINTENANCE, "Maintenance"),
+        (STATUS_PLANNED, _("Planned")),
+        (STATUS_FAILED, _("Failed")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_DECOMMISSIONING, _("Decommissioning")),
+        (STATUS_MAINTENANCE, _("Maintenance")),
     )
 
 
@@ -1417,9 +1419,9 @@ class CableStatusChoices(ChoiceSet):
     STATUS_DECOMMISSIONING = "decommissioning"
 
     CHOICES = (
-        (STATUS_CONNECTED, "Connected"),
-        (STATUS_PLANNED, "Planned"),
-        (STATUS_DECOMMISSIONING, "Decommissioning"),
+        (STATUS_CONNECTED, _("Connected")),
+        (STATUS_PLANNED, _("Planned")),
+        (STATUS_DECOMMISSIONING, _("Decommissioning")),
     )
 
 
@@ -1435,12 +1437,12 @@ class CableLengthUnitChoices(ChoiceSet):
     UNIT_INCH = "in"
 
     CHOICES = (
-        (UNIT_KILOMETER, "Kilometers"),
-        (UNIT_METER, "Meters"),
-        (UNIT_CENTIMETER, "Centimeters"),
-        (UNIT_MILE, "Miles"),
-        (UNIT_FOOT, "Feet"),
-        (UNIT_INCH, "Inches"),
+        (UNIT_KILOMETER, _("Kilometers")),
+        (UNIT_METER, _("Meters")),
+        (UNIT_CENTIMETER, _("Centimeters")),
+        (UNIT_MILE, _("Miles")),
+        (UNIT_FOOT, _("Feet")),
+        (UNIT_INCH, _("Inches")),
     )
 
 
@@ -1456,10 +1458,10 @@ class CableTypePolarityMethodChoices(ChoiceSet):
     METHOD_OTHER = "other"
 
     CHOICES = (
-        (METHOD_STRAIGHT, "Straight-through"),
-        (METHOD_REVERSED, "Reversed"),
-        (METHOD_PAIR_REVERSED, "Pair-reversed"),
-        (METHOD_OTHER, "Other"),
+        (METHOD_STRAIGHT, _("Straight-through")),
+        (METHOD_REVERSED, _("Reversed")),
+        (METHOD_PAIR_REVERSED, _("Pair-reversed")),
+        (METHOD_OTHER, _("Other")),
     )
 
 
@@ -1481,16 +1483,16 @@ class PowerPanelTypeChoices(ChoiceSet):
     TYPE_RPP = "rpp"
 
     CHOICES = (
-        (TYPE_UTILITY, "Utility"),
-        (TYPE_GENERATOR, "Generator"),
-        (TYPE_SWITCHGEAR, "Switchgear"),
-        (TYPE_MDP, "Main Distribution Panel (MDP)"),
-        (TYPE_UPS, "Uninterruptible Power Supply (UPS)"),
-        (TYPE_TRANSFER_SWITCH, "Transfer Switch (TS)"),
-        (TYPE_PDU, "Power Distribution Unit (PDU)"),
-        (TYPE_PANELBOARD, "Panelboard"),
-        (TYPE_MLC, "Mini Load Center (MLC)"),
-        (TYPE_RPP, "Remote Power Panel (RPP)"),
+        (TYPE_UTILITY, _("Utility")),
+        (TYPE_GENERATOR, _("Generator")),
+        (TYPE_SWITCHGEAR, _("Switchgear")),
+        (TYPE_MDP, _("Main Distribution Panel (MDP)")),
+        (TYPE_UPS, _("Uninterruptible Power Supply (UPS)")),
+        (TYPE_TRANSFER_SWITCH, _("Transfer Switch (TS)")),
+        (TYPE_PDU, _("Power Distribution Unit (PDU)")),
+        (TYPE_PANELBOARD, _("Panelboard")),
+        (TYPE_MLC, _("Mini Load Center (MLC)")),
+        (TYPE_RPP, _("Remote Power Panel (RPP)")),
     )
 
 
@@ -1506,10 +1508,10 @@ class PowerFeedStatusChoices(ChoiceSet):
     STATUS_FAILED = "failed"
 
     CHOICES = (
-        (STATUS_OFFLINE, "Offline"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_PLANNED, "Planned"),
-        (STATUS_FAILED, "Failed"),
+        (STATUS_OFFLINE, _("Offline")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_PLANNED, _("Planned")),
+        (STATUS_FAILED, _("Failed")),
     )
 
 
@@ -1518,8 +1520,8 @@ class PowerFeedTypeChoices(ChoiceSet):
     TYPE_REDUNDANT = "redundant"
 
     CHOICES = (
-        (TYPE_PRIMARY, "Primary"),
-        (TYPE_REDUNDANT, "Redundant"),
+        (TYPE_PRIMARY, _("Primary")),
+        (TYPE_REDUNDANT, _("Redundant")),
     )
 
     CSS_CLASSES = {
@@ -1533,8 +1535,8 @@ class PowerPathChoices(ChoiceSet):
     PATH_B = "b"
 
     CHOICES = (
-        (PATH_A, "Path A"),
-        (PATH_B, "Path B"),
+        (PATH_A, _("Path A")),
+        (PATH_B, _("Path B")),
     )
 
 
@@ -1553,8 +1555,8 @@ class PowerFeedPhaseChoices(ChoiceSet):
     PHASE_3PHASE = "three-phase"
 
     CHOICES = (
-        (PHASE_SINGLE, "Single phase"),
-        (PHASE_3PHASE, "Three-phase"),
+        (PHASE_SINGLE, _("Single phase")),
+        (PHASE_3PHASE, _("Three-phase")),
     )
 
 
@@ -1564,9 +1566,9 @@ class PowerFeedBreakerPoleChoices(ChoiceSet):
     POLE_3 = 3
 
     CHOICES = [
-        (POLE_1, "1-Pole"),
-        (POLE_2, "2-Pole"),
-        (POLE_3, "3-Pole"),
+        (POLE_1, _("1-Pole")),
+        (POLE_2, _("2-Pole")),
+        (POLE_3, _("3-Pole")),
     ]
 
 
@@ -1583,11 +1585,11 @@ class DeviceRedundancyGroupStatusChoices(ChoiceSet):
     STATUS_RETIRED = "retired"
 
     CHOICES = (
-        (STATUS_PLANNED, "Planned"),
-        (STATUS_STAGING, "Staging"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_DECOMMISSIONING, "Decommissioning"),
-        (STATUS_RETIRED, "Retired"),
+        (STATUS_PLANNED, _("Planned")),
+        (STATUS_STAGING, _("Staging")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_DECOMMISSIONING, _("Decommissioning")),
+        (STATUS_RETIRED, _("Retired")),
     )
 
 
@@ -1597,9 +1599,9 @@ class DeviceRedundancyGroupFailoverStrategyChoices(ChoiceSet):
     FAILOVER_ACTIVE_PASSIVE = "active-passive"
 
     CHOICES = (
-        (FAILOVER_UNSPECIFIED, "(unspecified)"),
-        (FAILOVER_ACTIVE_ACTIVE, "Active/Active"),
-        (FAILOVER_ACTIVE_PASSIVE, "Active/Passive"),
+        (FAILOVER_UNSPECIFIED, _("(unspecified)")),
+        (FAILOVER_ACTIVE_ACTIVE, _("Active/Active")),
+        (FAILOVER_ACTIVE_PASSIVE, _("Active/Passive")),
     )
 
 
@@ -1616,11 +1618,11 @@ class InterfaceRedundancyGroupStatusChoices(ChoiceSet):
     STATUS_RETIRED = "retired"
 
     CHOICES = (
-        (STATUS_PLANNED, "Planned"),
-        (STATUS_STAGING, "Staging"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_DECOMMISSIONING, "Decommissioning"),
-        (STATUS_RETIRED, "Retired"),
+        (STATUS_PLANNED, _("Planned")),
+        (STATUS_STAGING, _("Staging")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_DECOMMISSIONING, _("Decommissioning")),
+        (STATUS_RETIRED, _("Retired")),
     )
 
 
@@ -1673,9 +1675,9 @@ class SoftwareImageFileStatusChoices(ChoiceSet):
     STATUS_END_OF_LIFE = "end-of-life"
 
     CHOICES = (
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_EXTENDED_SUPPORT, "Extended Support"),
-        (STATUS_END_OF_LIFE, "End-of-Life"),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_EXTENDED_SUPPORT, _("Extended Support")),
+        (STATUS_END_OF_LIFE, _("End-of-Life")),
     )
 
 
@@ -1685,9 +1687,9 @@ class SoftwareVersionStatusChoices(ChoiceSet):
     STATUS_END_OF_LIFE = "end-of-life"
 
     CHOICES = (
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_EXTENDED_SUPPORT, "Extended Support"),
-        (STATUS_END_OF_LIFE, "End-of-Life"),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_EXTENDED_SUPPORT, _("Extended Support")),
+        (STATUS_END_OF_LIFE, _("End-of-Life")),
     )
 
 
@@ -1706,13 +1708,13 @@ class ModuleStatusChoices(ChoiceSet):
     STATUS_DECOMMISSIONING = "decommissioning"
 
     CHOICES = (
-        (STATUS_OFFLINE, "Offline"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_PLANNED, "Planned"),
-        (STATUS_STAGED, "Staged"),
-        (STATUS_FAILED, "Failed"),
-        (STATUS_INVENTORY, "Inventory"),
-        (STATUS_DECOMMISSIONING, "Decommissioning"),
+        (STATUS_OFFLINE, _("Offline")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_PLANNED, _("Planned")),
+        (STATUS_STAGED, _("Staged")),
+        (STATUS_FAILED, _("Failed")),
+        (STATUS_INVENTORY, _("Inventory")),
+        (STATUS_DECOMMISSIONING, _("Decommissioning")),
     )
 
 
@@ -1727,9 +1729,9 @@ class VirtualDeviceContextStatusChoices(ChoiceSet):
     STATUS_PLANNED = "planned"
 
     CHOICES = (
-        (STATUS_OFFLINE, "Offline"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_PLANNED, "Planned"),
+        (STATUS_OFFLINE, _("Offline")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_PLANNED, _("Planned")),
     )
 
 
@@ -1741,4 +1743,4 @@ class VirtualDeviceContextStatusChoices(ChoiceSet):
 class ControllerCapabilitiesChoices(ChoiceSet):
     WIRELESS = "wireless"
 
-    CHOICES = ((WIRELESS, "Wireless"),)
+    CHOICES = ((WIRELESS, _("Wireless")),)

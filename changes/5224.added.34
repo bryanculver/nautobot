@@ -1,0 +1,1 @@
+Marked the remaining table column headers as translatable, and allowed `TagColumn` to accept the standard column arguments so its header can be set.

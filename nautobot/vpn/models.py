@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.apps.constants import CHARFIELD_MAX_LENGTH
 from nautobot.apps.models import BaseModel, extras_features, JSONArrayField, PrimaryModel, StatusField
@@ -20,22 +21,22 @@ class VPNProfile(PrimaryModel):  # pylint: disable=too-many-ancestors
     vpn_phase1_policies = models.ManyToManyField(
         to="vpn.VPNPhase1Policy",
         related_name="vpn_profiles",
-        verbose_name="VPN Phase 1 Policy",
+        verbose_name=_("VPN Phase 1 Policy"),
         through="vpn.VPNProfilePhase1PolicyAssignment",
         blank=True,
-        help_text="Phase 1 Policy",
+        help_text=_("Phase 1 Policy"),
     )
     vpn_phase2_policies = models.ManyToManyField(
         to="vpn.VPNPhase2Policy",
         related_name="vpn_profiles",
-        verbose_name="VPN Phase 2 Policy",
+        verbose_name=_("VPN Phase 2 Policy"),
         through="vpn.VPNProfilePhase2PolicyAssignment",
         blank=True,
-        help_text="Phase 2 Policy",
+        help_text=_("Phase 2 Policy"),
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    role = RoleField(blank=True, null=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
+    role = RoleField(blank=True, null=True, verbose_name=_("role"))
     secrets_group = models.ForeignKey(
         to="extras.SecretsGroup",
         on_delete=models.SET_NULL,
@@ -43,13 +44,17 @@ class VPNProfile(PrimaryModel):  # pylint: disable=too-many-ancestors
         default=None,
         blank=True,
         null=True,
+        verbose_name=_("secrets group"),
     )
-    keepalive_enabled = models.BooleanField(default=False, verbose_name="Enable keepalive")
-    keepalive_interval = models.PositiveIntegerField(blank=True, null=True)
-    keepalive_retries = models.PositiveIntegerField(blank=True, null=True)
-    nat_traversal = models.BooleanField(default=False, verbose_name="Enable NAT Traversal")
+    keepalive_enabled = models.BooleanField(default=False, verbose_name=_("Enable keepalive"))
+    keepalive_interval = models.PositiveIntegerField(blank=True, null=True, verbose_name=_("keepalive interval"))
+    keepalive_retries = models.PositiveIntegerField(blank=True, null=True, verbose_name=_("keepalive retries"))
+    nat_traversal = models.BooleanField(default=False, verbose_name=_("Enable NAT Traversal"))
     extra_options = models.JSONField(
-        blank=True, null=True, help_text="Additional options specific to the VPN technology and/or implementation"
+        blank=True,
+        null=True,
+        help_text=_("Additional options specific to the VPN technology and/or implementation"),
+        verbose_name=_("extra options"),
     )
 
     tenant = models.ForeignKey(
@@ -58,6 +63,7 @@ class VPNProfile(PrimaryModel):  # pylint: disable=too-many-ancestors
         related_name="vpn_profiles",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
 
     clone_fields = [
@@ -75,7 +81,7 @@ class VPNProfile(PrimaryModel):  # pylint: disable=too-many-ancestors
         """Meta class for VPNProfile."""
 
         ordering = ("name",)
-        verbose_name = "VPN Profile"
+        verbose_name = _("VPN Profile")
 
     def __str__(self):
         """Stringify instance."""
@@ -92,38 +98,40 @@ class VPNProfile(PrimaryModel):  # pylint: disable=too-many-ancestors
 class VPNPhase1Policy(PrimaryModel):  # pylint: disable=too-many-ancestors
     """VPNPhase1Policy model."""
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     ike_version = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH, choices=choices.IkeVersionChoices, blank=True, verbose_name="IKE version"
+        max_length=CHARFIELD_MAX_LENGTH, choices=choices.IkeVersionChoices, blank=True, verbose_name=_("IKE version")
     )
     aggressive_mode = models.BooleanField(
-        default=False,
-        help_text="Only applicable to IKEv1",
+        default=False, help_text=_("Only applicable to IKEv1"), verbose_name=_("aggressive mode")
     )
     encryption_algorithm = JSONArrayField(
         base_field=models.CharField(choices=choices.EncryptionAlgorithmChoices),
         blank=True,
         null=True,
+        verbose_name=_("encryption algorithm"),
     )
     integrity_algorithm = JSONArrayField(
         base_field=models.CharField(choices=choices.IntegrityAlgorithmChoices),
         blank=True,
         null=True,
+        verbose_name=_("integrity algorithm"),
     )
     dh_group = JSONArrayField(
         base_field=models.CharField(choices=choices.DhGroupChoices),
         blank=True,
         null=True,
-        verbose_name="Diffie-Hellman group",
+        verbose_name=_("Diffie-Hellman group"),
     )
-    lifetime_seconds = models.PositiveIntegerField(blank=True, null=True, verbose_name="Lifetime (seconds)")
-    lifetime_kb = models.PositiveIntegerField(blank=True, null=True, verbose_name="Lifetime (kilobytes)")
+    lifetime_seconds = models.PositiveIntegerField(blank=True, null=True, verbose_name=_("Lifetime (seconds)"))
+    lifetime_kb = models.PositiveIntegerField(blank=True, null=True, verbose_name=_("Lifetime (kilobytes)"))
     authentication_method = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         choices=choices.AuthenticationMethodChoices,
         blank=True,
-        help_text="PSK, RSA, ECDSA, Certificate",
+        help_text=_("PSK, RSA, ECDSA, Certificate"),
+        verbose_name=_("authentication method"),
     )
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -131,6 +139,7 @@ class VPNPhase1Policy(PrimaryModel):  # pylint: disable=too-many-ancestors
         related_name="vpn_phase_1_policies",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
 
     clone_fields = [
@@ -149,8 +158,8 @@ class VPNPhase1Policy(PrimaryModel):  # pylint: disable=too-many-ancestors
         """Meta class for VPNPhase1Policy."""
 
         ordering = ("name",)
-        verbose_name = "VPN Phase 1 Policy"
-        verbose_name_plural = "VPN Phase 1 Policies"
+        verbose_name = _("VPN Phase 1 Policy")
+        verbose_name_plural = _("VPN Phase 1 Policies")
 
     def __str__(self):
         """Stringify instance."""
@@ -167,31 +176,34 @@ class VPNPhase1Policy(PrimaryModel):  # pylint: disable=too-many-ancestors
 class VPNPhase2Policy(PrimaryModel):  # pylint: disable=too-many-ancestors
     """VPNPhase2Policy model."""
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     encryption_algorithm = JSONArrayField(
         base_field=models.CharField(choices=choices.EncryptionAlgorithmChoices),
         blank=True,
         null=True,
+        verbose_name=_("encryption algorithm"),
     )
     integrity_algorithm = JSONArrayField(
         base_field=models.CharField(choices=choices.IntegrityAlgorithmChoices),
         blank=True,
         null=True,
+        verbose_name=_("integrity algorithm"),
     )
     pfs_group = JSONArrayField(
         base_field=models.CharField(choices=choices.DhGroupChoices),
         blank=True,
         null=True,
-        verbose_name="PFS group",
+        verbose_name=_("PFS group"),
     )
-    lifetime = models.PositiveIntegerField(blank=True, null=True, verbose_name="Lifetime (seconds)")
+    lifetime = models.PositiveIntegerField(blank=True, null=True, verbose_name=_("Lifetime (seconds)"))
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
         on_delete=models.SET_NULL,
         related_name="vpn_phase_2_policies",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
 
     clone_fields = [
@@ -206,8 +218,8 @@ class VPNPhase2Policy(PrimaryModel):  # pylint: disable=too-many-ancestors
         """Meta class for VPNPhase2Policy."""
 
         ordering = ("name",)
-        verbose_name = "VPN Phase 2 Policy"
-        verbose_name_plural = "VPN Phase 2 Policies"
+        verbose_name = _("VPN Phase 2 Policy")
+        verbose_name_plural = _("VPN Phase 2 Policies")
 
     def __str__(self):
         """Stringify instance."""
@@ -217,12 +229,20 @@ class VPNPhase2Policy(PrimaryModel):  # pylint: disable=too-many-ancestors
 @extras_features("graphql")
 class VPNProfilePhase1PolicyAssignment(BaseModel):
     vpn_profile = models.ForeignKey(
-        "vpn.VPNProfile", on_delete=models.CASCADE, related_name="vpn_profile_phase1_policy_assignments"
+        "vpn.VPNProfile",
+        on_delete=models.CASCADE,
+        related_name="vpn_profile_phase1_policy_assignments",
+        verbose_name=_("vpn profile"),
     )
     vpn_phase1_policy = models.ForeignKey(
-        "vpn.VPNPhase1Policy", on_delete=models.CASCADE, related_name="vpn_profile_phase1_policy_assignments"
+        "vpn.VPNPhase1Policy",
+        on_delete=models.CASCADE,
+        related_name="vpn_profile_phase1_policy_assignments",
+        verbose_name=_("vpn phase1 policy"),
     )
-    weight = models.PositiveIntegerField(default=100, help_text="Higher weights appear later in the list")
+    weight = models.PositiveIntegerField(
+        default=100, help_text=_("Higher weights appear later in the list"), verbose_name=_("weight")
+    )
     is_metadata_associable_model = False
     documentation_static_path = "docs/user-guide/core-data-model/vpn/vpnprofile.html"
 
@@ -237,12 +257,20 @@ class VPNProfilePhase1PolicyAssignment(BaseModel):
 @extras_features("graphql")
 class VPNProfilePhase2PolicyAssignment(BaseModel):
     vpn_profile = models.ForeignKey(
-        "vpn.VPNProfile", on_delete=models.CASCADE, related_name="vpn_profile_phase2_policy_assignments"
+        "vpn.VPNProfile",
+        on_delete=models.CASCADE,
+        related_name="vpn_profile_phase2_policy_assignments",
+        verbose_name=_("vpn profile"),
     )
     vpn_phase2_policy = models.ForeignKey(
-        "vpn.VPNPhase2Policy", on_delete=models.CASCADE, related_name="vpn_profile_phase2_policy_assignments"
+        "vpn.VPNPhase2Policy",
+        on_delete=models.CASCADE,
+        related_name="vpn_profile_phase2_policy_assignments",
+        verbose_name=_("vpn phase2 policy"),
     )
-    weight = models.PositiveIntegerField(default=100, help_text="Higher weights appear later in the list")
+    weight = models.PositiveIntegerField(
+        default=100, help_text=_("Higher weights appear later in the list"), verbose_name=_("weight")
+    )
     is_metadata_associable_model = False
     documentation_static_path = "docs/user-guide/core-data-model/vpn/vpnprofile.html"
 
@@ -265,9 +293,9 @@ class VPNProfilePhase2PolicyAssignment(BaseModel):
 class VPN(PrimaryModel):  # pylint: disable=too-many-ancestors
     """VPN model."""
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    vpn_id = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name="Identifier")
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
+    vpn_id = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("Identifier"))
     vpn_profile = models.ForeignKey(
         to="vpn.VPNProfile",
         on_delete=models.PROTECT,
@@ -275,31 +303,31 @@ class VPN(PrimaryModel):  # pylint: disable=too-many-ancestors
         default=None,
         blank=True,
         null=True,
-        verbose_name="VPN Profile",
+        verbose_name=_("VPN Profile"),
     )
-    role = RoleField(blank=True, null=True)
+    role = RoleField(blank=True, null=True, verbose_name=_("role"))
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
         on_delete=models.SET_NULL,
         related_name="vpns",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
     service_type = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         choices=choices.VPNServiceTypeChoices,
         blank=True,
-        help_text="Optional classification of this VPN service, for example IPSec or VXLAN-EVPN.",
+        help_text=_("Optional classification of this VPN service, for example IPSec or VXLAN-EVPN."),
+        verbose_name=_("service type"),
     )
     # Nullable to support backwards-compatible migration of pre-existing VPN rows.
-    status = StatusField(
-        blank=True,
-        null=True,
-    )
+    status = StatusField(blank=True, null=True, verbose_name=_("status"))
     extra_attributes = models.JSONField(
         blank=True,
         default=dict,
-        help_text="Free-form scalar service metadata only; not for references to real Nautobot objects.",
+        help_text=_("Free-form scalar service metadata only; not for references to real Nautobot objects."),
+        verbose_name=_("extra attributes"),
     )
 
     clone_fields = [
@@ -317,7 +345,7 @@ class VPN(PrimaryModel):  # pylint: disable=too-many-ancestors
         """Meta class for VPN."""
 
         ordering = ("name",)
-        verbose_name = "VPN"
+        verbose_name = _("VPN")
 
     def __str__(self):
         """Stringify instance."""
@@ -335,21 +363,24 @@ class VPN(PrimaryModel):  # pylint: disable=too-many-ancestors
 
         if self.service_type in choices.VPNServiceTypeChoices.VXLAN_TYPES:
             if not self.vpn_id:
-                raise ValidationError({"vpn_id": "Identifier is required for VXLAN-based VPN services."})
+                raise ValidationError({"vpn_id": _("Identifier is required for VXLAN-based VPN services.")})
 
             try:
                 vni = int(self.vpn_id)
             except (TypeError, ValueError) as exc:
                 raise ValidationError(
-                    {"vpn_id": "Identifier must be a numeric VNI for VXLAN-based VPN services."}
+                    {"vpn_id": _("Identifier must be a numeric VNI for VXLAN-based VPN services.")}
                 ) from exc
 
             if not (choices.VPNServiceTypeChoices.VXLAN_VNI_MIN <= vni <= choices.VPNServiceTypeChoices.VXLAN_VNI_MAX):
                 raise ValidationError(
                     {
                         "vpn_id": (
-                            f"VNI must be between {choices.VPNServiceTypeChoices.VXLAN_VNI_MIN} "
-                            f"and {choices.VPNServiceTypeChoices.VXLAN_VNI_MAX}."
+                            gettext("VNI must be between %(VXLAN_VNI_MIN)s and %(VXLAN_VNI_MAX)s.")
+                            % {
+                                "VXLAN_VNI_MIN": choices.VPNServiceTypeChoices.VXLAN_VNI_MIN,
+                                "VXLAN_VNI_MAX": choices.VPNServiceTypeChoices.VXLAN_VNI_MAX,
+                            }
                         )
                     }
                 )
@@ -366,16 +397,16 @@ class VPN(PrimaryModel):  # pylint: disable=too-many-ancestors
 class VPNTunnel(PrimaryModel):  # pylint: disable=too-many-ancestors
     """VPNTunnel model."""
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    tunnel_id = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name="Tunnel ID")
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
+    tunnel_id = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("Tunnel ID"))
     vpn_profile = models.ForeignKey(
         to="vpn.VPNProfile",
         on_delete=models.PROTECT,
         related_name="vpn_tunnels",
         blank=True,
         null=True,
-        verbose_name="VPN Profile",
+        verbose_name=_("VPN Profile"),
     )
     vpn = models.ForeignKey(
         to="vpn.VPN",
@@ -383,11 +414,11 @@ class VPNTunnel(PrimaryModel):  # pylint: disable=too-many-ancestors
         related_name="vpn_tunnels",
         blank=True,
         null=True,
-        verbose_name="VPN",
-        help_text="VPN to which this tunnel belongs",
+        verbose_name=_("VPN"),
+        help_text=_("VPN to which this tunnel belongs"),
     )
-    role = RoleField(blank=True, null=True)
-    status = StatusField(blank=False, null=False)
+    role = RoleField(blank=True, null=True, verbose_name=_("role"))
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
     secrets_group = models.ForeignKey(
         to="extras.SecretsGroup",
         on_delete=models.SET_NULL,
@@ -395,11 +426,13 @@ class VPNTunnel(PrimaryModel):  # pylint: disable=too-many-ancestors
         default=None,
         blank=True,
         null=True,
+        verbose_name=_("secrets group"),
     )
     encapsulation = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         choices=choices.EncapsulationChoices,
         blank=True,
+        verbose_name=_("encapsulation"),
     )
     endpoint_a = models.ForeignKey(
         to="vpn.VPNTunnelEndpoint",
@@ -407,8 +440,8 @@ class VPNTunnel(PrimaryModel):  # pylint: disable=too-many-ancestors
         related_name="endpoint_a_vpn_tunnels",
         blank=True,
         null=True,
-        verbose_name="Endpoint A",
-        help_text="Tunnel termination A",
+        verbose_name=_("Endpoint A"),
+        help_text=_("Tunnel termination A"),
     )
     endpoint_z = models.ForeignKey(
         to="vpn.VPNTunnelEndpoint",
@@ -416,8 +449,8 @@ class VPNTunnel(PrimaryModel):  # pylint: disable=too-many-ancestors
         related_name="endpoint_z_vpn_tunnels",
         blank=True,
         null=True,
-        verbose_name="Endpoint Z",
-        help_text="Tunnel termination Z",
+        verbose_name=_("Endpoint Z"),
+        help_text=_("Tunnel termination Z"),
     )
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -425,6 +458,7 @@ class VPNTunnel(PrimaryModel):  # pylint: disable=too-many-ancestors
         related_name="vpn_tunnels",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
 
     clone_fields = [
@@ -444,7 +478,7 @@ class VPNTunnel(PrimaryModel):  # pylint: disable=too-many-ancestors
         """Meta class for VPNTunnel."""
 
         ordering = ("name",)
-        verbose_name = "VPN Tunnel"
+        verbose_name = _("VPN Tunnel")
 
     def __str__(self):
         """Stringify instance."""
@@ -453,7 +487,7 @@ class VPNTunnel(PrimaryModel):  # pylint: disable=too-many-ancestors
     def clean(self):
         super().clean()
         if self.endpoint_a and self.endpoint_z and self.endpoint_a == self.endpoint_z:
-            raise ValidationError("Endpoint A and Endpoint Z cannot be the same.")
+            raise ValidationError(_("Endpoint A and Endpoint Z cannot be the same."))
 
 
 @extras_features(
@@ -473,7 +507,7 @@ class VPNTunnelEndpoint(PrimaryModel):  # pylint: disable=too-many-ancestors
         related_name="vpn_tunnel_endpoints",
         blank=True,
         null=True,
-        verbose_name="Device",
+        verbose_name=_("Device"),
     )
     source_interface = models.OneToOneField(
         to="dcim.Interface",
@@ -481,7 +515,7 @@ class VPNTunnelEndpoint(PrimaryModel):  # pylint: disable=too-many-ancestors
         related_name="vpn_tunnel_endpoints_src_int",
         blank=True,
         null=True,
-        verbose_name="Source Interface",
+        verbose_name=_("Source Interface"),
     )
     source_ipaddress = models.ForeignKey(
         to="ipam.IPAddress",
@@ -489,14 +523,14 @@ class VPNTunnelEndpoint(PrimaryModel):  # pylint: disable=too-many-ancestors
         related_name="vpn_tunnel_endpoints_src_ip",
         blank=True,
         null=True,
-        verbose_name="Source IP Address",
-        help_text="Mutually Exclusive with Source FQDN.",
+        verbose_name=_("Source IP Address"),
+        help_text=_("Mutually Exclusive with Source FQDN."),
     )
     source_fqdn = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        verbose_name="Source FQDN",
-        help_text="Mutually Exclusive with Source IP Address",
+        verbose_name=_("Source FQDN"),
+        help_text=_("Mutually Exclusive with Source IP Address"),
     )
     tunnel_interface = models.OneToOneField(
         to="dcim.Interface",
@@ -504,7 +538,7 @@ class VPNTunnelEndpoint(PrimaryModel):  # pylint: disable=too-many-ancestors
         related_name="vpn_tunnel_endpoints_tunnel",
         blank=True,
         null=True,
-        verbose_name="Tunnel Interface",
+        verbose_name=_("Tunnel Interface"),
     )
     vpn_profile = models.ForeignKey(
         to="vpn.VPNProfile",
@@ -512,20 +546,20 @@ class VPNTunnelEndpoint(PrimaryModel):  # pylint: disable=too-many-ancestors
         related_name="vpn_tunnel_endpoints",
         blank=True,
         null=True,
-        verbose_name="VPN Profile",
+        verbose_name=_("VPN Profile"),
     )
-    role = RoleField(blank=True, null=True)
+    role = RoleField(blank=True, null=True, verbose_name=_("role"))
     protected_prefixes = models.ManyToManyField(
         to="ipam.Prefix",
         related_name="vpn_tunnel_endpoints",
         blank=True,
-        verbose_name="Protected Prefixes",
+        verbose_name=_("Protected Prefixes"),
     )
     protected_prefixes_dg = models.ManyToManyField(
         to="extras.DynamicGroup",
         related_name="vpn_tunnel_endpoints",
         blank=True,
-        verbose_name="Protected Prefixes Dynamic Group",
+        verbose_name=_("Protected Prefixes Dynamic Group"),
     )
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -533,6 +567,7 @@ class VPNTunnelEndpoint(PrimaryModel):  # pylint: disable=too-many-ancestors
         related_name="vpn_tunnel_endpoints",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
 
     clone_fields = [
@@ -551,7 +586,7 @@ class VPNTunnelEndpoint(PrimaryModel):  # pylint: disable=too-many-ancestors
         """Meta class for VPNTunnelEndpoint."""
 
         ordering = ("name",)
-        verbose_name = "VPN Tunnel Endpoint"
+        verbose_name = _("VPN Tunnel Endpoint")
 
     def _name(self):
         """Dynamic name field."""
@@ -569,23 +604,25 @@ class VPNTunnelEndpoint(PrimaryModel):  # pylint: disable=too-many-ancestors
     def clean(self):
         super().clean()
         if self.source_ipaddress and self.source_fqdn:
-            raise ValidationError("Source IP Address and Source FQDN are mutually exclusive fields. Select only one.")
+            raise ValidationError(
+                _("Source IP Address and Source FQDN are mutually exclusive fields. Select only one.")
+            )
         if not any([self.source_interface, self.source_ipaddress, self.source_fqdn]):
-            raise ValidationError("Source Interface or Source IP Address or Source FQDN Is required.")
+            raise ValidationError(_("Source Interface or Source IP Address or Source FQDN Is required."))
         if self.source_interface and not self.source_interface.parent:
-            raise ValidationError("Source Interface must belong to a device.")
+            raise ValidationError(_("Source Interface must belong to a device."))
         if (
             self.source_ipaddress
             and self.source_interface
             and (self.source_ipaddress not in self.source_interface.ip_addresses.all())
         ):
-            raise ValidationError("Source IP address must be assigned to Source Interface.")
+            raise ValidationError(_("Source IP address must be assigned to Source Interface."))
         if (
             self.tunnel_interface
             and self.source_interface
             and (self.tunnel_interface not in self.source_interface.parent.all_interfaces)
         ):
-            raise ValidationError("Tunnel Interface and Source Interface must be on the same device")
+            raise ValidationError(_("Tunnel Interface and Source Interface must be on the same device"))
 
     def save(self, *args, **kwargs):
         if self.source_interface:
@@ -607,9 +644,7 @@ class VPNTermination(PrimaryModel):
     natural_key_field_names = ["pk"]
 
     vpn = models.ForeignKey(
-        to="vpn.VPN",
-        on_delete=models.CASCADE,
-        related_name="vpn_terminations",
+        to="vpn.VPN", on_delete=models.CASCADE, related_name="vpn_terminations", verbose_name=_("vpn")
     )
     vlan = models.ForeignKey(
         to="ipam.VLAN",
@@ -617,6 +652,7 @@ class VPNTermination(PrimaryModel):
         related_name="vpn_terminations",
         blank=True,
         null=True,
+        verbose_name=_("vlan"),
     )
     interface = models.ForeignKey(
         to="dcim.Interface",
@@ -624,6 +660,7 @@ class VPNTermination(PrimaryModel):
         related_name="vpn_terminations",
         blank=True,
         null=True,
+        verbose_name=_("interface"),
     )
     vm_interface = models.ForeignKey(
         to="virtualization.VMInterface",
@@ -631,14 +668,15 @@ class VPNTermination(PrimaryModel):
         related_name="vpn_terminations",
         blank=True,
         null=True,
+        verbose_name=_("vm interface"),
     )
 
     clone_fields = ["vpn"]
 
     class Meta:
         ordering = ("vpn__name",)
-        verbose_name = "VPN Termination"
-        verbose_name_plural = "VPN Terminations"
+        verbose_name = _("VPN Termination")
+        verbose_name_plural = _("VPN Terminations")
         constraints = [
             models.UniqueConstraint(
                 fields=["vlan"],
@@ -688,7 +726,7 @@ class VPNTermination(PrimaryModel):
 
         selected = [obj for obj in (self.vlan, self.interface, self.vm_interface) if obj is not None]
         if len(selected) != 1:
-            raise ValidationError("Exactly one of vlan, interface, or vm_interface must be set.")
+            raise ValidationError(_("Exactly one of vlan, interface, or vm_interface must be set."))
 
         duplicate_fields = {
             "vlan": self.vlan,
@@ -699,7 +737,7 @@ class VPNTermination(PrimaryModel):
             if value is None:
                 continue
             if self.__class__.objects.exclude(pk=self.pk).filter(**{field_name: value}).exists():
-                raise ValidationError({field_name: "This object is already assigned to another VPN termination."})
+                raise ValidationError({field_name: _("This object is already assigned to another VPN termination.")})
 
         if self.vpn_id is None:
             return
@@ -708,5 +746,6 @@ class VPNTermination(PrimaryModel):
             count = self.vpn.vpn_terminations.exclude(pk=self.pk).count()
             if count >= 2:
                 raise ValidationError(
-                    f"{self.vpn.get_service_type_display()} VPNs cannot have more than 2 terminations."
+                    gettext("%(get_service_type_display)s VPNs cannot have more than 2 terminations.")
+                    % {"get_service_type_display": self.vpn.get_service_type_display()}
                 )

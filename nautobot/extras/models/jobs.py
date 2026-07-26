@@ -1,5 +1,4 @@
 # Data models relating to Jobs
-
 import contextlib
 from datetime import datetime, timedelta
 import logging
@@ -19,6 +18,7 @@ from django.db import connections, InterfaceError, models, OperationalError, tra
 from django.db.models import Count, ProtectedError, Q, signals
 from django.utils import timezone
 from django.utils.functional import cached_property
+from django.utils.translation import gettext, gettext_lazy as _
 from django_celery_beat.clockedschedule import clocked
 import django_celery_beat.models as django_celery_beat_models
 from django_celery_beat.tzcrontab import TzAwareCrontab
@@ -112,30 +112,33 @@ class Job(PrimaryModel):
         max_length=JOB_MAX_NAME_LENGTH,
         editable=False,
         db_index=True,
-        help_text="Dotted name of the Python module providing this job",
+        help_text=_("Dotted name of the Python module providing this job"),
     )
     job_class_name = models.CharField(
         max_length=JOB_MAX_NAME_LENGTH,
         editable=False,
         db_index=True,
-        help_text="Name of the Python class providing this job",
+        help_text=_("Name of the Python class providing this job"),
     )
 
     # Human-readable information, potentially inherited from the source code
     # See also the docstring of nautobot.extras.jobs.BaseJob.Meta.
     grouping = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
-        help_text="Human-readable grouping that this job belongs to",
+        help_text=_("Human-readable grouping that this job belongs to"),
         db_index=True,
+        verbose_name=_("grouping"),
     )
     name = models.CharField(
         max_length=JOB_MAX_NAME_LENGTH,
-        help_text="Human-readable name of this job",
+        help_text=_("Human-readable name of this job"),
         unique=True,
+        verbose_name=_("name"),
     )
     description = models.TextField(
         blank=True,
-        help_text="Markdown formatting and a limited subset of HTML are supported",
+        help_text=_("Markdown formatting and a limited subset of HTML are supported"),
+        verbose_name=_("description"),
     )
 
     # Control flags
@@ -143,73 +146,96 @@ class Job(PrimaryModel):
         default=True,
         db_index=True,
         editable=False,
-        help_text="Whether the Python module and class providing this job are presently installed and loadable",
+        verbose_name=_("installed"),
+        help_text=_("Whether the Python module and class providing this job are presently installed and loadable"),
     )
-    enabled = models.BooleanField(default=False, help_text="Whether this job can be executed by users")
+    enabled = models.BooleanField(
+        default=False, help_text=_("Whether this job can be executed by users"), verbose_name=_("enabled")
+    )
 
     is_job_hook_receiver = models.BooleanField(
-        default=False, editable=False, help_text="Whether this job is a job hook receiver"
+        default=False, editable=False, help_text=_("Whether this job is a job hook receiver")
     )
 
     is_job_button_receiver = models.BooleanField(
-        default=False, editable=False, help_text="Whether this job is a job button receiver"
+        default=False,
+        editable=False,
+        verbose_name=_("is job button receiver"),
+        help_text=_("Whether this job is a job button receiver"),
     )
 
     has_sensitive_variables = models.BooleanField(
-        default=True, help_text="Whether this job contains sensitive variables"
+        default=True,
+        help_text=_("Whether this job contains sensitive variables"),
+        verbose_name=_("has sensitive variables"),
     )
 
     is_singleton = models.BooleanField(
         default=False,
-        help_text="Whether this job should fail to run if another instance of this job is already running",
+        help_text=_("Whether this job should fail to run if another instance of this job is already running"),
+        verbose_name=_("is singleton"),
     )
 
     # Additional properties, potentially inherited from the source code
     # See also the docstring of nautobot.extras.jobs.BaseJob.Meta.
     console_log_default = models.BooleanField(
-        default=False, help_text="Whether the job defaults to running with console log argument set to true"
+        default=False,
+        help_text=_("Whether the job defaults to running with console log argument set to true"),
+        verbose_name=_("console log default"),
     )
     hidden = models.BooleanField(
         default=False,
         db_index=True,
-        help_text="Whether the job defaults to not being shown in the UI",
+        help_text=_("Whether the job defaults to not being shown in the UI"),
+        verbose_name=_("hidden"),
     )
     # Job.Meta.field_order is not overridable in this model
     dryrun_default = models.BooleanField(
-        default=False, help_text="Whether the job defaults to running with dryrun argument set to true"
+        default=False,
+        help_text=_("Whether the job defaults to running with dryrun argument set to true"),
+        verbose_name=_("dryrun default"),
     )
     read_only = models.BooleanField(
-        default=False, editable=False, help_text="Set to true if the job does not make any changes to the environment"
+        default=False,
+        editable=False,
+        verbose_name=_("read only"),
+        help_text=_("Set to true if the job does not make any changes to the environment"),
     )
     soft_time_limit = models.FloatField(
         default=0,
         validators=[MinValueValidator(0)],
-        help_text="Maximum runtime in seconds before the job will receive a <code>SoftTimeLimitExceeded</code> "
-        "exception.<br>Set to 0 to use Nautobot system default",
+        help_text=_(
+            "Maximum runtime in seconds before the job will receive a <code>SoftTimeLimitExceeded</code> "
+            "exception.<br>Set to 0 to use Nautobot system default"
+        ),
+        verbose_name=_("soft time limit"),
     )
     time_limit = models.FloatField(
         default=0,
         validators=[MinValueValidator(0)],
-        help_text="Maximum runtime in seconds before the job will be forcibly terminated."
-        "<br>Set to 0 to use Nautobot system default",
+        help_text=_(
+            "Maximum runtime in seconds before the job will be forcibly terminated."
+            "<br>Set to 0 to use Nautobot system default"
+        ),
+        verbose_name=_("time limit"),
     )
     supports_dryrun = models.BooleanField(
         default=False,
         editable=False,
-        help_text="If supported, allows the job to bypass approval when running with dryrun argument set to true",
+        help_text=_("If supported, allows the job to bypass approval when running with dryrun argument set to true"),
     )
     job_queues = models.ManyToManyField(
         to="extras.JobQueue",
         related_name="jobs",
-        verbose_name="Job Queues",
-        help_text="The job queues that this job can be run on",
+        verbose_name=_("Job Queues"),
+        help_text=_("The job queues that this job can be run on"),
         through="extras.JobQueueAssignment",
     )
     default_job_queue = models.ForeignKey(
         to="extras.JobQueue",
         related_name="default_for_jobs",
         on_delete=models.PROTECT,
-        verbose_name="Default Job Queue",
+        verbose_name=_("Default Job Queue"),
         null=False,
         blank=False,
     )
@@ -217,51 +243,65 @@ class Job(PrimaryModel):
     # Flags to indicate whether the above properties are inherited from the source code or overridden by the database
     grouping_override = models.BooleanField(
         default=False,
-        help_text="If set, the configured grouping will remain even if the underlying Job source code changes",
+        help_text=_("If set, the configured grouping will remain even if the underlying Job source code changes"),
+        verbose_name=_("grouping override"),
     )
     name_override = models.BooleanField(
         default=False,
-        help_text="If set, the configured name will remain even if the underlying Job source code changes",
+        help_text=_("If set, the configured name will remain even if the underlying Job source code changes"),
+        verbose_name=_("name override"),
     )
     console_log_default_override = models.BooleanField(
         default=False,
-        help_text="If set, the configured console log default will remain even if the underlying Job source code changes",
+        help_text=_(
+            "If set, the configured console log default will remain even if the underlying Job source code changes"
+        ),
+        verbose_name=_("console log default override"),
     )
     description_override = models.BooleanField(
         default=False,
-        help_text="If set, the configured description will remain even if the underlying Job source code changes",
+        help_text=_("If set, the configured description will remain even if the underlying Job source code changes"),
+        verbose_name=_("description override"),
     )
     dryrun_default_override = models.BooleanField(
         default=False,
-        help_text="If set, the configured value will remain even if the underlying Job source code changes",
+        help_text=_("If set, the configured value will remain even if the underlying Job source code changes"),
+        verbose_name=_("dryrun default override"),
     )
     hidden_override = models.BooleanField(
         default=False,
-        help_text="If set, the configured value will remain even if the underlying Job source code changes",
+        help_text=_("If set, the configured value will remain even if the underlying Job source code changes"),
+        verbose_name=_("hidden override"),
     )
     soft_time_limit_override = models.BooleanField(
         default=False,
-        help_text="If set, the configured value will remain even if the underlying Job source code changes",
+        help_text=_("If set, the configured value will remain even if the underlying Job source code changes"),
+        verbose_name=_("soft time limit override"),
     )
     time_limit_override = models.BooleanField(
         default=False,
-        help_text="If set, the configured value will remain even if the underlying Job source code changes",
+        help_text=_("If set, the configured value will remain even if the underlying Job source code changes"),
+        verbose_name=_("time limit override"),
     )
     has_sensitive_variables_override = models.BooleanField(
         default=False,
-        help_text="If set, the configured value will remain even if the underlying Job source code changes",
+        help_text=_("If set, the configured value will remain even if the underlying Job source code changes"),
+        verbose_name=_("has sensitive variables override"),
     )
     job_queues_override = models.BooleanField(
         default=False,
-        help_text="If set, the configured value will remain even if the underlying Job source code changes",
+        help_text=_("If set, the configured value will remain even if the underlying Job source code changes"),
+        verbose_name=_("job queues override"),
     )
     default_job_queue_override = models.BooleanField(
         default=False,
-        help_text="If set, the configured value will remain even if the underlying Job source code changes",
+        help_text=_("If set, the configured value will remain even if the underlying Job source code changes"),
+        verbose_name=_("default job queue override"),
     )
     is_singleton_override = models.BooleanField(
         default=False,
-        help_text="If set, the configured value will remain even if the underlying Job source code changes",
+        help_text=_("If set, the configured value will remain even if the underlying Job source code changes"),
+        verbose_name=_("is singleton override"),
     )
     objects = BaseManager.from_queryset(JobQuerySet)()
     is_data_compliance_model = False
@@ -387,7 +427,7 @@ class Job(PrimaryModel):
             try:
                 job_queues.append(JobQueue.objects.get(name=queue))
             except JobQueue.DoesNotExist:
-                raise ValidationError(f"Job Queue {queue} does not exist in the database.")
+                raise ValidationError(gettext("Job Queue %(queue)s does not exist in the database.") % {"queue": queue})
         self.job_queues.set(job_queues)
 
     @property
@@ -399,7 +439,10 @@ class Job(PrimaryModel):
         if isinstance(value, bool):
             raise ValidationError(
                 {
-                    "task_queues_override": f"{value} is invalid for field task_queues_override, use a boolean value instead"
+                    "task_queues_override": gettext(
+                        "%(value)s is invalid for field task_queues_override, use a boolean value instead"
+                    )
+                    % {"value": value}
                 }
             )
         self.job_queues_override = value
@@ -419,13 +462,25 @@ class Job(PrimaryModel):
 
         # Protect against invalid input when auto-creating Job records
         if len(self.module_name) > JOB_MAX_NAME_LENGTH:
-            raise ValidationError(f"Module name may not exceed {JOB_MAX_NAME_LENGTH} characters in length")
+            raise ValidationError(
+                gettext("Module name may not exceed %(JOB_MAX_NAME_LENGTH)s characters in length")
+                % {"JOB_MAX_NAME_LENGTH": JOB_MAX_NAME_LENGTH}
+            )
         if len(self.job_class_name) > JOB_MAX_NAME_LENGTH:
-            raise ValidationError(f"Job class name may not exceed {JOB_MAX_NAME_LENGTH} characters in length")
+            raise ValidationError(
+                gettext("Job class name may not exceed %(JOB_MAX_NAME_LENGTH)s characters in length")
+                % {"JOB_MAX_NAME_LENGTH": JOB_MAX_NAME_LENGTH}
+            )
         if len(self.grouping) > CHARFIELD_MAX_LENGTH:
-            raise ValidationError(f"Grouping may not exceed {CHARFIELD_MAX_LENGTH} characters in length")
+            raise ValidationError(
+                gettext("Grouping may not exceed %(CHARFIELD_MAX_LENGTH)s characters in length")
+                % {"CHARFIELD_MAX_LENGTH": CHARFIELD_MAX_LENGTH}
+            )
         if len(self.name) > JOB_MAX_NAME_LENGTH:
-            raise ValidationError(f"Name may not exceed {JOB_MAX_NAME_LENGTH} characters in length")
+            raise ValidationError(
+                gettext("Name may not exceed %(JOB_MAX_NAME_LENGTH)s characters in length")
+                % {"JOB_MAX_NAME_LENGTH": JOB_MAX_NAME_LENGTH}
+            )
 
     def save(self, *args, **kwargs):
         """When a Job is uninstalled, auto-disable all associated JobButtons, JobHooks, and ScheduledJobs."""
@@ -457,24 +512,36 @@ class JobHook(OrganizationalModel):
     content_types = models.ManyToManyField(
         to=ContentType,
         related_name="job_hooks",
-        verbose_name="Object types",
+        verbose_name=_("Object types"),
         # 2.0 TODO: standardize verbose name for ContentType fields
         limit_choices_to=ChangeLoggedModelsQuery,
-        help_text="The object(s) to which this job hook applies.",
+        help_text=_("The object(s) to which this job hook applies."),
     )
-    enabled = models.BooleanField(default=True)
+    enabled = models.BooleanField(default=True, verbose_name=_("enabled"))
     job = models.ForeignKey(
         to=Job,
         related_name="job_hooks",
-        verbose_name="Job",
-        help_text="The job that this job hook will initiate",
+        verbose_name=_("Job"),
+        help_text=_("The job that this job hook will initiate"),
         on_delete=models.CASCADE,
         limit_choices_to={"is_job_hook_receiver": True},
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    type_create = models.BooleanField(default=False, help_text="Call this job hook when a matching object is created.")
-    type_delete = models.BooleanField(default=False, help_text="Call this job hook when a matching object is deleted.")
-    type_update = models.BooleanField(default=False, help_text="Call this job hook when a matching object is updated.")
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    type_create = models.BooleanField(
+        default=False,
+        help_text=_("Call this job hook when a matching object is created."),
+        verbose_name=_("type create"),
+    )
+    type_delete = models.BooleanField(
+        default=False,
+        help_text=_("Call this job hook when a matching object is deleted."),
+        verbose_name=_("type delete"),
+    )
+    type_update = models.BooleanField(
+        default=False,
+        help_text=_("Call this job hook when a matching object is updated."),
+        verbose_name=_("type update"),
+    )
 
     is_data_compliance_model = False
 
@@ -491,10 +558,10 @@ class JobHook(OrganizationalModel):
 
         # At least one action type must be selected
         if not self.type_create and not self.type_delete and not self.type_update:
-            raise ValidationError("You must select at least one type: create, update, and/or delete.")
+            raise ValidationError(_("You must select at least one type: create, update, and/or delete."))
 
         if self.enabled and not (self.job.installed and self.job.enabled):
-            raise ValidationError({"enabled": "The selected Job is not installed and enabled"})
+            raise ValidationError({"enabled": _("The selected Job is not installed and enabled")})
 
     @classmethod
     def check_for_conflicts(
@@ -553,19 +620,29 @@ class JobHook(OrganizationalModel):
 class JobLogEntry(BaseModel):
     """Stores each log entry for the JobResult."""
 
-    job_result = models.ForeignKey(to="extras.JobResult", on_delete=models.CASCADE, related_name="job_log_entries")
-    log_level = models.CharField(
-        max_length=32, choices=LogLevelChoices, default=LogLevelChoices.LOG_INFO, db_index=True
+    job_result = models.ForeignKey(
+        to="extras.JobResult", on_delete=models.CASCADE, related_name="job_log_entries", verbose_name=_("job result")
     )
-    grouping = models.CharField(max_length=JOB_LOG_MAX_GROUPING_LENGTH, default="main")
-    message = models.TextField(blank=True)
-    created = models.DateTimeField(default=timezone.now, db_index=True)
+    log_level = models.CharField(
+        max_length=32,
+        choices=LogLevelChoices,
+        default=LogLevelChoices.LOG_INFO,
+        db_index=True,
+        verbose_name=_("log level"),
+    )
+    grouping = models.CharField(max_length=JOB_LOG_MAX_GROUPING_LENGTH, default="main", verbose_name=_("grouping"))
+    message = models.TextField(blank=True, verbose_name=_("message"))
+    created = models.DateTimeField(default=timezone.now, db_index=True, verbose_name=_("created"))
     # Storing both of the below as strings instead of using GenericForeignKey to support
     # compatibility with existing JobResult logs. GFK would pose a problem with dangling foreign-key
     # references, whereas this allows us to retain all records for as long as the entry exists.
     # This also simplifies migration from the JobResult Data field as these were stored as strings.
-    log_object = models.CharField(max_length=JOB_LOG_MAX_LOG_OBJECT_LENGTH, blank=True, default="")
-    absolute_url = models.CharField(max_length=JOB_LOG_MAX_ABSOLUTE_URL_LENGTH, blank=True, default="")
+    log_object = models.CharField(
+        max_length=JOB_LOG_MAX_LOG_OBJECT_LENGTH, blank=True, default="", verbose_name=_("log object")
+    )
+    absolute_url = models.CharField(
+        max_length=JOB_LOG_MAX_ABSOLUTE_URL_LENGTH, blank=True, default="", verbose_name=_("absolute url")
+    )
 
     is_metadata_associable_model = False
     is_data_compliance_model = False
@@ -580,7 +657,7 @@ class JobLogEntry(BaseModel):
     class Meta:
         ordering = ["created"]
         get_latest_by = "created"
-        verbose_name_plural = "job log entries"
+        verbose_name_plural = _("job log entries")
         indexes = [
             models.Index(
                 name="extras_joblog_jr_created_idx",
@@ -606,18 +683,16 @@ class JobQueue(PrimaryModel):
     A Job Queue represents a structure that is used to manage, organize and schedule jobs for Nautobot workers.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    queue_type = models.CharField(
-        max_length=50,
-        choices=JobQueueTypeChoices,
-    )
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
+    queue_type = models.CharField(max_length=50, choices=JobQueueTypeChoices, verbose_name=_("queue type"))
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
         on_delete=models.PROTECT,
         related_name="job_queues",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
 
     documentation_static_path = "docs/user-guide/platform-functionality/jobs/jobqueue.html"
@@ -643,11 +718,15 @@ class JobQueue(PrimaryModel):
         if self.name:
             if ".." in self.name:
                 # This is a security measure to prevent path traversal attacks.
-                raise ValidationError({"name": "Job queue name cannot contain '..', please use a different name."})
+                raise ValidationError({"name": _("Job queue name cannot contain '..', please use a different name.")})
             if os.sep in self.name or "/" in self.name:
                 # This is a security measure to prevent path traversal attacks.
                 raise ValidationError(
-                    {"name": "Job queue name cannot contain path separators (e.g. '/'), please use a different name."}
+                    {
+                        "name": _(
+                            "Job queue name cannot contain path separators (e.g. '/'), please use a different name."
+                        )
+                    }
                 )
 
 
@@ -662,8 +741,10 @@ class JobQueueAssignment(BaseModel):
     Through table model that represents the m2m relationship between jobs and job queues.
     """
 
-    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="job_queue_assignments")
-    job_queue = models.ForeignKey(JobQueue, on_delete=models.CASCADE, related_name="job_assignments")
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="job_queue_assignments", verbose_name=_("job"))
+    job_queue = models.ForeignKey(
+        JobQueue, on_delete=models.CASCADE, related_name="job_assignments", verbose_name=_("job queue")
+    )
     is_metadata_associable_model = False
     is_data_compliance_model = False
     is_version_controlled = False
@@ -694,47 +775,68 @@ class JobResult(SavedViewMixin, BaseModel, CustomFieldModel):
     # This is because we want to be able to keep JobResult records for tracking and auditing purposes even after
     # deleting the corresponding Job record.
     job_model = models.ForeignKey(
-        to="extras.Job", null=True, blank=True, on_delete=models.SET_NULL, related_name="job_results"
+        to="extras.Job",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="job_results",
+        verbose_name=_("job model"),
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True, verbose_name=_("name"))
     task_name = models.CharField(  # noqa: DJ001  # django-nullable-model-string-field
         max_length=CHARFIELD_MAX_LENGTH,
         null=True,  # TODO: should this be blank=True instead?
         db_index=True,
-        help_text="Registered name of the Celery task for this job. Internal use only.",
+        help_text=_("Registered name of the Celery task for this job. Internal use only."),
+        verbose_name=_("task name"),
     )
-    date_created = models.DateTimeField(auto_now_add=True, db_index=True)
-    date_started = models.DateTimeField(null=True, blank=True, db_index=True)
-    date_done = models.DateTimeField(null=True, blank=True, db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name=_("date created"))
+    date_started = models.DateTimeField(null=True, blank=True, db_index=True, verbose_name=_("date started"))
+    date_done = models.DateTimeField(null=True, blank=True, db_index=True, verbose_name=_("date done"))
     user = models.ForeignKey(
-        to=settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name="+", blank=True, null=True
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        blank=True,
+        null=True,
+        verbose_name=_("user"),
     )
     status = models.CharField(
         max_length=30,
         choices=JobResultStatusChoices,
         default=JobResultStatusChoices.STATUS_PENDING,
-        help_text="Current state of the Job being run",
+        help_text=_("Current state of the Job being run"),
         db_index=True,
+        verbose_name=_("status"),
     )
     result = models.JSONField(
         encoder=NautobotKombuJSONEncoder,
         null=True,
         blank=True,
         editable=False,
-        verbose_name="Result Data",
-        help_text="The data returned by the task",
+        verbose_name=_("Result Data"),
+        help_text=_("The data returned by the task"),
     )
     worker = models.CharField(  # noqa: DJ001  # django-nullable-model-string-field
         max_length=100,
         default=None,
         null=True,  # TODO: should this be default="", blank=True instead?
+        verbose_name=_("worker"),
     )
-    task_args = models.JSONField(blank=True, default=list, encoder=NautobotKombuJSONEncoder)
-    task_kwargs = models.JSONField(blank=True, default=dict, encoder=NautobotKombuJSONEncoder)
-    celery_kwargs = models.JSONField(blank=True, default=dict, encoder=NautobotKombuJSONEncoder)
-    traceback = models.TextField(blank=True, null=True)  # noqa: DJ001  # django-nullable-model-string-field -- TODO: can we remove null=True?
-    meta = models.JSONField(null=True, default=None, editable=False)
-    scheduled_job = models.ForeignKey(to="extras.ScheduledJob", on_delete=models.SET_NULL, null=True, blank=True)
+    task_args = models.JSONField(
+        blank=True, default=list, encoder=NautobotKombuJSONEncoder, verbose_name=_("task args")
+    )
+    task_kwargs = models.JSONField(
+        blank=True, default=dict, encoder=NautobotKombuJSONEncoder, verbose_name=_("task kwargs")
+    )
+    celery_kwargs = models.JSONField(
+        blank=True, default=dict, encoder=NautobotKombuJSONEncoder, verbose_name=_("celery kwargs")
+    )
+    traceback = models.TextField(blank=True, null=True, verbose_name=_("traceback"))  # noqa: DJ001  # django-nullable-model-string-field -- TODO: can we remove null=True?
+    meta = models.JSONField(null=True, default=None, editable=False, verbose_name=_("meta"))
+    scheduled_job = models.ForeignKey(
+        to="extras.ScheduledJob", on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("scheduled job")
+    )
     debug_log_count = models.PositiveIntegerField(blank=True, null=True, editable=False)
     success_log_count = models.PositiveIntegerField(blank=True, null=True, editable=False)
     info_log_count = models.PositiveIntegerField(blank=True, null=True, editable=False)
@@ -748,19 +850,19 @@ class JobResult(SavedViewMixin, BaseModel, CustomFieldModel):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="terminated_job_results",
-        help_text="The user who initiated the cancel action.",
+        help_text=_("The user who initiated the cancel action."),
+        verbose_name=_("canceled by"),
     )
     canceled_by_user_name = models.CharField(max_length=150, blank=True, editable=False)
     cancel_type = models.CharField(
         max_length=30,
         choices=JobCancelTypeChoices,
         blank=True,
-        help_text="Cancel type of the Job being canceled",
+        help_text=_("Cancel type of the Job being canceled"),
+        verbose_name=_("cancel type"),
     )
     date_canceled = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Timestamp at which the job was canceled",
+        null=True, blank=True, help_text=_("Timestamp at which the job was canceled"), verbose_name=_("date canceled")
     )
 
     objects = JobResultManager()
@@ -1307,17 +1409,25 @@ class JobConsoleEntry(BaseModel):
 
     """
 
-    job_result = models.ForeignKey(to="extras.JobResult", on_delete=models.CASCADE, related_name="job_console_entries")
+    job_result = models.ForeignKey(
+        to="extras.JobResult",
+        on_delete=models.CASCADE,
+        related_name="job_console_entries",
+        verbose_name=_("job result"),
+    )
     timestamp = models.DateTimeField(
-        auto_now_add=True, help_text="Timestamp when this output has been produced / received"
+        auto_now_add=True,
+        help_text=_("Timestamp when this output has been produced / received"),
+        verbose_name=_("timestamp"),
     )
     output_type = models.CharField(
         max_length=10,
-        help_text="Type of the output (e.g. stdout, stderr, output)",
+        help_text=_("Type of the output (e.g. stdout, stderr, output)"),
         choices=JobConsoleEntryOutputTypeChoices,
         default=JobConsoleEntryOutputTypeChoices.TYPE_OUTPUT,
+        verbose_name=_("output type"),
     )
-    text = models.TextField(help_text="Actual line of output data")
+    text = models.TextField(help_text=_("Actual line of output data"), verbose_name=_("text"))
 
     documentation_static_path = "docs/user-guide/platform-functionality/jobs/models.html"
     is_metadata_associable_model = False
@@ -1344,35 +1454,46 @@ class JobButton(ContactMixin, ChangeLoggedModel, DynamicGroupsModelMixin, NotesM
     content_types = models.ManyToManyField(
         to=ContentType,
         related_name="job_buttons",
-        verbose_name="Object types",
-        help_text="The object type(s) to which this job button applies.",
+        verbose_name=_("Object types"),
+        help_text=_("The object type(s) to which this job button applies."),
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    enabled = models.BooleanField(default=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    enabled = models.BooleanField(default=True, verbose_name=_("enabled"))
     text = models.CharField(
         max_length=500,
-        help_text="Jinja2 template code for button text. Reference the object as <code>{{ obj }}</code> such as <code>{{ obj.platform.name }}</code>. Buttons which render as empty text will not be displayed.",
+        help_text=_(
+            "Jinja2 template code for button text. Reference the object as <code>{{ obj }}</code> such as <code>{{ obj.platform.name }}</code>. Buttons which render as empty text will not be displayed."
+        ),
+        verbose_name=_("text"),
     )
     job = models.ForeignKey(
         to="extras.Job",
         on_delete=models.CASCADE,
-        help_text="Job this button will run",
+        help_text=_("Job this button will run"),
         limit_choices_to={"is_job_button_receiver": True},
+        verbose_name=_("job"),
     )
-    weight = models.PositiveSmallIntegerField(default=100)
+    weight = models.PositiveSmallIntegerField(default=100, verbose_name=_("weight"))
     group_name = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        help_text="Buttons with the same group will appear as a dropdown menu. Group dropdown buttons will inherit the button class from the button with the lowest weight in the group.",
+        help_text=_(
+            "Buttons with the same group will appear as a dropdown menu. Group dropdown buttons will inherit the button class from the button with the lowest weight in the group."
+        ),
+        verbose_name=_("group name"),
     )
     button_class = models.CharField(
         max_length=30,
         choices=ButtonClassChoices,
         default=ButtonClassChoices.CLASS_DEFAULT,
+        verbose_name=_("button class"),
     )
     confirmation = models.BooleanField(
-        help_text="Enable confirmation pop-up box. <span class='text-danger'>WARNING: unselecting this option will allow the Job to run (and commit changes) with a single click!</span>",
+        help_text=_(
+            "Enable confirmation pop-up box. <span class='text-danger'>WARNING: unselecting this option will allow the Job to run (and commit changes) with a single click!</span>"
+        ),
         default=True,
+        verbose_name=_("confirmation"),
     )
 
     documentation_static_path = "docs/user-guide/platform-functionality/jobs/jobbutton.html"
@@ -1395,7 +1516,7 @@ class JobButton(ContactMixin, ChangeLoggedModel, DynamicGroupsModelMixin, NotesM
         super().clean()
 
         if self.enabled and not (self.job.installed and self.job.enabled):
-            raise ValidationError({"enabled": "The selected Job is not installed and enabled"})
+            raise ValidationError({"enabled": _("The selected Job is not installed and enabled")})
 
 
 class ScheduledJobs(models.Model):
@@ -1410,8 +1531,8 @@ class ScheduledJobs(models.Model):
     Doing this so we also track deletions, and not just insert/update.
     """
 
-    ident = models.SmallIntegerField(default=1, primary_key=True, unique=True)
-    last_update = models.DateTimeField(null=False)
+    ident = models.SmallIntegerField(default=1, primary_key=True, unique=True, verbose_name=_("ident"))
+    last_update = models.DateTimeField(null=False, verbose_name=_("last update"))
 
     objects = ScheduledJobsManager()
     is_version_controlled = False
@@ -1467,8 +1588,8 @@ class ScheduledJob(ApprovableModelMixin, BaseModel):
     # equivalent to PeriodicTask.name
     name = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,  # note: max_length=200 in PeriodicTask model
-        verbose_name="Name",
-        help_text="Human-readable description of this scheduled task",
+        verbose_name=_("Name"),
+        help_text=_("Human-readable description of this scheduled task"),
         unique=True,
     )
 
@@ -1477,20 +1598,20 @@ class ScheduledJob(ApprovableModelMixin, BaseModel):
         # JOB_MAX_NAME_LENGTH is the longest permitted module name as well as the longest permitted class name,
         # so we need to permit a task name of MAX.MAX at a minimum:
         max_length=JOB_MAX_NAME_LENGTH + 1 + JOB_MAX_NAME_LENGTH,  # note: max_length=200 in PeriodicTask model
-        verbose_name="Task Name",
-        help_text='The name of the Celery task that should be run. (Example: "proj.tasks.import_contacts")',
+        verbose_name=_("Task Name"),
+        help_text=_('The name of the Celery task that should be run. (Example: "proj.tasks.import_contacts")'),
         db_index=True,
     )
 
     # TODO: PeriodicTask.interval is a nullable ForeignKey to an IntervalSchedule record
-    interval = models.CharField(choices=JobExecutionType, max_length=255)
+    interval = models.CharField(choices=JobExecutionType, max_length=255, verbose_name=_("interval"))
 
     # TODO: PeriodicTask.crontab is a nullable ForeignKey to a CrontabSchedule record
     crontab = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        verbose_name="Custom cronjob",
-        help_text="Cronjob syntax string for custom scheduling",
+        verbose_name=_("Custom cronjob"),
+        help_text=_("Cronjob syntax string for custom scheduling"),
     )
 
     # equivalent to PeriodicTask.solar -- unused in Nautobot at this time
@@ -1504,10 +1625,10 @@ class ScheduledJob(ApprovableModelMixin, BaseModel):
     )
 
     # equivalent to PeriodicTask.args, but using a JSONField instead of a TextField
-    args = models.JSONField(blank=True, default=list, encoder=NautobotKombuJSONEncoder)
+    args = models.JSONField(blank=True, default=list, encoder=NautobotKombuJSONEncoder, verbose_name=_("args"))
 
     # equivalent to PeriodicTask.kwargs, but using a JSONField instead of a TextField
-    kwargs = models.JSONField(blank=True, default=dict, encoder=NautobotKombuJSONEncoder)
+    kwargs = models.JSONField(blank=True, default=dict, encoder=NautobotKombuJSONEncoder, verbose_name=_("kwargs"))
 
     # equivalent to PeriodicTask.queue field -- unused in Nautobot at this time, see job_queue below instead
     @property
@@ -1540,31 +1661,32 @@ class ScheduledJob(ApprovableModelMixin, BaseModel):
     # equivalent to PeriodicTask.one_off
     one_off = models.BooleanField(
         default=False,
-        verbose_name="One-off Task",
-        help_text="If True, the schedule will only run the task a single time",
+        verbose_name=_("One-off Task"),
+        help_text=_("If True, the schedule will only run the task a single time"),
     )
 
     # equivalent to PeriodicTask.start_time
     start_time = models.DateTimeField(
         # TODO: PeriodicTask.start_time is blank=True, null=True?
-        verbose_name="Start Datetime",
-        help_text="Datetime when the schedule should begin triggering the task to run",
+        verbose_name=_("Start Datetime"),
+        help_text=_("Datetime when the schedule should begin triggering the task to run"),
     )
 
     state = models.CharField(
         max_length=30,
         choices=ScheduledJobStateChoices,
         default=ScheduledJobStateChoices.ACTIVE,
-        help_text="Current state of the Scheduled Job",
+        help_text=_("Current state of the Scheduled Job"),
         db_index=True,
+        verbose_name=_("state"),
     )
 
     # todoindex:
     # equivalent to PeriodicTask.enabled
     enabled = models.BooleanField(
         default=True,
-        verbose_name="Enabled",
-        help_text="Set to False to disable the schedule",
+        verbose_name=_("Enabled"),
+        help_text=_("Set to False to disable the schedule"),
     )
 
     # Equivalent to PeriodicTask.last_run_at
@@ -1572,31 +1694,32 @@ class ScheduledJob(ApprovableModelMixin, BaseModel):
         editable=False,
         blank=True,
         null=True,
-        verbose_name="Most Recent Run",
-        help_text="Datetime that the schedule last triggered the task to run. "
-        "Reset to None if enabled is set to False.",
+        verbose_name=_("Most Recent Run"),
+        help_text=_(
+            "Datetime that the schedule last triggered the task to run. Reset to None if enabled is set to False."
+        ),
     )
 
     # Equivalent to PeriodicTask.total_run_count
     total_run_count = models.PositiveIntegerField(
         default=0,
         editable=False,
-        verbose_name="Total Run Count",
-        help_text="Running count of how many times the schedule has triggered the task",
+        verbose_name=_("Total Run Count"),
+        help_text=_("Running count of how many times the schedule has triggered the task"),
     )
 
     # Equivalent to PeriodicTask.date_changed
     date_changed = models.DateTimeField(
         auto_now=True,
-        verbose_name="Last Modified",
-        help_text="Datetime that this scheduled job was last modified",
+        verbose_name=_("Last Modified"),
+        help_text=_("Datetime that this scheduled job was last modified"),
     )
 
     # equivalent to PeriodicTask.description
     description = models.TextField(
         blank=True,
-        verbose_name="Description",
-        help_text="Detailed description about the details of this scheduled job",
+        verbose_name=_("Description"),
+        help_text=_("Detailed description about the details of this scheduled job"),
     )
 
     # equivalent to PeriodicTask.expires_ property
@@ -1636,13 +1759,20 @@ class ScheduledJob(ApprovableModelMixin, BaseModel):
     # Nautobot-specific fields, properties, and methods
     #
 
-    celery_kwargs = models.JSONField(blank=True, default=dict, encoder=NautobotKombuJSONEncoder)
+    celery_kwargs = models.JSONField(
+        blank=True, default=dict, encoder=NautobotKombuJSONEncoder, verbose_name=_("celery kwargs")
+    )
 
     # Note that we allow job_model to be null and use models.SET_NULL here.
     # This is because we want to be able to keep ScheduledJob records for tracking and auditing purposes even after
     # deleting the corresponding Job record.
     job_model = models.ForeignKey(
-        to="extras.Job", null=True, blank=True, on_delete=models.SET_NULL, related_name="scheduled_jobs"
+        to="extras.Job",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="scheduled_jobs",
+        verbose_name=_("job model"),
     )
 
     # Same reason here for null=True, on_delete=SET_NULL
@@ -1652,12 +1782,12 @@ class ScheduledJob(ApprovableModelMixin, BaseModel):
         related_name="scheduled_jobs",
         null=True,
         blank=True,
-        verbose_name="Job Queue Override",
+        verbose_name=_("Job Queue Override"),
     )
 
     # Django always stores DateTimeField as UTC internally, but we want scheduled jobs to respect DST and similar,
     # so we need to store the time zone the job was scheduled under as well.
-    time_zone = TimeZoneField(default=timezone.get_default_timezone_name)
+    time_zone = TimeZoneField(default=timezone.get_default_timezone_name, verbose_name=_("time zone"))
 
     user = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
@@ -1665,7 +1795,8 @@ class ScheduledJob(ApprovableModelMixin, BaseModel):
         related_name="+",
         blank=True,
         null=True,
-        help_text="User that requested the schedule",
+        help_text=_("User that requested the schedule"),
+        verbose_name=_("user"),
     )
 
     # todoindex:
@@ -1673,8 +1804,8 @@ class ScheduledJob(ApprovableModelMixin, BaseModel):
         editable=False,
         blank=True,
         null=True,
-        verbose_name="Approval/Rejection date/time",
-        help_text="Datetime that the schedule was approved or denied",
+        verbose_name=_("Approval/Rejection date/time"),
+        help_text=_("Datetime that the schedule was approved or denied"),
     )
 
     objects = BaseManager.from_queryset(ScheduledJobExtendedQuerySet)()
@@ -1771,7 +1902,7 @@ class ScheduledJob(ApprovableModelMixin, BaseModel):
             try:
                 self.job_queue = JobQueue.objects.get(name=value)
             except JobQueue.DoesNotExist:
-                raise ValidationError(f"Job Queue {value} does not exist in the database.")
+                raise ValidationError(gettext("Job Queue %(value)s does not exist in the database.") % {"value": value})
 
     @staticmethod
     def earliest_possible_time():

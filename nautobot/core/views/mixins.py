@@ -23,6 +23,7 @@ from django.utils.cache import patch_vary_headers
 from django.utils.encoding import iri_to_uri
 from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext
 from django.views.generic.edit import FormView
 from django_filters import FilterSet
 from drf_spectacular.utils import extend_schema
@@ -434,7 +435,9 @@ class NautobotViewSetMixin(GenericViewSet, UIComponentsMixin, AccessMixin, GetRe
         except KeyError:
             messages.error(
                 self.request,
-                "This action is not permitted. Please use the buttons at the bottom of the table for Bulk Delete and Bulk Update",
+                gettext(
+                    "This action is not permitted. Please use the buttons at the bottom of the table for Bulk Delete and Bulk Update"
+                ),
             )
         return self.get_permissions_for_model(queryset.model, actions)
 
@@ -550,7 +553,7 @@ class NautobotViewSetMixin(GenericViewSet, UIComponentsMixin, AccessMixin, GetRe
         # For bulk_create/bulk_update view, self.obj is not set since there are multiple
         # The errors will be rendered on the form itself.
         if self.action not in ["bulk_create", "bulk_update"]:  # 3.0 TODO: remove bulk_create
-            messages.error(self.request, f"{self.obj} failed validation: {e}")
+            messages.error(self.request, gettext("%(obj)s failed validation: %(e)s") % {"obj": self.obj, "e": e})
         self.has_error = True
 
     def form_valid(self, form):
@@ -598,7 +601,8 @@ class NautobotViewSetMixin(GenericViewSet, UIComponentsMixin, AccessMixin, GetRe
                 if not table.rows:
                     messages.warning(
                         request,
-                        f"No {queryset.model._meta.verbose_name_plural} were selected for {self.action}.",
+                        gettext("No %(object_name)s were selected for %(action)s.")
+                        % {"object_name": queryset.model._meta.verbose_name_plural, "action": self.action},
                     )
                     return redirect(self.get_return_url(request))
 
@@ -620,7 +624,8 @@ class NautobotViewSetMixin(GenericViewSet, UIComponentsMixin, AccessMixin, GetRe
             if not table.rows:
                 messages.warning(
                     request,
-                    f"No {queryset.model._meta.verbose_name_plural} were selected for {self.action}.",
+                    gettext("No %(object_name)s were selected for %(action)s.")
+                    % {"object_name": queryset.model._meta.verbose_name_plural, "action": self.action},
                 )
                 return redirect(self.get_return_url(request))
 
@@ -870,7 +875,7 @@ class ObjectListViewMixin(NautobotViewSetMixin, mixins.ListModelMixin):
             if not self.filterset.is_valid():
                 messages.error(
                     self.request,
-                    format_html("Invalid filters were specified: {}", self.filterset.errors),
+                    format_html(gettext("Invalid filters were specified: {errors}"), errors=self.filterset.errors),
                 )
                 queryset = queryset.none()
 
@@ -896,7 +901,8 @@ class ObjectListViewMixin(NautobotViewSetMixin, mixins.ListModelMixin):
             except Exception as e:
                 messages.error(
                     request,
-                    f"There was an error rendering the selected export template ({et.name}): {e}",
+                    gettext("There was an error rendering the selected export template (%(name)s): %(e)s")
+                    % {"name": et.name, "e": e},
                 )
 
         # Check for YAML export support
@@ -1181,7 +1187,10 @@ class BulkEditAndBulkDeleteModelMixin:
                 job_kwargs=BulkDeleteObjects.serialize_data(job_kwargs),
             )
             if scheduled_job.has_approval_workflow_definition():
-                messages.success(request, f"Job '{scheduled_job.name}' successfully submitted for approval")
+                messages.success(
+                    request,
+                    gettext("Job '%(name)s' successfully submitted for approval") % {"name": scheduled_job.name},
+                )
                 return redirect("extras:scheduledjob_approvalworkflow", pk=scheduled_job.pk)
             else:
                 scheduled_job.delete()
@@ -1216,7 +1225,10 @@ class BulkEditAndBulkDeleteModelMixin:
                 job_kwargs=BulkEditObjects.serialize_data(job_kwargs),
             )
             if scheduled_job.has_approval_workflow_definition():
-                messages.success(request, f"Job '{scheduled_job.name}' successfully submitted for approval")
+                messages.success(
+                    request,
+                    gettext("Job '%(name)s' successfully submitted for approval") % {"name": scheduled_job.name},
+                )
                 return redirect("extras:scheduledjob_approvalworkflow", pk=scheduled_job.pk)
             else:
                 scheduled_job.delete()
@@ -1312,7 +1324,8 @@ class ObjectBulkDestroyViewMixin(NautobotViewSetMixin, BulkDestroyModelMixin, Bu
             if not table.rows:
                 messages.warning(
                     request,
-                    f"No {queryset.model._meta.verbose_name_plural} were selected for deletion.",
+                    gettext("No %(object_name)s were selected for deletion.")
+                    % {"object_name": queryset.model._meta.verbose_name_plural},
                 )
                 return redirect(self.get_return_url(request))
             # Hide actions column in the table for bulk destroy view
@@ -1529,7 +1542,8 @@ class ObjectBulkUpdateViewMixin(NautobotViewSetMixin, BulkUpdateModelMixin, Bulk
             if not table.rows:
                 messages.warning(
                     request,
-                    f"No {queryset.model._meta.verbose_name_plural} were selected to update.",
+                    gettext("No %(object_name)s were selected to update.")
+                    % {"object_name": queryset.model._meta.verbose_name_plural},
                 )
                 return redirect(self.get_return_url(request))
 
@@ -1647,7 +1661,11 @@ class ObjectBulkRenameViewMixin(NautobotViewSetMixin):
 
         # selected_objects would return False; if no query_pks or invalid query_pks
         if not selected_objects:
-            messages.warning(request, f"No valid {self.get_queryset().model._meta.verbose_name_plural} were selected.")
+            messages.warning(
+                request,
+                gettext("No valid %(object_name)s were selected.")
+                % {"object_name": self.get_queryset().model._meta.verbose_name_plural},
+            )
             return redirect(self.get_return_url(request))
 
         action = "_preview" if "_preview" in request.POST else "_apply" if "_apply" in request.POST else None
@@ -1701,7 +1719,11 @@ class ObjectBulkRenameViewMixin(NautobotViewSetMixin):
 
                     messages.success(
                         request,
-                        f"Renamed {len(selected_objects)} {self.get_queryset().model._meta.verbose_name_plural}",
+                        gettext("Renamed %(count)s %(object_name)s")
+                        % {
+                            "count": len(selected_objects),
+                            "object_name": self.get_queryset().model._meta.verbose_name_plural,
+                        },
                     )
                     return redirect(self.get_return_url(request))
 

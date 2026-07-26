@@ -1,6 +1,17 @@
+from django.utils.translation import gettext_noop
 import django_tables2 as tables
 
 from nautobot.dcim.constants import DEVICE_COMPONENT_ICONS
+
+# This module holds Django template fragments in Python literals, so `makemessages` cannot see
+# their translation tags. Declaring the msgid here is what makes it extractable; see
+# `nautobot.core.ui.titles` for the same pattern.
+TRANSLATABLE_FRAGMENT_MESSAGES = (
+    gettext_noop("Add cable"),
+    gettext_noop("View elevations"),
+    gettext_noop("Add IP address"),
+    gettext_noop("Trace"),
+)
 
 
 class DeviceComponentNameColumn(tables.TemplateColumn):
@@ -308,9 +319,10 @@ MODULEBAY_TREE_LINK = """
 
 
 RACKGROUP_ELEVATIONS = """
+{% load i18n %}
 <li>
     <a href="{% url 'dcim:rack_elevation_list' %}?location={{ record.location.pk }}&rack_group={{ record.pk }}" class="dropdown-item text-primary">
-        <span class="mdi mdi-server me-4" aria-hidden="true"></span>View elevations
+        <span class="mdi mdi-server me-4" aria-hidden="true"></span>{% trans "View elevations" %}
     </a>
 </li>
 """
@@ -329,16 +341,16 @@ UTILIZATION_GRAPH = """
 # PowerOutlet, Interface, FrontPort, RearPort, etc.). Each table column passing this in as `prepend_template`
 # may also concatenate additional model-specific buttons (e.g. Interface adds an "Add IP address" entry).
 CABLE_TERMINATION_BUTTONS = """
-{% load helpers %}
+{% load helpers i18n %}
 {% if record.cable %}
     {% with trace_url=record|viewname:"trace" %}
-        <li><a href="{% url trace_url pk=record.pk %}" class="dropdown-item text-primary"><span class="mdi mdi-transit-connection-variant me-4" aria-hidden="true"></span>Trace</a></li>
+        <li><a href="{% url trace_url pk=record.pk %}" class="dropdown-item text-primary"><span class="mdi mdi-transit-connection-variant me-4" aria-hidden="true"></span>{% trans "Trace" %}</a></li>
     {% endwith %}
     {% include 'dcim/inc/cable_toggle_buttons.html' with cable=record.cable termination=record %}
 {% elif record.is_connectable and perms.dcim.add_cable %}
     <li>
         <a href="{% url 'dcim:cable_add' %}?termination_a_type={{ record|meta:'app_label' }}.{{ record|meta:'model_name' }}&termination_a_id={{ record.pk }}&return_url={{ request.path }}" class="dropdown-item text-success">
-            <span class="mdi mdi-ethernet-cable me-4" aria-hidden="true"></span>Add cable
+            <span class="mdi mdi-ethernet-cable me-4" aria-hidden="true"></span>{% trans "Add cable" %}
         </a>
     </li>
 {% endif %}
@@ -348,19 +360,21 @@ CABLE_TERMINATION_BUTTONS = """
 # offers it no Trace action. When its parent trunk is cabled, trace that lane via the parent's trace
 # view plus the lane's `cablepath_id` (resolved by `PathTraceView` to originate from this subinterface).
 INTERFACE_BREAKOUT_TRACE_BUTTON = """
+{% load i18n %}
 {% with breakout_path=record.get_breakout_lane_cable_path %}
     {% if breakout_path %}
-        <li><a href="{% url 'dcim:interface_trace' pk=record.parent_interface.pk %}?cablepath_id={{ breakout_path.pk }}" class="dropdown-item text-primary"><span class="mdi mdi-transit-connection-variant me-4" aria-hidden="true"></span>Trace</a></li>
+        <li><a href="{% url 'dcim:interface_trace' pk=record.parent_interface.pk %}?cablepath_id={{ breakout_path.pk }}" class="dropdown-item text-primary"><span class="mdi mdi-transit-connection-variant me-4" aria-hidden="true"></span>{% trans "Trace" %}</a></li>
     {% endif %}
 {% endwith %}
 """
 
 INTERFACE_BUTTONS = (
     """
+{% load i18n %}
 {% if perms.ipam.add_ipaddress and perms.dcim.change_interface %}
     <li>
         <a href="{% url 'ipam:ipaddress_add' %}?interface={{ record.pk }}&return_url={{ request.path }}" class="dropdown-item text-success">
-            <span class="mdi mdi-plus-thick me-4" aria-hidden="true"></span>Add IP address
+            <span class="mdi mdi-plus-thick me-4" aria-hidden="true"></span>{% trans "Add IP address" %}
         </a>
     </li>
 {% endif %}

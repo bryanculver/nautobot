@@ -4,6 +4,7 @@ from textwrap import dedent
 
 from django.contrib.contenttypes.models import ContentType
 from django.utils.html import format_html, format_html_join
+from django.utils.translation import gettext_lazy as _, gettext_noop
 import django_tables2 as tables
 from django_tables2.utils import Accessor
 from jsonschema import Draft7Validator
@@ -244,10 +245,11 @@ WEBHOOK_CONTENT_TYPES = """
 """
 
 SCHEDULED_JOB_APPROVAL_QUEUE_BUTTONS = """
+{% load i18n %}
 <div class="dropdown">
     <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
         <span class="mdi mdi-dots-vertical" aria-hidden="true"></span>
-        <span class="visually-hidden">Toggle Dropdown</span>
+        <span class="visually-hidden">{% trans "Toggle Dropdown" %}</span>
     </button>
     <ul class="dropdown-menu dropdown-menu-end">
         <li>
@@ -257,7 +259,7 @@ SCHEDULED_JOB_APPROVAL_QUEUE_BUTTONS = """
                 class="dropdown-item{% if perms.extras.run_job and record.job_model.supports_dryrun %} text-primary"{% else %}" disabled{% endif %}
             >
                 <span class="mdi mdi-play" aria-hidden="true"></span>
-                Dry Run
+                {% trans "Dry Run" %}
             </button>
         </li>
         <li>
@@ -267,7 +269,7 @@ SCHEDULED_JOB_APPROVAL_QUEUE_BUTTONS = """
                 class="dropdown-item{% if perms.extras.run_job %} text-success"{% else %}" disabled{% endif %}
             >
                 <span class="mdi mdi-check" aria-hidden="true"></span>
-                Approve
+                {% trans "Approve" %}
             </button>
         </li>
         <li>
@@ -277,12 +279,19 @@ SCHEDULED_JOB_APPROVAL_QUEUE_BUTTONS = """
                 class="dropdown-item{% if perms.extras.run_job %} text-danger"{% else %}" disabled{% endif %}
             >
                 <span class="mdi mdi-close" aria-hidden="true"></span>
-                Deny
+                {% trans "Deny" %}
             </button>
         </li>
     </ul>
 </div>
 """
+
+# `makemessages` runs the Python extractor over `.py` files and the template extractor only
+# over `.html`, so the `{% trans %}` tags in the fragment above are invisible to both: they
+# render (gettext falls back to the msgid) but no translator can ever reach them. Declaring
+# the msgids here makes them extractable. Same reasoning as `TRANSLATABLE_VIEW_TITLES` in
+# `nautobot.extras.views`.
+TRANSLATABLE_SCHEDULED_JOB_APPROVAL_QUEUE_BUTTONS = (gettext_noop("Dry Run"),)
 
 #
 # Approval Workflow
@@ -351,15 +360,15 @@ class ApprovalWorkflowTable(BaseTable):
 
     pk = ToggleColumn()
     approval_workflow_definition = tables.Column(linkify=True)
-    object_under_review_content_type = tables.Column(verbose_name="Object Type Under Review")
+    object_under_review_content_type = tables.Column(verbose_name=_("Object Type Under Review"))
     object_under_review = tables.TemplateColumn(
         template_code=APPROVAL_WORKFLOW_OBJECT,
-        verbose_name="Object Under Review",
+        verbose_name=_("Object Under Review"),
         order_by=["object_under_review_content_type", "object_under_review_object_id"],
     )
     user = tables.TemplateColumn(
         template_code="{% if record.user %}{{record.user}}{% else %}{{ record.user_name }}{% endif %}",
-        verbose_name="User",
+        verbose_name=_("User"),
     )
     current_state = ChoiceFieldColumn()
     actions = ApprovalButtonsColumn(ApprovalWorkflow, buttons=("detail", "changelog"))
@@ -416,7 +425,7 @@ class ApprovalWorkflowStageTable(BaseTable):
         {% endif %}
         """,
         orderable=False,
-        verbose_name="Actions Needed",
+        verbose_name=_("Actions Needed"),
     )
     state = ApprovalChoiceFieldColumn()
     actions = ApprovalButtonsColumn(
@@ -454,16 +463,16 @@ class ApproverDashboardTable(ApprovalWorkflowStageTable):
     pk = ToggleColumn()
     approval_workflow = tables.TemplateColumn(
         template_code="<a href={{record.approval_workflow.get_absolute_url}}>{{ record.approval_workflow.approval_workflow_definition.name }}</a>",
-        verbose_name="Workflow",
+        verbose_name=_("Workflow"),
     )
     approval_workflow_stage = tables.TemplateColumn(
         template_code="<a href={{record.approval_workflow.get_absolute_url}}>{{ record.approval_workflow_stage_definition.name }}</a>",
-        verbose_name="Current Stage",
+        verbose_name=_("Current Stage"),
     )
-    approval_workflow__object_under_review_content_type = tables.Column(verbose_name="Object Type Under Review")
+    approval_workflow__object_under_review_content_type = tables.Column(verbose_name=_("Object Type Under Review"))
     object_under_review = tables.TemplateColumn(
         template_code="<a href={{record.approval_workflow.object_under_review.get_absolute_url }}>{{ record.approval_workflow.object_under_review }}</a>",
-        verbose_name="Object Under Review",
+        verbose_name=_("Object Under Review"),
         order_by=[
             "approval_workflow__object_under_review_content_type",
             "approval_workflow__object_under_review_object_id",
@@ -504,7 +513,7 @@ class RelatedApprovalWorkflowStageTable(ApprovalWorkflowStageTable):
 
     approval_workflow_stage = tables.TemplateColumn(
         template_code="<a href={{record.get_absolute_url}}>{{ record.approval_workflow_stage_definition.name }}</a>",
-        verbose_name="Stage",
+        verbose_name=_("Stage"),
     )
     actions = ApprovalButtonsColumn(ApprovalWorkflowStage, buttons=("approve", "comment", "deny"))
 
@@ -565,7 +574,7 @@ class RelatedApprovalWorkflowStageResponseTable(ApprovalWorkflowStageResponseTab
 
     approval_workflow_stage = tables.TemplateColumn(
         template_code="<a href={{record.approval_workflow_stage.get_absolute_url}}>{{ record.approval_workflow_stage.approval_workflow_stage_definition.name }}</a>",
-        verbose_name="Stage",
+        verbose_name=_("Stage"),
     )
 
     class Meta(BaseTable.Meta):
@@ -616,7 +625,7 @@ class ConfigContextTable(BaseTable):
     pk = ToggleColumn()
     name = tables.LinkColumn()
     owner = tables.LinkColumn(order_by=["owner_content_type", "owner_object_id"])
-    is_active = BooleanColumn(verbose_name="Active")
+    is_active = BooleanColumn(verbose_name=_("Active"))
     actions = ButtonsColumn(ConfigContext)
 
     class Meta(BaseTable.Meta):
@@ -681,7 +690,7 @@ class ConfigContextSchemaValidationStateColumn(tables.Column):
         validator = self.validator
         # only call validate if this is a real validator
         if not isinstance(validator, Draft7Validator):
-            return render_boolean(False) + format_html('<span class="text-danger"> {}</span>', "No schema available")
+            return render_boolean(False) + format_html('<span class="text-danger"> {}</span>', _("No schema available"))
 
         try:
             validator.validate(data)
@@ -786,10 +795,10 @@ class DynamicGroupTable(BaseTable):
     """Base table for displaying dynamic groups in list view."""
 
     pk = ToggleColumn()
-    name = tables.Column(linkify=True)
-    members = tables.Column(accessor="count", verbose_name="Group Members", orderable=False)
-    tenant = TenantColumn()
-    tags = TagColumn(url_name="extras:dynamicgroup_list")
+    name = tables.Column(linkify=True, verbose_name=_("Name"))
+    members = tables.Column(accessor="count", verbose_name=_("Group Members"), orderable=False)
+    tenant = TenantColumn(verbose_name=_("Tenant"))
+    tags = TagColumn(url_name="extras:dynamicgroup_list", verbose_name=_("Tags"))
     actions = ButtonsColumn(DynamicGroup)
 
     class Meta(BaseTable.Meta):  # pylint: disable=too-few-public-methods
@@ -826,7 +835,7 @@ class DynamicGroupMembershipTable(DynamicGroupTable):
     """Hybrid table for displaying info for both group and membership."""
 
     description = tables.Column(accessor="group__description")
-    members = tables.Column(accessor="group__count", verbose_name="Group Members", orderable=False)
+    members = tables.Column(accessor="group__count", verbose_name=_("Group Members"), orderable=False)
 
     class Meta(BaseTable.Meta):
         model = DynamicGroupMembership
@@ -948,7 +957,7 @@ class StaticGroupAssociationTable(BaseTable):
     pk = ToggleColumn()
     dynamic_group = tables.Column(linkify=True)
     associated_object = tables.Column(
-        linkify=True, verbose_name="Associated Object", order_by=["associated_object_type", "associated_object_id"]
+        linkify=True, verbose_name=_("Associated Object"), order_by=["associated_object_type", "associated_object_id"]
     )
     actions = ButtonsColumn(StaticGroupAssociation, buttons=["changelog", "delete"])
 
@@ -1019,11 +1028,11 @@ class ExternalIntegrationTable(BaseTable):
 class GitRepositoryTable(BaseTable):
     pk = ToggleColumn()
     name = tables.LinkColumn()
-    remote_url = tables.Column(verbose_name="Remote URL")
+    remote_url = tables.Column(verbose_name=_("Remote URL"))
     secrets_group = tables.Column(linkify=True)
-    last_sync_time = tables.DateTimeColumn(empty_values=(), short=True, verbose_name="Sync Time", orderable=False)
+    last_sync_time = tables.DateTimeColumn(empty_values=(), short=True, verbose_name=_("Sync Time"), orderable=False)
 
-    last_sync_user = tables.Column(empty_values=(), verbose_name="Sync By", orderable=False)
+    last_sync_user = tables.Column(empty_values=(), verbose_name=_("Sync By"), orderable=False)
 
     class JobResultColumn(tables.TemplateColumn):
         def render(self, record, table, value, bound_column, **kwargs):
@@ -1035,9 +1044,9 @@ class GitRepositoryTable(BaseTable):
             return super().render(record, table, value, bound_column, **kwargs)
 
     last_sync_status = JobResultColumn(
-        template_name="extras/inc/job_label.html", verbose_name="Sync Status", orderable=False
+        template_name="extras/inc/job_label.html", verbose_name=_("Sync Status"), orderable=False
     )
-    provides = tables.TemplateColumn(GITREPOSITORY_PROVIDES, orderable=False)
+    provides = tables.TemplateColumn(GITREPOSITORY_PROVIDES, orderable=False, verbose_name=_("Provides"))
     actions = ButtonsColumn(GitRepository, prepend_template=GITREPOSITORY_BUTTONS)
 
     class Meta(BaseTable.Meta):
@@ -1082,7 +1091,7 @@ class GitRepositoryTable(BaseTable):
 class GitRepositoryBulkTable(BaseTable):
     pk = ToggleColumn()
     name = tables.LinkColumn()
-    remote_url = tables.Column(verbose_name="Remote URL")
+    remote_url = tables.Column(verbose_name=_("Remote URL"))
     secrets_group = tables.Column(linkify=True)
     provides = tables.TemplateColumn(GITREPOSITORY_PROVIDES)
 
@@ -1112,8 +1121,8 @@ class GraphQLQueryTable(BaseTable):
 
 class ImageAttachmentTable(BaseTable):
     pk = ToggleColumn()
-    name = tables.TemplateColumn(template_code=IMAGEATTACHMENT_NAME, verbose_name="Name")
-    size = tables.TemplateColumn(template_code=IMAGEATTACHMENT_SIZE)
+    name = tables.TemplateColumn(template_code=IMAGEATTACHMENT_NAME, verbose_name=_("Name"))
+    size = tables.TemplateColumn(template_code=IMAGEATTACHMENT_SIZE, verbose_name=_("Size"))
     created = tables.DateTimeColumn()
     actions = ButtonsColumn(ImageAttachment, buttons=("edit", "delete"))
 
@@ -1139,12 +1148,12 @@ class JobTable(BaseTable):
         attrs={"a": {"class": "job_run", "title": "Run/Schedule"}},
         linkify=("extras:job_run", {"pk": tables.A("pk")}),
     )
-    source_version = tables.Column(orderable=False)
+    source_version = tables.Column(orderable=False, verbose_name=_("Source version"))
     installed = BooleanColumn()
     enabled = BooleanColumn()
     has_sensitive_variables = BooleanColumn()
     console_log_default = BooleanColumn()
-    description = tables.Column(accessor="description_first_line")
+    description = tables.Column(accessor="description_first_line", verbose_name=_("Description"))
     dryrun_default = BooleanColumn()
     hidden = BooleanColumn()
     read_only = BooleanColumn()
@@ -1155,7 +1164,7 @@ class JobTable(BaseTable):
     time_limit = tables.Column()
     default_job_queue = tables.Column(linkify=True)
     job_queues_count = LinkedCountColumn(
-        viewname="extras:jobqueue_list", url_params={"jobs": "pk"}, verbose_name="Job Queues"
+        viewname="extras:jobqueue_list", url_params={"jobs": "pk"}, verbose_name=_("Job Queues")
     )
     last_run = tables.TemplateColumn(
         accessor="latest_result",
@@ -1167,9 +1176,11 @@ class JobTable(BaseTable):
             {% endif %}
         """,
         linkify=lambda value: value.get_absolute_url() if value else None,
+        verbose_name=_("Last run"),
     )
     last_status = tables.TemplateColumn(
         template_code="{% include 'extras/inc/job_label.html' with result=record.latest_result %}",
+        verbose_name=_("Last status"),
     )
     tags = TagColumn(url_name="extras:job_list")
     actions = ButtonsColumn(JobModel, prepend_template=JOB_BUTTONS)
@@ -1256,13 +1267,13 @@ class JobHookTable(BaseTable):
 
 
 class JobLogEntryTable(BaseTable):
-    created = tables.DateTimeColumn(verbose_name="Time", format="Y-m-d H:i:s.u")
+    created = tables.DateTimeColumn(verbose_name=_("Time"), format="Y-m-d H:i:s.u")
     grouping = tables.Column()
     log_level = tables.Column(
-        verbose_name="Level",
+        verbose_name=_("Level"),
         attrs={"td": {"class": "text-nowrap report-stats"}},
     )
-    log_object = tables.Column(verbose_name="Object", linkify=log_object_link)
+    log_object = tables.Column(verbose_name=_("Object"), linkify=log_object_link)
     message = tables.Column(
         attrs={"td": {"class": "nb-rendered-markdown"}},
     )
@@ -1297,7 +1308,7 @@ class JobQueueTable(BaseTable):
     pk = ToggleColumn()
     name = tables.Column(linkify=True)
     tenant = TenantColumn()
-    jobs_count = LinkedCountColumn(viewname="extras:job_list", url_params={"job_queues": "pk"}, verbose_name="Jobs")
+    jobs_count = LinkedCountColumn(viewname="extras:job_list", url_params={"job_queues": "pk"}, verbose_name=_("Jobs"))
 
     class Meta(BaseTable.Meta):
         model = JobQueue
@@ -1331,21 +1342,21 @@ class JobResultTable(BaseTable):
     )
     summary = tables.Column(
         empty_values=(),
-        verbose_name="Summary",
+        verbose_name=_("Summary"),
         orderable=False,
         attrs={"td": {"class": "text-nowrap report-stats"}},
     )
     scheduled_job = tables.Column(
         linkify=True,
-        verbose_name="Scheduled Job",
+        verbose_name=_("Scheduled Job"),
     )
-    duration = tables.Column(orderable=False)
+    duration = tables.Column(orderable=False, verbose_name=_("Duration"))
     actions = ButtonsColumn(JobResult, buttons=("none",), prepend_template=JOB_RESULT_BUTTONS)
-    console_log = BooleanColumn(order_by=("celery_kwargs__nautobot_job_console_log",))
-    queue_name = tables.Column(accessor="queue", verbose_name="Queue Name", order_by=("celery_kwargs__queue",))
+    console_log = BooleanColumn(order_by=("celery_kwargs__nautobot_job_console_log",), verbose_name=_("Console log"))
+    queue_name = tables.Column(accessor="queue", verbose_name=_("Queue Name"), order_by=("celery_kwargs__queue",))
     cancel_type = tables.TemplateColumn(
         template_code="{% include 'extras/inc/job_cancel_label.html' with result=record %}",
-        verbose_name="Cancel Type",
+        verbose_name=_("Cancel Type"),
     )
 
     def render_summary(self, record):
@@ -1486,11 +1497,11 @@ class ObjectMetadataTable(BaseTable):
     # NOTE: there is no identity column in this table; this is intentional as we have no detail view for ObjectMetadata
     metadata_type = tables.Column(linkify=True)
     assigned_object = tables.TemplateColumn(
-        template_code=ASSIGNED_OBJECT, verbose_name="Assigned object", orderable=False
+        template_code=ASSIGNED_OBJECT, verbose_name=_("Assigned object"), orderable=False
     )
     # This is needed so that render_value method below does not skip itself
     # when metadata_type.data_type is TYPE_CONTACT_TEAM and we need it to display either contact or team
-    value = tables.Column(empty_values=[], order_by=("_value",))
+    value = tables.Column(empty_values=[], order_by=("_value",), verbose_name=_("Value"))
     actions = ButtonsColumn(ObjectMetadata)
 
     class Meta(BaseTable.Meta):
@@ -1514,7 +1525,7 @@ class ObjectMetadataTable(BaseTable):
 
     def render_scoped_fields(self, value):
         if not value:
-            return "(all fields)"
+            return _("(all fields)")
         return format_html_join(", ", "<code>{}</code>", ([v] for v in sorted(value)))
 
     def render_value(self, record):
@@ -1551,18 +1562,18 @@ class NoteTable(BaseTable):
 class ScheduledJobTable(BaseTable):
     pk = ToggleColumn()
     name = tables.Column(linkify=True)
-    job_model = tables.Column(verbose_name="Job", linkify=True)
+    job_model = tables.Column(verbose_name=_("Job"), linkify=True)
     enabled = BooleanColumn()
     state = tables.TemplateColumn(
         template_code="{% include 'extras/inc/scheduled_job_label.html' with scheduled_job=record %}",
     )
-    interval = tables.Column(verbose_name="Execution Type")
-    start_time = tables.DateTimeColumn(verbose_name="First Run", short=True)
-    last_run_at = tables.DateTimeColumn(verbose_name="Most Recent Run", short=True)
+    interval = tables.Column(verbose_name=_("Execution Type"))
+    start_time = tables.DateTimeColumn(verbose_name=_("First Run"), short=True)
+    last_run_at = tables.DateTimeColumn(verbose_name=_("Most Recent Run"), short=True)
     crontab = tables.Column()
-    total_run_count = tables.Column(verbose_name="Total Run Count")
+    total_run_count = tables.Column(verbose_name=_("Total Run Count"))
     actions = ButtonsColumn(ScheduledJob, buttons=("delete",), prepend_template=SCHEDULED_JOB_BUTTONS)
-    approval_state = tables.Column(empty_values=[], orderable=False)
+    approval_state = tables.Column(empty_values=[], orderable=False, verbose_name=_("Approval state"))
 
     def render_approval_state(self, record):
         workflow = record.associated_approval_workflows.first()
@@ -1601,10 +1612,10 @@ class ScheduledJobTable(BaseTable):
 
 class ScheduledJobApprovalQueueTable(BaseTable):
     name = tables.LinkColumn(viewname="extras:scheduledjob_approval_request_view", args=[tables.A("pk")])
-    job_model = tables.Column(verbose_name="Job", linkify=True)
-    interval = tables.Column(verbose_name="Execution Type")
-    start_time = tables.Column(verbose_name="Requested")
-    user = tables.Column(verbose_name="Requestor")
+    job_model = tables.Column(verbose_name=_("Job"), linkify=True)
+    interval = tables.Column(verbose_name=_("Execution Type"))
+    start_time = tables.Column(verbose_name=_("Requested"))
+    user = tables.Column(verbose_name=_("Requestor"))
     actions = tables.TemplateColumn(
         SCHEDULED_JOB_APPROVAL_QUEUE_BUTTONS,
         attrs={
@@ -1622,9 +1633,9 @@ class ScheduledJobApprovalQueueTable(BaseTable):
 class ObjectChangeTable(BaseTable):
     time = tables.DateTimeColumn(linkify=True, short=True)
     action = ChoiceFieldColumn()
-    changed_object_type = tables.Column(verbose_name="Type")
-    object_repr = tables.TemplateColumn(template_code=OBJECTCHANGE_OBJECT, verbose_name="Object")
-    request_id = tables.TemplateColumn(template_code=OBJECTCHANGE_REQUEST_ID, verbose_name="Request ID")
+    changed_object_type = tables.Column(verbose_name=_("Type"))
+    object_repr = tables.TemplateColumn(template_code=OBJECTCHANGE_OBJECT, verbose_name=_("Object"))
+    request_id = tables.TemplateColumn(template_code=OBJECTCHANGE_REQUEST_ID, verbose_name=_("Request ID"))
 
     class Meta(BaseTable.Meta):
         model = ObjectChange
@@ -1696,10 +1707,14 @@ class RelationshipAssociationTable(BaseTable):
     relationship = tables.Column(linkify=True)
 
     source_type = tables.Column()
-    source = tables.Column(linkify=True, orderable=False, accessor="get_source", default="unknown")
+    source = tables.Column(
+        linkify=True, orderable=False, accessor="get_source", default="unknown", verbose_name=_("Source")
+    )
 
     destination_type = tables.Column()
-    destination = tables.Column(linkify=True, orderable=False, accessor="get_destination", default="unknown")
+    destination = tables.Column(
+        linkify=True, orderable=False, accessor="get_destination", default="unknown", verbose_name=_("Destination")
+    )
 
     class Meta(BaseTable.Meta):
         model = RelationshipAssociation
@@ -1838,6 +1853,8 @@ class StatusTableMixin(BaseTable):
 class TagTable(BaseTable):
     pk = ToggleColumn()
     name = tables.LinkColumn(viewname="extras:tag", args=[Accessor("pk")])
+    # Annotated on the queryset rather than a model field, so it has no verbose_name to inherit.
+    items = tables.Column(verbose_name=_("Items"))
     color = ColorColumn()
     content_types = ContentTypesColumn(truncate_words=15)
     actions = ButtonsColumn(Tag)
@@ -1856,8 +1873,8 @@ class TagTable(BaseTable):
 
 
 class TaggedItemTable(BaseTable):
-    content_object = tables.TemplateColumn(template_code=TAGGED_ITEM, orderable=False, verbose_name="Object")
-    content_type = tables.Column(verbose_name="Type")
+    content_object = tables.TemplateColumn(template_code=TAGGED_ITEM, orderable=False, verbose_name=_("Object"))
+    content_type = tables.Column(verbose_name=_("Type"))
 
     class Meta(BaseTable.Meta):
         model = TaggedItem
@@ -1936,12 +1953,12 @@ class AssociatedContactsTable(StatusTableMixin, RoleTableMixin, BaseTable):
     pk = ToggleColumn()
     contact_type = tables.TemplateColumn(
         CONTACT_OR_TEAM_ICON,
-        verbose_name="Type",
+        verbose_name=_("Type"),
         attrs={"td": {"style": "width:20px;"}},
     )
-    name = tables.TemplateColumn(CONTACT_OR_TEAM, verbose_name="Name")
-    contact_or_team_phone = tables.TemplateColumn(PHONE, accessor="contact_or_team__phone", verbose_name="Phone")
-    contact_or_team_email = tables.TemplateColumn(EMAIL, accessor="contact_or_team__email", verbose_name="E-Mail")
+    name = tables.TemplateColumn(CONTACT_OR_TEAM, verbose_name=_("Name"))
+    contact_or_team_phone = tables.TemplateColumn(PHONE, accessor="contact_or_team__phone", verbose_name=_("Phone"))
+    contact_or_team_email = tables.TemplateColumn(EMAIL, accessor="contact_or_team__email", verbose_name=_("E-Mail"))
     actions = ButtonsColumn(model=ContactAssociation, buttons=("edit", "delete"))
 
     class Meta(BaseTable.Meta):
@@ -1970,9 +1987,9 @@ class AssociatedContactsTable(StatusTableMixin, RoleTableMixin, BaseTable):
 
 
 class ContactAssociationTable(StatusTableMixin, RoleTableMixin, BaseTable):
-    associated_object_type = tables.Column(verbose_name="Object Type")
+    associated_object_type = tables.Column(verbose_name=_("Object Type"))
     associated_object = tables.Column(
-        linkify=True, verbose_name="Object", order_by=["associated_object_type", "associated_object_id"]
+        linkify=True, verbose_name=_("Object"), order_by=["associated_object_type", "associated_object_id"]
     )
 
     class Meta(BaseTable.Meta):

@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.template import engines, loader
 from django.urls import resolve
+from django.utils.translation import gettext
 from django_tables2 import RequestConfig
 from rest_framework import renderers
 
@@ -136,8 +137,11 @@ class NautobotHTMLRenderer(renderers.BrowsableAPIRenderer):
             if max_page_size and paginate["per_page"] > max_page_size:
                 messages.warning(
                     request,
-                    'Requested "per_page" is too large. '
-                    f"No more than {max_page_size} items may be displayed at a time.",
+                    gettext(
+                        'Requested "per_page" is too large. '
+                        "No more than %(max_page_size)s items may be displayed at a time."
+                    )
+                    % {"max_page_size": max_page_size},
                 )
             return RequestConfig(request, paginate).configure(table)
         else:
@@ -164,7 +168,11 @@ class NautobotHTMLRenderer(renderers.BrowsableAPIRenderer):
             else:
                 invalid_actions.append(action)
         if invalid_actions:
-            messages.error(request, f"Missing views for action(s) {', '.join(invalid_actions)}")
+            messages.error(
+                request,
+                gettext("Missing views for action(s) %(invalid_actions)s")
+                % {"invalid_actions": ", ".join(invalid_actions)},
+            )
         return valid_actions
 
     def get_template_context(self, data, renderer_context):

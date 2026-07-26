@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.forms import DynamicModelChoiceField, DynamicModelMultipleChoiceField
 from nautobot.extras.models import Role, Status
@@ -13,7 +14,7 @@ class ContactForm(NautobotModelForm):
     teams = DynamicModelMultipleChoiceField(
         queryset=Team.objects.all(),
         required=False,
-        label="Team(s)",
+        label=_("Team(s)"),
     )
 
     class Meta:
@@ -58,26 +59,30 @@ class ContactBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
 
 class ContactFilterForm(NautobotFilterForm):
     model = Contact
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
 
 
 class ObjectNewContactForm(NautobotModelForm):
     teams = DynamicModelMultipleChoiceField(
         queryset=Team.objects.all(),
         required=False,
-        label="Team(s)",
+        label=_("Team(s)"),
     )
-    associated_object_type = DynamicModelChoiceField(queryset=ContentType.objects.all(), required=True)
+    associated_object_type = DynamicModelChoiceField(
+        queryset=ContentType.objects.all(), required=True, label=_("Associated object type")
+    )
     associated_object_id = forms.CharField(required=True)
     role = DynamicModelChoiceField(
         queryset=Role.objects.all(),
         required=True,
         query_params={"content_types": ContactAssociation._meta.label_lower},
+        label=_("Role"),
     )
     status = DynamicModelChoiceField(
         queryset=Status.objects.all(),
         required=True,
         query_params={"content_types": ContactAssociation._meta.label_lower},
+        label=_("Status"),
     )
 
     class Meta:
@@ -111,19 +116,23 @@ class ObjectNewTeamForm(NautobotModelForm):
     contacts = DynamicModelMultipleChoiceField(
         queryset=Contact.objects.all(),
         required=False,
-        label="Contact(s)",
+        label=_("Contact(s)"),
     )
-    associated_object_type = DynamicModelChoiceField(queryset=ContentType.objects.all(), required=True)
+    associated_object_type = DynamicModelChoiceField(
+        queryset=ContentType.objects.all(), required=True, label=_("Associated object type")
+    )
     associated_object_id = forms.CharField(required=True)
     role = DynamicModelChoiceField(
         queryset=Role.objects.all(),
         required=True,
         query_params={"content_types": ContactAssociation._meta.label_lower},
+        label=_("Role"),
     )
     status = DynamicModelChoiceField(
         queryset=Status.objects.all(),
         required=True,
         query_params={"content_types": ContactAssociation._meta.label_lower},
+        label=_("Status"),
     )
 
     class Meta:
@@ -180,7 +189,7 @@ class TeamForm(NautobotModelForm):
     contacts = DynamicModelMultipleChoiceField(
         queryset=Contact.objects.all(),
         required=False,
-        label="Contact(s)",
+        label=_("Contact(s)"),
     )
 
     class Meta:
@@ -208,4 +217,4 @@ class TeamBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
 
 class TeamFilterForm(NautobotFilterForm):
     model = Team
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))

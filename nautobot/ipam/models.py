@@ -10,6 +10,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import Q
 from django.utils.functional import cached_property
+from django.utils.translation import gettext, gettext_lazy as _
 import netaddr
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
@@ -129,7 +130,10 @@ class NamespaceParentedModelMixin:
             parent = Prefix.objects.filter(namespace=namespace).get_closest_parent(host, include_self=True)
         except Prefix.DoesNotExist as e:
             raise ValidationError(
-                {"namespace": f"No suitable parent Prefix for {host} exists in Namespace {namespace}"}
+                {
+                    "namespace": gettext("No suitable parent Prefix for %(host)s exists in Namespace %(namespace)s")
+                    % {"host": host, "namespace": namespace}
+                }
             ) from e
         self._closest_parent_cache[cache_key] = parent
         return parent
@@ -146,14 +150,15 @@ class NamespaceParentedModelMixin:
 class Namespace(PrimaryModel):
     """Container for unique IPAM objects."""
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, db_index=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, db_index=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     location = models.ForeignKey(
         to="dcim.Location",
         on_delete=models.PROTECT,
         related_name="namespaces",
         blank=True,
         null=True,
+        verbose_name=_("location"),
     )
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -161,6 +166,7 @@ class Namespace(PrimaryModel):
         related_name="namespaces",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
 
     @property
@@ -224,43 +230,45 @@ class VRF(PrimaryModel):
     are said to exist in the "global" table.)
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True, verbose_name=_("name"))
     rd = models.CharField(  # noqa: DJ001  # django-nullable-model-string-field -- see below
         max_length=constants.VRF_RD_MAX_LENGTH,
         blank=True,
         null=True,  # because rd is optional but part of a uniqueness constraint
-        verbose_name="Route distinguisher",
-        help_text="Unique route distinguisher (as defined in RFC 4364)",
+        verbose_name=_("Route distinguisher"),
+        help_text=_("Unique route distinguisher (as defined in RFC 4364)"),
     )
-    status = StatusField(blank=True, null=True)
+    status = StatusField(blank=True, null=True, verbose_name=_("status"))
     namespace = models.ForeignKey(
         "ipam.Namespace",
         on_delete=models.PROTECT,
         related_name="vrfs",
         default=get_default_namespace_pk,
+        verbose_name=_("namespace"),
     )
     devices = models.ManyToManyField(
         to="dcim.Device",
         related_name="vrfs",
         through="ipam.VRFDeviceAssignment",
         through_fields=("vrf", "device"),
+        verbose_name=_("devices"),
     )
     virtual_machines = models.ManyToManyField(
         to="virtualization.VirtualMachine",
         related_name="vrfs",
         through="ipam.VRFDeviceAssignment",
         through_fields=("vrf", "virtual_machine"),
+        verbose_name=_("virtual machines"),
     )
     virtual_device_contexts = models.ManyToManyField(
         to="dcim.VirtualDeviceContext",
         related_name="vrfs",
         through="ipam.VRFDeviceAssignment",
         through_fields=("vrf", "virtual_device_context"),
+        verbose_name=_("virtual device contexts"),
     )
     prefixes = models.ManyToManyField(
-        to="ipam.Prefix",
-        related_name="vrfs",
-        through="ipam.VRFPrefixAssignment",
+        to="ipam.Prefix", related_name="vrfs", through="ipam.VRFPrefixAssignment", verbose_name=_("prefixes")
     )
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -268,10 +276,15 @@ class VRF(PrimaryModel):
         related_name="vrfs",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    import_targets = models.ManyToManyField(to="ipam.RouteTarget", related_name="importing_vrfs", blank=True)
-    export_targets = models.ManyToManyField(to="ipam.RouteTarget", related_name="exporting_vrfs", blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
+    import_targets = models.ManyToManyField(
+        to="ipam.RouteTarget", related_name="importing_vrfs", blank=True, verbose_name=_("import targets")
+    )
+    export_targets = models.ManyToManyField(
+        to="ipam.RouteTarget", related_name="exporting_vrfs", blank=True, verbose_name=_("export targets")
+    )
 
     clone_fields = [
         "tenant",
@@ -289,8 +302,8 @@ class VRF(PrimaryModel):
         indexes = [
             models.Index(fields=("namespace", "name", "rd")),
         ]
-        verbose_name = "VRF"
-        verbose_name_plural = "VRFs"
+        verbose_name = _("VRF")
+        verbose_name_plural = _("VRFs")
 
     def __str__(self):
         return self.display or super().__str__()
@@ -454,28 +467,45 @@ def interfaces_assigned_to_vrf(vrf, parent):
 
 @extras_features("graphql")
 class VRFDeviceAssignment(BaseModel):
-    vrf = models.ForeignKey("ipam.VRF", on_delete=models.CASCADE, related_name="device_assignments")
+    vrf = models.ForeignKey(
+        "ipam.VRF", on_delete=models.CASCADE, related_name="device_assignments", verbose_name=_("vrf")
+    )
     device = models.ForeignKey(
-        "dcim.Device", null=True, blank=True, on_delete=models.CASCADE, related_name="vrf_assignments"
+        "dcim.Device",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="vrf_assignments",
+        verbose_name=_("device"),
     )
     virtual_machine = models.ForeignKey(
-        "virtualization.VirtualMachine", null=True, blank=True, on_delete=models.CASCADE, related_name="vrf_assignments"
+        "virtualization.VirtualMachine",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="vrf_assignments",
+        verbose_name=_("virtual machine"),
     )
     virtual_device_context = models.ForeignKey(
-        "dcim.VirtualDeviceContext", null=True, blank=True, on_delete=models.CASCADE, related_name="vrf_assignments"
+        "dcim.VirtualDeviceContext",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="vrf_assignments",
+        verbose_name=_("virtual device context"),
     )
     rd = models.CharField(  # noqa: DJ001  # django-nullable-model-string-field -- see below
         max_length=constants.VRF_RD_MAX_LENGTH,
         blank=True,
         null=True,  # because rd is optional but (will be) part of a uniqueness constraint
-        verbose_name="Route distinguisher",
-        help_text="Unique route distinguisher (as defined in RFC 4364)",
+        verbose_name=_("Route distinguisher"),
+        help_text=_("Unique route distinguisher (as defined in RFC 4364)"),
     )
-    name = models.CharField(blank=True, max_length=CHARFIELD_MAX_LENGTH)
+    name = models.CharField(blank=True, max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("name"))
     is_metadata_associable_model = False
 
     class Meta:
-        verbose_name = "VRF-device assignment"
+        verbose_name = _("VRF-device assignment")
         # Use the local FK columns so the default ordering does not join into
         # the vrf/device/vm/vdc tables to evaluate their own orderings.
         ordering = ["vrf_id", "device_id", "virtual_machine_id", "virtual_device_context_id"]
@@ -508,19 +538,23 @@ class VRFDeviceAssignment(BaseModel):
         # A VRF must belong to a Device *or* to a VirtualMachine *or* to a Virtual Device Context.
         if all([self.device, self.virtual_machine]):
             raise ValidationError(
-                "A VRFDeviceAssignment entry cannot be associated with both a device and a virtual machine."
+                _("A VRFDeviceAssignment entry cannot be associated with both a device and a virtual machine.")
             )
         if all([self.device, self.virtual_device_context]):
             raise ValidationError(
-                "A VRFDeviceAssignment entry cannot be associated with both a device and a virtual device context."
+                _("A VRFDeviceAssignment entry cannot be associated with both a device and a virtual device context.")
             )
         if all([self.virtual_machine, self.virtual_device_context]):
             raise ValidationError(
-                "A VRFDeviceAssignment entry cannot be associated with both a virtual machine and a virtual device context."
+                _(
+                    "A VRFDeviceAssignment entry cannot be associated with both a virtual machine and a virtual device context."
+                )
             )
         if not any([self.device, self.virtual_machine, self.virtual_device_context]):
             raise ValidationError(
-                "A VRFDeviceAssignment entry must be associated with a device, a virtual machine, or a virtual device context."
+                _(
+                    "A VRFDeviceAssignment entry must be associated with a device, a virtual machine, or a virtual device context."
+                )
             )
 
     clean.alters_data = True
@@ -543,12 +577,14 @@ class VRFDeviceAssignment(BaseModel):
 
 @extras_features("graphql")
 class VRFPrefixAssignment(BaseModel):
-    vrf = models.ForeignKey("ipam.VRF", on_delete=models.CASCADE, related_name="+")
-    prefix = models.ForeignKey("ipam.Prefix", on_delete=models.CASCADE, related_name="vrf_assignments")
+    vrf = models.ForeignKey("ipam.VRF", on_delete=models.CASCADE, related_name="+", verbose_name=_("vrf"))
+    prefix = models.ForeignKey(
+        "ipam.Prefix", on_delete=models.CASCADE, related_name="vrf_assignments", verbose_name=_("prefix")
+    )
     is_metadata_associable_model = False
 
     class Meta:
-        verbose_name = "VRF-prefix assignment"
+        verbose_name = _("VRF-prefix assignment")
         # Use the local FK columns so the default ordering does not join into
         # the vrf/prefix/namespace tables to evaluate their own orderings.
         ordering = ["vrf_id", "prefix_id"]
@@ -563,8 +599,10 @@ class VRFPrefixAssignment(BaseModel):
         if self.prefix.namespace != self.vrf.namespace:
             raise ValidationError(
                 {
-                    "prefix": f"Prefix (namespace {self.prefix.namespace}) must be in same namespace as "
-                    f"VRF (namespace {self.vrf.namespace})"
+                    "prefix": gettext(
+                        "Prefix (namespace %(namespace)s) must be in same namespace as VRF (namespace %(namespace_2)s)"
+                    )
+                    % {"namespace": self.prefix.namespace, "namespace_2": self.vrf.namespace}
                 }
             )
 
@@ -584,15 +622,17 @@ class RouteTarget(PrimaryModel):
     name = models.CharField(
         max_length=constants.VRF_RD_MAX_LENGTH,  # Same format options as VRF RD (RFC 4360 section 4)
         unique=True,
-        help_text="Route target value (formatted in accordance with RFC 4360)",
+        help_text=_("Route target value (formatted in accordance with RFC 4360)"),
+        verbose_name=_("name"),
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
         on_delete=models.PROTECT,
         related_name="route_targets",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
 
     class Meta:
@@ -612,20 +652,20 @@ class RIR(OrganizationalModel):
     space. This can be an organization like ARIN or RIPE, or a governing standard such as RFC 1918.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
     is_private = models.BooleanField(
         default=False,
-        verbose_name="Private",
-        help_text="IP space managed by this RIR is considered private",
+        verbose_name=_("Private"),
+        help_text=_("IP space managed by this RIR is considered private"),
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     objects = BaseManager.from_queryset(RIRQuerySet)()
 
     class Meta:
         ordering = ["name"]
-        verbose_name = "RIR"
-        verbose_name_plural = "RIRs"
+        verbose_name = _("RIR")
+        verbose_name_plural = _("RIRs")
 
     def __str__(self):
         return self.name
@@ -650,45 +690,54 @@ class Prefix(PrimaryModel):
     """
 
     network = VarbinaryIPField(
+        null=False, db_index=True, help_text=_("IPv4 or IPv6 network address"), verbose_name=_("network")
+    )
+    broadcast = VarbinaryIPField(
+        null=False, db_index=True, help_text=_("IPv4 or IPv6 broadcast address"), verbose_name=_("broadcast")
+    )
+    prefix_length = models.IntegerField(
         null=False,
         db_index=True,
-        help_text="IPv4 or IPv6 network address",
+        help_text=_("Length of the Network prefix, in bits."),
+        verbose_name=_("prefix length"),
     )
-    broadcast = VarbinaryIPField(null=False, db_index=True, help_text="IPv4 or IPv6 broadcast address")
-    prefix_length = models.IntegerField(null=False, db_index=True, help_text="Length of the Network prefix, in bits.")
     type = models.CharField(
         max_length=50,
         choices=choices.PrefixTypeChoices,
         default=choices.PrefixTypeChoices.TYPE_NETWORK,
+        verbose_name=_("type"),
     )
-    status = StatusField(blank=False, null=False)
-    role = RoleField(blank=True, null=True)
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
+    role = RoleField(blank=True, null=True, verbose_name=_("role"))
     parent = models.ForeignKey(
         "self",
         blank=True,
         null=True,
         related_name="children",  # `IPAddress` to use `related_name="ip_addresses"`
         on_delete=models.PROTECT,
-        help_text="The parent Prefix of this Prefix.",
+        help_text=_("The parent Prefix of this Prefix."),
+        verbose_name=_("parent"),
     )
     # ip_version is set internally just like network, broadcast, and prefix_length.
     ip_version = models.IntegerField(
         choices=choices.IPAddressVersionChoices,
         editable=False,
         db_index=True,
-        verbose_name="IP Version",
+        verbose_name=_("IP Version"),
     )
     locations = models.ManyToManyField(
         to="dcim.Location",
         related_name="prefixes",
         through="ipam.PrefixLocationAssignment",
         blank=True,
+        verbose_name=_("locations"),
     )
     namespace = models.ForeignKey(
         to="ipam.Namespace",
         on_delete=models.PROTECT,
         related_name="prefixes",
         default=get_default_namespace_pk,
+        verbose_name=_("namespace"),
     )
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -696,6 +745,7 @@ class Prefix(PrimaryModel):
         related_name="prefixes",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
     vlan = models.ForeignKey(
         to="ipam.VLAN",
@@ -703,7 +753,7 @@ class Prefix(PrimaryModel):
         related_name="prefixes",
         blank=True,
         null=True,
-        verbose_name="VLAN",
+        verbose_name=_("VLAN"),
     )
     rir = models.ForeignKey(
         to="ipam.RIR",
@@ -711,15 +761,16 @@ class Prefix(PrimaryModel):
         related_name="prefixes",
         blank=True,
         null=True,
-        verbose_name="RIR",
-        help_text="Regional Internet Registry responsible for this prefix",
+        verbose_name=_("RIR"),
+        help_text=_("Regional Internet Registry responsible for this prefix"),
     )
     date_allocated = models.DateTimeField(
         blank=True,
         null=True,
-        help_text="Date this prefix was allocated to an RIR, reserved in IPAM, etc.",
+        help_text=_("Date this prefix was allocated to an RIR, reserved in IPAM, etc."),
+        verbose_name=_("date allocated"),
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     objects = BaseManager.from_queryset(PrefixQuerySet)()
 
@@ -749,7 +800,7 @@ class Prefix(PrimaryModel):
             models.Index(fields=("namespace", "ip_version", "network", "prefix_length")),
         ]
         unique_together = ["namespace", "network", "prefix_length"]
-        verbose_name_plural = "prefixes"
+        verbose_name_plural = _("prefixes")
 
     def __init__(self, *args, **kwargs):
         prefix = kwargs.pop("prefix", None)
@@ -897,8 +948,10 @@ class Prefix(PrimaryModel):
         if self._networking_values_changed and self._namespace_id != self.namespace_id:
             raise ValidationError(
                 {
-                    "__all__": "Cannot change network and namespace in the same update. "
-                    "Consider creating a new Prefix instead."
+                    "__all__": _(
+                        "Cannot change network and namespace in the same update. "
+                        "Consider creating a new Prefix instead."
+                    )
                 }
             )
 
@@ -911,8 +964,10 @@ class Prefix(PrimaryModel):
             if orphaned_ips_count := orphaned_ips.count():
                 raise ValidationError(
                     {
-                        "__all__": f"{orphaned_ips_count} existing IP addresses (including "
-                        f"{orphaned_ips.first().host}) would no longer have a valid parent Prefix after this change."
+                        "__all__": gettext(
+                            "%(orphaned_ips_count)s existing IP addresses (including %(host)s) would no longer have a valid parent Prefix after this change."
+                        )
+                        % {"orphaned_ips_count": orphaned_ips_count, "host": orphaned_ips.first().host}
                     }
                 )
 
@@ -928,10 +983,10 @@ class Prefix(PrimaryModel):
                 raise ValidationError(
                     {
                         "__all__": (
-                            f"Cannot modify Prefix: IP Address Range "
-                            f"'{orphaned_range.start_address} - {orphaned_range.end_address}' "
-                            "would no longer be fully contained within this Prefix. "
-                            "Modify or delete the IP Address Range first."
+                            gettext(
+                                "Cannot modify Prefix: IP Address Range '%(start_address)s - %(end_address)s' would no longer be fully contained within this Prefix. Modify or delete the IP Address Range first."
+                            )
+                            % {"start_address": orphaned_range.start_address, "end_address": orphaned_range.end_address}
                         )
                     }
                 )
@@ -940,8 +995,10 @@ class Prefix(PrimaryModel):
             if self.vrfs.exists():
                 raise ValidationError(
                     {
-                        "namespace": "Cannot move to a different Namespace while associated to VRFs in the current "
-                        "Namespace. Remove all VRFs from this Prefix and descendants before making this change."
+                        "namespace": _(
+                            "Cannot move to a different Namespace while associated to VRFs in the current "
+                            "Namespace. Remove all VRFs from this Prefix and descendants before making this change."
+                        )
                     }
                 )
             if VRFPrefixAssignment.objects.filter(
@@ -953,8 +1010,10 @@ class Prefix(PrimaryModel):
             ).exists():
                 raise ValidationError(
                     {
-                        "namespace": "Cannot move to a different Namespace with descendant Prefixes associated to VRFs "
-                        "in the current Namespace. Remove all VRFs from all descendants before making this change."
+                        "namespace": _(
+                            "Cannot move to a different Namespace with descendant Prefixes associated to VRFs "
+                            "in the current Namespace. Remove all VRFs from all descendants before making this change."
+                        )
                     }
                 )
 
@@ -1166,8 +1225,10 @@ class Prefix(PrimaryModel):
             if self._parent_id is None and reparentable_ips.exists():
                 raise ValidationError(
                     {
-                        "__all__": f"{reparentable_ips.count()} existing IP addresses would no longer have "
-                        "a valid parent Prefix after this change."
+                        "__all__": gettext(
+                            "%(count)s existing IP addresses would no longer have a valid parent Prefix after this change."
+                        )
+                        % {"count": reparentable_ips.count()}
                     }
                 )
             reparentable_ips.update(parent_id=self._parent_id)
@@ -1216,8 +1277,10 @@ class Prefix(PrimaryModel):
             if self._parent_id is None and reparentable_ranges.exists():
                 raise ValidationError(
                     {
-                        "__all__": f"{reparentable_ranges.count()} existing IP Address Ranges would no longer "
-                        "have a valid parent Prefix after this change."
+                        "__all__": gettext(
+                            "%(count)s existing IP Address Ranges would no longer have a valid parent Prefix after this change."
+                        )
+                        % {"count": reparentable_ranges.count()}
                     }
                 )
             reparentable_ranges.update(parent_id=self._parent_id)
@@ -1661,8 +1724,12 @@ class Prefix(PrimaryModel):
 
 @extras_features("graphql")
 class PrefixLocationAssignment(BaseModel):
-    prefix = models.ForeignKey("ipam.Prefix", on_delete=models.CASCADE, related_name="location_assignments")
-    location = models.ForeignKey("dcim.Location", on_delete=models.CASCADE, related_name="prefix_assignments")
+    prefix = models.ForeignKey(
+        "ipam.Prefix", on_delete=models.CASCADE, related_name="location_assignments", verbose_name=_("prefix")
+    )
+    location = models.ForeignKey(
+        "dcim.Location", on_delete=models.CASCADE, related_name="prefix_assignments", verbose_name=_("location")
+    )
     is_metadata_associable_model = False
 
     class Meta:
@@ -1693,33 +1760,33 @@ class IPAddress(NamespaceParentedModelMixin, PrimaryModel):
     which has a NAT outside IP, that Interface's Device can use either the inside or outside IP as its primary IP.
     """
 
-    host = VarbinaryIPField(
-        null=False,
-        db_index=True,
-        help_text="IPv4 or IPv6 host address",
+    host = VarbinaryIPField(null=False, db_index=True, help_text=_("IPv4 or IPv6 host address"), verbose_name=_("host"))
+    mask_length = models.IntegerField(
+        null=False, db_index=True, help_text=_("Length of the network mask, in bits."), verbose_name=_("mask length")
     )
-    mask_length = models.IntegerField(null=False, db_index=True, help_text="Length of the network mask, in bits.")
     type = models.CharField(
         max_length=50,
         choices=choices.IPAddressTypeChoices,
         default=choices.IPAddressTypeChoices.TYPE_HOST,
+        verbose_name=_("type"),
     )
-    status = StatusField(blank=False, null=False)
-    role = RoleField(blank=True, null=True)
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
+    role = RoleField(blank=True, null=True, verbose_name=_("role"))
     parent = models.ForeignKey(
         "ipam.Prefix",
         blank=True,
         null=True,  # TODO remove this, it shouldn't be permitted for the database!
         related_name="ip_addresses",  # `IPAddress` to use `related_name="ip_addresses"`
         on_delete=models.PROTECT,
-        help_text="The parent Prefix of this IPAddress.",
+        help_text=_("The parent Prefix of this IPAddress."),
+        verbose_name=_("parent"),
     )
     # ip_version is set internally just like network, and mask_length.
     ip_version = models.IntegerField(
         choices=choices.IPAddressVersionChoices,
         editable=False,
         db_index=True,
-        verbose_name="IP Version",
+        verbose_name=_("IP Version"),
     )
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -1727,6 +1794,7 @@ class IPAddress(NamespaceParentedModelMixin, PrimaryModel):
         related_name="ip_addresses",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
     nat_inside = models.ForeignKey(
         to="self",
@@ -1734,18 +1802,18 @@ class IPAddress(NamespaceParentedModelMixin, PrimaryModel):
         related_name="nat_outside_list",
         blank=True,
         null=True,
-        verbose_name="NAT (Inside)",
-        help_text='The IP Addresses for which this address is the "outside" IP',
+        verbose_name=_("NAT (Inside)"),
+        help_text=_('The IP Addresses for which this address is the "outside" IP'),
     )
     dns_name = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
         validators=[DNSValidator],
-        verbose_name="DNS Name",
-        help_text="Hostname or FQDN (not case-sensitive)",
+        verbose_name=_("DNS Name"),
+        help_text=_("Hostname or FQDN (not case-sensitive)"),
         db_index=True,
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     clone_fields = [
         "tenant",
@@ -1761,8 +1829,8 @@ class IPAddress(NamespaceParentedModelMixin, PrimaryModel):
 
     class Meta:
         ordering = ("ip_version", "host", "mask_length")  # address may be non-unique
-        verbose_name = "IP address"
-        verbose_name_plural = "IP addresses"
+        verbose_name = _("IP address")
+        verbose_name_plural = _("IP addresses")
         unique_together = ["parent", "host"]
         indexes = [
             models.Index(fields=("ip_version", "host", "mask_length")),
@@ -1792,14 +1860,14 @@ class IPAddress(NamespaceParentedModelMixin, PrimaryModel):
         self._deconstruct_address(self.address)
 
         if self.present_in_database and self._host != self.host:  # pylint: disable=no-member
-            raise ValidationError({"__all__": "Host address cannot be changed once created"})
+            raise ValidationError({"__all__": _("Host address cannot be changed once created")})
 
         # Validate IP status selection
         if (
             self.type == choices.IPAddressTypeChoices.TYPE_SLAAC
             and self.ip_version != choices.IPAddressVersionChoices.VERSION_6
         ):
-            raise ValidationError({"type": "Only IPv6 addresses can be assigned SLAAC type"})
+            raise ValidationError({"type": _("Only IPv6 addresses can be assigned SLAAC type")})
 
         if self.host and self.ip_version:
             exclusive_range = IPAddressRange.objects.filter(
@@ -1813,9 +1881,10 @@ class IPAddress(NamespaceParentedModelMixin, PrimaryModel):
                 raise ValidationError(
                     {
                         "__all__": (
-                            f"IP address {self.host} falls within exclusive IP Address Range "
-                            f'"{exclusive_range}". Creating an IP Address within an '
-                            "exclusive range is not permitted."
+                            gettext(
+                                'IP address %(host)s falls within exclusive IP Address Range "%(exclusive_range)s". Creating an IP Address within an exclusive range is not permitted.'
+                            )
+                            % {"host": self.host, "exclusive_range": exclusive_range}
                         )
                     }
                 )
@@ -1827,8 +1896,15 @@ class IPAddress(NamespaceParentedModelMixin, PrimaryModel):
                 raise ValidationError(
                     {
                         "parent": (
-                            f"{self.parent} cannot be assigned as the parent of {self}. "
-                            f" In namespace {self._namespace}, the expected parent would be {closest_parent}."
+                            gettext(
+                                "%(parent)s cannot be assigned as the parent of %(value)s.  In namespace %(_namespace)s, the expected parent would be %(closest_parent)s."
+                            )
+                            % {
+                                "parent": self.parent,
+                                "value": self,
+                                "_namespace": self._namespace,
+                                "closest_parent": closest_parent,
+                            }
                         )
                     }
                 )
@@ -1839,7 +1915,12 @@ class IPAddress(NamespaceParentedModelMixin, PrimaryModel):
         if self.host and self.parent_id:
             duplicate = IPAddress.objects.filter(parent_id=self.parent_id, host=self.host).exclude(pk=self.pk)
             if duplicate.exists():
-                raise ValidationError({"__all__": f"IP address {self.address} already exists in {self.parent}."})
+                raise ValidationError(
+                    {
+                        "__all__": gettext("IP address %(address)s already exists in %(parent)s.")
+                        % {"address": self.address, "parent": self.parent}
+                    }
+                )
 
         # Force dns_name to lowercase
         if not self.dns_name.islower():
@@ -1910,9 +1991,16 @@ class IPAddress(NamespaceParentedModelMixin, PrimaryModel):
 
 @extras_features("graphql")
 class IPAddressToInterface(BaseModel):
-    ip_address = models.ForeignKey("ipam.IPAddress", on_delete=models.CASCADE, related_name="interface_assignments")
+    ip_address = models.ForeignKey(
+        "ipam.IPAddress", on_delete=models.CASCADE, related_name="interface_assignments", verbose_name=_("ip address")
+    )
     interface = models.ForeignKey(
-        "dcim.Interface", blank=True, null=True, on_delete=models.CASCADE, related_name="ip_address_assignments"
+        "dcim.Interface",
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="ip_address_assignments",
+        verbose_name=_("interface"),
     )
     vm_interface = models.ForeignKey(
         "virtualization.VMInterface",
@@ -1920,14 +2008,29 @@ class IPAddressToInterface(BaseModel):
         null=True,
         on_delete=models.CASCADE,
         related_name="ip_address_assignments",
+        verbose_name=_("vm interface"),
     )
-    is_source = models.BooleanField(default=False, help_text="Is source address on interface")
-    is_destination = models.BooleanField(default=False, help_text="Is destination address on interface")
-    is_default = models.BooleanField(default=False, help_text="Is default address on interface")
-    is_preferred = models.BooleanField(default=False, help_text="Is preferred address on interface")
-    is_primary = models.BooleanField(default=False, help_text="Is primary address on interface")
-    is_secondary = models.BooleanField(default=False, help_text="Is secondary address on interface")
-    is_standby = models.BooleanField(default=False, help_text="Is standby address on interface")
+    is_source = models.BooleanField(
+        default=False, help_text=_("Is source address on interface"), verbose_name=_("is source")
+    )
+    is_destination = models.BooleanField(
+        default=False, help_text=_("Is destination address on interface"), verbose_name=_("is destination")
+    )
+    is_default = models.BooleanField(
+        default=False, help_text=_("Is default address on interface"), verbose_name=_("is default")
+    )
+    is_preferred = models.BooleanField(
+        default=False, help_text=_("Is preferred address on interface"), verbose_name=_("is preferred")
+    )
+    is_primary = models.BooleanField(
+        default=False, help_text=_("Is primary address on interface"), verbose_name=_("is primary")
+    )
+    is_secondary = models.BooleanField(
+        default=False, help_text=_("Is secondary address on interface"), verbose_name=_("is secondary")
+    )
+    is_standby = models.BooleanField(
+        default=False, help_text=_("Is standby address on interface"), verbose_name=_("is standby")
+    )
     is_metadata_associable_model = False
 
     class Meta:
@@ -1935,19 +2038,19 @@ class IPAddressToInterface(BaseModel):
             ["ip_address", "interface"],
             ["ip_address", "vm_interface"],
         ]
-        verbose_name = "IP Address Assignment"
-        verbose_name_plural = "IP Address Assignments"
+        verbose_name = _("IP Address Assignment")
+        verbose_name_plural = _("IP Address Assignments")
 
     def clean(self):
         super().clean()
 
         if self.interface is not None and self.vm_interface is not None:
             raise ValidationError(
-                {"interface": "Cannot use a single instance to associate to both an Interface and a VMInterface."}
+                {"interface": _("Cannot use a single instance to associate to both an Interface and a VMInterface.")}
             )
 
         if self.interface is None and self.vm_interface is None:
-            raise ValidationError({"interface": "Must associate to either an Interface or a VMInterface."})
+            raise ValidationError({"interface": _("Must associate to either an Interface or a VMInterface.")})
 
     def __str__(self):
         if self.interface:
@@ -1979,23 +2082,26 @@ class IPAddressRange(NamespaceParentedModelMixin, PrimaryModel):
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
         db_index=True,
-        help_text="Name of the IP Address Range",
+        help_text=_("Name of the IP Address Range"),
+        verbose_name=_("name"),
     )
     start_host = VarbinaryIPField(
         null=False,
         db_index=True,
-        help_text="First IP host address in the range (inclusive)",
+        help_text=_("First IP host address in the range (inclusive)"),
+        verbose_name=_("start host"),
     )
     end_host = VarbinaryIPField(
         null=False,
         db_index=True,
-        help_text="Last IP host address in the range (inclusive)",
+        help_text=_("Last IP host address in the range (inclusive)"),
+        verbose_name=_("end host"),
     )
     ip_version = models.IntegerField(
         choices=choices.IPAddressVersionChoices,
         editable=False,
         db_index=True,
-        verbose_name="IP Version",
+        verbose_name=_("IP Version"),
     )
     # blank=True (despite null=False): parent isn't supplied on input, it's auto-resolved
     # in clean(). full_clean() runs before clean(), so without this it'd be rejected as required.
@@ -2005,11 +2111,12 @@ class IPAddressRange(NamespaceParentedModelMixin, PrimaryModel):
         null=False,
         related_name="ip_address_ranges",
         on_delete=models.PROTECT,
-        help_text="The parent Prefix of this IP Address Range. Auto-resolved from the start/end host.",
+        help_text=_("The parent Prefix of this IP Address Range. Auto-resolved from the start/end host."),
+        verbose_name=_("parent"),
     )
-    status = StatusField(blank=False, null=False)
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
     role = RoleField(
-        blank=True, null=True
+        blank=True, null=True, verbose_name=_("role")
     )  # starter choices: DHCP, Firewall Object, NAT Pool, Load Balancer Pool, Reserved
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -2017,17 +2124,18 @@ class IPAddressRange(NamespaceParentedModelMixin, PrimaryModel):
         related_name="ip_address_ranges",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     count_as_utilized = models.BooleanField(
         default=False,
-        verbose_name="Mark as fully utilized",
-        help_text="Forces this range to count as fully utilized in prefix utilization calculations.",
+        verbose_name=_("Mark as fully utilized"),
+        help_text=_("Forces this range to count as fully utilized in prefix utilization calculations."),
     )
     is_exclusive = models.BooleanField(
         default=False,
-        verbose_name="Exclusive (block IPs)",
-        help_text="Prevent individual IP Address objects from being created within this range.",
+        verbose_name=_("Exclusive (block IPs)"),
+        help_text=_("Prevent individual IP Address objects from being created within this range."),
     )
 
     clone_fields = [
@@ -2044,8 +2152,8 @@ class IPAddressRange(NamespaceParentedModelMixin, PrimaryModel):
 
     class Meta:
         ordering = ("parent__namespace", "ip_version", "start_host")
-        verbose_name = "IP address range"
-        verbose_name_plural = "IP address ranges"
+        verbose_name = _("IP address range")
+        verbose_name_plural = _("IP address ranges")
         indexes = [
             models.Index(fields=("parent", "ip_version", "start_host", "end_host")),
         ]
@@ -2095,8 +2203,10 @@ class IPAddressRange(NamespaceParentedModelMixin, PrimaryModel):
                 raise ValidationError(
                     {
                         "__all__": (
-                            f"start_address (IPv{start_version}) and end_address "
-                            f"(IPv{end_version}) must be of the same IP version"
+                            gettext(
+                                "start_address (IPv%(start_version)s) and end_address (IPv%(end_version)s) must be of the same IP version"
+                            )
+                            % {"start_version": start_version, "end_version": end_version}
                         )
                     }
                 )
@@ -2124,7 +2234,7 @@ class IPAddressRange(NamespaceParentedModelMixin, PrimaryModel):
     def _validate_start_not_after_end(self):
         """start_address must be <= end_address."""
         if self.start_address > self.end_address:
-            raise ValidationError({"start_address": "start_address must be less than or equal to end_address"})
+            raise ValidationError({"start_address": _("start_address must be less than or equal to end_address")})
 
     def _resolve_and_validate_parent(self):
         """Both endpoints must resolve to the same single parent Prefix.
@@ -2142,9 +2252,11 @@ class IPAddressRange(NamespaceParentedModelMixin, PrimaryModel):
             raise ValidationError(
                 {
                     "__all__": (
-                        "IP Address Range must be fully contained within a single parent Prefix. "
-                        "No single Prefix in namespace contains both start_address and end_address. "
-                        "Consider creating a wider parent Prefix that covers the entire range."
+                        _(
+                            "IP Address Range must be fully contained within a single parent Prefix. "
+                            "No single Prefix in namespace contains both start_address and end_address. "
+                            "Consider creating a wider parent Prefix that covers the entire range."
+                        )
                     )
                 }
             )
@@ -2153,8 +2265,15 @@ class IPAddressRange(NamespaceParentedModelMixin, PrimaryModel):
             raise ValidationError(
                 {
                     "parent": (
-                        f"{self.parent} cannot be assigned as the parent of {self}. "
-                        f"In namespace {self._namespace}, the expected parent would be {closest_start}."
+                        gettext(
+                            "%(parent)s cannot be assigned as the parent of %(value)s. In namespace %(_namespace)s, the expected parent would be %(closest_start)s."
+                        )
+                        % {
+                            "parent": self.parent,
+                            "value": self,
+                            "_namespace": self._namespace,
+                            "closest_start": closest_start,
+                        }
                     )
                 }
             )
@@ -2177,8 +2296,11 @@ class IPAddressRange(NamespaceParentedModelMixin, PrimaryModel):
             raise ValidationError(
                 {
                     "__all__": (
-                        f"IP Address Range intersects with existing range "
-                        f"'{overlapping_range.start_address} - {overlapping_range.end_address}'"
+                        gettext("IP Address Range intersects with existing range '%(start_address)s - %(end_address)s'")
+                        % {
+                            "start_address": overlapping_range.start_address,
+                            "end_address": overlapping_range.end_address,
+                        }
                     )
                 }
             )
@@ -2198,7 +2320,10 @@ class IPAddressRange(NamespaceParentedModelMixin, PrimaryModel):
             raise ValidationError(
                 {
                     "is_exclusive": (
-                        f"Cannot make this IP Address Range exclusive: existing IP address(es) fall within the range: {hosts}"
+                        gettext(
+                            "Cannot make this IP Address Range exclusive: existing IP address(es) fall within the range: %(hosts)s"
+                        )
+                        % {"hosts": hosts}
                     )
                 }
             )
@@ -2211,7 +2336,10 @@ class IPAddressRange(NamespaceParentedModelMixin, PrimaryModel):
                 raise ValidationError(
                     {
                         "__all__": (
-                            f"IP Address Range overlaps with child Prefix '{child.prefix}' of the assigned parent Prefix"
+                            gettext(
+                                "IP Address Range overlaps with child Prefix '%(prefix)s' of the assigned parent Prefix"
+                            )
+                            % {"prefix": child.prefix}
                         )
                     }
                 )
@@ -2272,28 +2400,30 @@ class VLANGroup(PrimaryModel):
     A VLAN group is an arbitrary collection of VLANs within which VLAN IDs and names must be unique.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True, unique=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True, unique=True, verbose_name=_("name"))
     location = models.ForeignKey(
         to="dcim.Location",
         on_delete=models.PROTECT,
         related_name="vlan_groups",
         blank=True,
         null=True,
+        verbose_name=_("location"),
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     range = PositiveRangeNumberTextField(
         blank=False,
         default="1-4094",
-        help_text="Permitted VID range(s) as comma-separated list, default '1-4094' if left blank.",
+        help_text=_("Permitted VID range(s) as comma-separated list, default '1-4094' if left blank."),
         min_boundary=constants.VLAN_VID_MIN,
         max_boundary=constants.VLAN_VID_MAX,
+        verbose_name=_("range"),
     )
 
     class Meta:
         ordering = ("name",)
-        verbose_name = "VLAN group"
-        verbose_name_plural = "VLAN groups"
+        verbose_name = _("VLAN group")
+        verbose_name_plural = _("VLAN groups")
 
     @property
     def expanded_range(self):
@@ -2318,7 +2448,10 @@ class VLANGroup(PrimaryModel):
         if self.location is not None:
             if ContentType.objects.get_for_model(self) not in self.location.location_type.content_types.all():
                 raise ValidationError(
-                    {"location": f'VLAN groups may not associate to locations of type "{self.location.location_type}".'}
+                    {
+                        "location": gettext('VLAN groups may not associate to locations of type "%(location_type)s".')
+                        % {"location_type": self.location.location_type}
+                    }
                 )
 
         # Validate ranges for related VLANs.
@@ -2327,7 +2460,10 @@ class VLANGroup(PrimaryModel):
         if out_of_range_vids:
             raise ValidationError(
                 {
-                    "range": f"VLAN group range may not be re-sized due to existing VLANs (IDs: {','.join(map(str, out_of_range_vids))})."
+                    "range": gettext(
+                        "VLAN group range may not be re-sized due to existing VLANs (IDs: %(out_of_range_vids)s)."
+                    )
+                    % {"out_of_range_vids": ",".join(map(str, out_of_range_vids))}
                 }
             )
 
@@ -2366,6 +2502,7 @@ class VLAN(PrimaryModel):
         related_name="vlans",
         through="ipam.VLANLocationAssignment",
         blank=True,
+        verbose_name=_("locations"),
     )
     vlan_group = models.ForeignKey(
         to="ipam.VLANGroup",
@@ -2373,21 +2510,23 @@ class VLAN(PrimaryModel):
         related_name="vlans",
         blank=True,
         null=True,
+        verbose_name=_("vlan group"),
     )
     vid = models.PositiveSmallIntegerField(
-        verbose_name="ID", validators=[MinValueValidator(1), MaxValueValidator(4094)]
+        verbose_name=_("ID"), validators=[MinValueValidator(1), MaxValueValidator(4094)]
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True)
-    status = StatusField(blank=False, null=False)
-    role = RoleField(blank=True, null=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True, verbose_name=_("name"))
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
+    role = RoleField(blank=True, null=True, verbose_name=_("role"))
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
         on_delete=models.PROTECT,
         related_name="vlans",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     clone_fields = [
         "locations",
@@ -2412,8 +2551,8 @@ class VLAN(PrimaryModel):
             ["vlan_group", "vid"],
             ["vlan_group", "name"],
         ]
-        verbose_name = "VLAN"
-        verbose_name_plural = "VLANs"
+        verbose_name = _("VLAN")
+        verbose_name_plural = _("VLANs")
 
     def __str__(self):
         return self.display or super().__str__()
@@ -2471,13 +2610,22 @@ class VLAN(PrimaryModel):
 
         # Validate Vlan Group Range
         if self.vlan_group and self.vid not in self.vlan_group.expanded_range:
-            raise ValidationError({"vid": f"VLAN ID is not contained in VLAN Group range ({self.vlan_group.range})"})
+            raise ValidationError(
+                {
+                    "vid": gettext("VLAN ID is not contained in VLAN Group range (%(range)s)")
+                    % {"range": self.vlan_group.range}
+                }
+            )
 
 
 @extras_features("graphql")
 class VLANLocationAssignment(BaseModel):
-    vlan = models.ForeignKey("ipam.VLAN", on_delete=models.CASCADE, related_name="location_assignments")
-    location = models.ForeignKey("dcim.Location", on_delete=models.CASCADE, related_name="vlan_assignments")
+    vlan = models.ForeignKey(
+        "ipam.VLAN", on_delete=models.CASCADE, related_name="location_assignments", verbose_name=_("vlan")
+    )
+    location = models.ForeignKey(
+        "dcim.Location", on_delete=models.CASCADE, related_name="vlan_assignments", verbose_name=_("location")
+    )
     is_metadata_associable_model = False
 
     class Meta:
@@ -2505,7 +2653,7 @@ class Service(PrimaryModel):
         to="dcim.Device",
         on_delete=models.CASCADE,
         related_name="services",
-        verbose_name="device",
+        verbose_name=_("device"),
         null=True,
         blank=True,
     )
@@ -2515,9 +2663,10 @@ class Service(PrimaryModel):
         related_name="services",
         null=True,
         blank=True,
+        verbose_name=_("virtual machine"),
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True)
-    protocol = models.CharField(max_length=50, choices=choices.ServiceProtocolChoices)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True, verbose_name=_("name"))
+    protocol = models.CharField(max_length=50, choices=choices.ServiceProtocolChoices, verbose_name=_("protocol"))
     ports = JSONArrayField(
         base_field=models.PositiveIntegerField(
             validators=[
@@ -2525,15 +2674,15 @@ class Service(PrimaryModel):
                 MaxValueValidator(constants.SERVICE_PORT_MAX),
             ]
         ),
-        verbose_name="Port numbers",
+        verbose_name=_("Port numbers"),
     )
     ip_addresses = models.ManyToManyField(
         to="ipam.IPAddress",
         related_name="services",
         blank=True,
-        verbose_name="IP addresses",
+        verbose_name=_("IP addresses"),
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     class Meta:
         ordering = (
@@ -2559,9 +2708,9 @@ class Service(PrimaryModel):
 
         # A Service must belong to a Device *or* to a VirtualMachine
         if self.device and self.virtual_machine:
-            raise ValidationError("A service cannot be associated with both a device and a virtual machine.")
+            raise ValidationError(_("A service cannot be associated with both a device and a virtual machine."))
         if not self.device and not self.virtual_machine:
-            raise ValidationError("A service must be associated with either a device or a virtual machine.")
+            raise ValidationError(_("A service must be associated with either a device or a virtual machine."))
 
     @property
     def port_list(self):

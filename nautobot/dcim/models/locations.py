@@ -3,6 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.functional import classproperty
+from django.utils.translation import gettext, gettext_lazy as _
 from timezone_field import TimeZoneField
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
@@ -31,18 +32,19 @@ class LocationType(TreeModel, OrganizationalModel):
     while a "Room" LocationType might allow Racks and Devices.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     content_types = models.ManyToManyField(
         to=ContentType,
         related_name="location_types",
-        verbose_name="Permitted object types",
+        verbose_name=_("Permitted object types"),
         limit_choices_to=FeatureQuery("locations"),
-        help_text="The object type(s) that can be associated to a Location of this type.",
+        help_text=_("The object type(s) that can be associated to a Location of this type."),
     )
     nestable = models.BooleanField(
         default=False,
-        help_text="Allow Locations of this type to be parents/children of other Locations of this same type",
+        help_text=_("Allow Locations of this type to be parents/children of other Locations of this same type"),
+        verbose_name=_("nestable"),
     )
 
     clone_fields = [
@@ -78,8 +80,10 @@ class LocationType(TreeModel, OrganizationalModel):
             ):
                 raise ValidationError(
                     {
-                        "nestable": "There are existing nested Locations of this type, "
-                        "so changing this Location Type to be non-nestable is not permitted."
+                        "nestable": _(
+                            "There are existing nested Locations of this type, "
+                            "so changing this Location Type to be non-nestable is not permitted."
+                        )
                     }
                 )
 
@@ -89,7 +93,7 @@ class LocationType(TreeModel, OrganizationalModel):
             "rack group",
             "rack groups",
         ]:
-            raise ValidationError({"name": "This name is reserved for future use."})
+            raise ValidationError({"name": _("This name is reserved for future use.")})
 
         if (
             self.present_in_database
@@ -98,8 +102,10 @@ class LocationType(TreeModel, OrganizationalModel):
         ):
             raise ValidationError(
                 {
-                    "parent": "This LocationType currently has Locations using it, "
-                    "therefore its parent cannot be changed at this time."
+                    "parent": _(
+                        "This LocationType currently has Locations using it, "
+                        "therefore its parent cannot be changed at this time."
+                    )
                 }
             )
 
@@ -145,52 +151,56 @@ class Location(TreeModel, PrimaryModel):
     """
 
     # A Location's name is unique within context of its parent, not globally unique.
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True, verbose_name=_("name"))
     _name = NaturalOrderingField(target_field="name", max_length=CHARFIELD_MAX_LENGTH, blank=True, db_index=True)
     location_type = models.ForeignKey(
-        to="dcim.LocationType",
-        on_delete=models.PROTECT,
-        related_name="locations",
+        to="dcim.LocationType", on_delete=models.PROTECT, related_name="locations", verbose_name=_("location type")
     )
-    status = StatusField(blank=False, null=False)
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
         on_delete=models.PROTECT,
         related_name="locations",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     facility = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH, blank=True, help_text="Local facility ID or description"
+        max_length=CHARFIELD_MAX_LENGTH,
+        blank=True,
+        help_text=_("Local facility ID or description"),
+        verbose_name=_("facility"),
     )
     asn = ASNField(
         blank=True,
         null=True,
-        verbose_name="ASN",
-        help_text="32-bit autonomous system number",
+        verbose_name=_("ASN"),
+        help_text=_("32-bit autonomous system number"),
     )
-    time_zone = TimeZoneField(blank=True)
-    physical_address = models.TextField(blank=True)
-    shipping_address = models.TextField(blank=True)
+    time_zone = TimeZoneField(blank=True, verbose_name=_("time zone"))
+    physical_address = models.TextField(blank=True, verbose_name=_("physical address"))
+    shipping_address = models.TextField(blank=True, verbose_name=_("shipping address"))
     latitude = models.DecimalField(
         max_digits=8,
         decimal_places=6,
         blank=True,
         null=True,
-        help_text="GPS coordinate (latitude)",
+        help_text=_("GPS coordinate (latitude)"),
+        verbose_name=_("latitude"),
     )
     longitude = models.DecimalField(
         max_digits=9,
         decimal_places=6,
         blank=True,
         null=True,
-        help_text="GPS coordinate (longitude)",
+        help_text=_("GPS coordinate (longitude)"),
+        verbose_name=_("longitude"),
     )
-    contact_name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    contact_phone = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    contact_email = models.EmailField(blank=True, verbose_name="Contact E-mail")
-    comments = models.TextField(blank=True)
+    contact_name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("contact name"))
+    contact_phone = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("contact phone"))
+    contact_email = models.EmailField(blank=True, verbose_name=_("Contact E-mail"))
+    comments = models.TextField(blank=True, verbose_name=_("comments"))
     images = GenericRelation(to="extras.ImageAttachment")
 
     objects = LocationManager()
@@ -248,7 +258,7 @@ class Location(TreeModel, PrimaryModel):
 
         lookups = []
         name = "name"
-        for _ in range(cls.objects.max_depth + 1):
+        for _depth in range(cls.objects.max_depth + 1):
             lookups.append(name)
             name = f"parent__{name}"
         return lookups
@@ -269,7 +279,7 @@ class Location(TreeModel, PrimaryModel):
         # This is necessary because Django does not consider two NULL fields to be equal.
         if self.parent is None:
             if Location.objects.exclude(pk=self.pk).filter(parent__isnull=True, name=self.name).exists():
-                raise ValidationError({"name": "A root-level location with this name already exists."})
+                raise ValidationError({"name": _("A root-level location with this name already exists.")})
 
         super().validate_unique(exclude=exclude)
 
@@ -283,8 +293,10 @@ class Location(TreeModel, PrimaryModel):
             if self.location_type != prior_location_type:
                 raise ValidationError(
                     {
-                        "location_type": f"Changing the type of an existing Location (from {prior_location_type} to "
-                        f"{self.location_type} in this case) is not permitted."
+                        "location_type": gettext(
+                            "Changing the type of an existing Location (from %(prior_location_type)s to %(location_type)s in this case) is not permitted."
+                        )
+                        % {"prior_location_type": prior_location_type, "location_type": self.location_type}
                     }
                 )
 
@@ -295,20 +307,28 @@ class Location(TreeModel, PrimaryModel):
                     if self.parent.location_type != self.location_type:  # pylint: disable=no-member
                         raise ValidationError(
                             {
-                                "parent": f"A Location of type {self.location_type} may only have "
-                                "a Location of the same type as its parent."
+                                "parent": gettext(
+                                    "A Location of type %(location_type)s may only have a Location of the same type as its parent."
+                                )
+                                % {"location_type": self.location_type}
                             }
                         )
                 else:  # No parent type, and not nestable, therefore should never have a parent.
                     raise ValidationError(
-                        {"parent": f"A Location of type {self.location_type} must not have a parent Location."}
+                        {
+                            "parent": gettext("A Location of type %(location_type)s must not have a parent Location.")
+                            % {"location_type": self.location_type}
+                        }
                     )
 
         else:  # Our location type has a parent type of its own
             # We *must* have a parent location.
             if self.parent is None:
                 raise ValidationError(
-                    {"parent": f"A Location of type {self.location_type} must have a parent Location."}
+                    {
+                        "parent": gettext("A Location of type %(location_type)s must have a parent Location.")
+                        % {"location_type": self.location_type}
+                    }
                 )
 
             # Is the parent location of a correct type?
@@ -316,16 +336,20 @@ class Location(TreeModel, PrimaryModel):
                 if self.parent.location_type not in (self.location_type, self.location_type.parent):  # pylint: disable=no-member
                     raise ValidationError(
                         {
-                            "parent": f"A Location of type {self.location_type} can only have a Location "
-                            f"of the same type or of type {self.location_type.parent} as its parent."
+                            "parent": gettext(
+                                "A Location of type %(location_type)s can only have a Location of the same type or of type %(parent)s as its parent."
+                            )
+                            % {"location_type": self.location_type, "parent": self.location_type.parent}
                         }
                     )
             else:
                 if self.parent.location_type != self.location_type.parent:  # pylint: disable=no-member
                     raise ValidationError(
                         {
-                            "parent": f"A Location of type {self.location_type} can only have a Location "
-                            f"of type {self.location_type.parent} as its parent."
+                            "parent": gettext(
+                                "A Location of type %(location_type)s can only have a Location of type %(parent)s as its parent."
+                            )
+                            % {"location_type": self.location_type, "parent": self.location_type.parent}
                         }
                     )
 

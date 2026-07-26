@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import django_tables2 as tables
 
 from nautobot.core.tables import (
@@ -31,11 +32,11 @@ class PowerPanelTable(BaseTable):
     location = tables.Column(linkify=True)
     panel_type = tables.Column()
     power_path = tables.Column()
-    breaker_position_count = tables.Column(verbose_name="Total Breaker Positions")
+    breaker_position_count = tables.Column(verbose_name=_("Total Breaker Positions"))
     power_feed_count = LinkedCountColumn(
         viewname="dcim:powerfeed_list",
         url_params={"power_panel": "pk"},
-        verbose_name="Feeds",
+        verbose_name=_("Feeds"),
     )
     tags = TagColumn(url_name="dcim:powerpanel_list")
     actions = ButtonsColumn(PowerPanel)
@@ -79,12 +80,14 @@ class PowerFeedTable(StatusTableMixin, CableTerminationTable):
     rack = tables.Column(linkify=True)
     type = ChoiceFieldColumn()
     power_path = tables.Column()
-    occupied_positions = tables.Column(accessor="occupied_positions", verbose_name="Position", orderable=False)
-    phase_designation = tables.Column(accessor="phase_designation", verbose_name="Phase Designation", orderable=False)
+    occupied_positions = tables.Column(accessor="occupied_positions", verbose_name=_("Position"), orderable=False)
+    phase_designation = tables.Column(
+        accessor="phase_designation", verbose_name=_("Phase Designation"), orderable=False
+    )
     max_utilization = tables.TemplateColumn(template_code="{{ value }}%")
-    connection = tables.Column(orderable=False)
-    available_power = tables.Column(verbose_name="Available power (VA)")
-    utilization = tables.TemplateColumn(template_code=UTILIZATION_GRAPH, orderable=False, verbose_name="Utilization")
+    connection = tables.Column(orderable=False, verbose_name=_("Connection"))
+    available_power = tables.Column(verbose_name=_("Available power (VA)"))
+    utilization = tables.TemplateColumn(template_code=UTILIZATION_GRAPH, orderable=False, verbose_name=_("Utilization"))
     tags = TagColumn(url_name="dcim:powerfeed_list")
     actions = ButtonsColumn(PowerFeed)
 

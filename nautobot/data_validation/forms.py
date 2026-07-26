@@ -2,6 +2,7 @@
 
 from django import forms
 from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.apps.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.forms import (
@@ -91,7 +92,7 @@ class RegularExpressionValidationRuleFilterForm(NautobotFilterForm):
         "context_processing",
         "error_message",
     ]
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_type = MultipleContentTypeField(feature="custom_validators", choices_as_strings=True, required=False)
     tags = TagFilterField(model)
 
@@ -140,7 +141,7 @@ class MinMaxValidationRuleFilterForm(NautobotFilterForm):
 
     model = MinMaxValidationRule
     field_order = ["q", "name", "enabled", "content_type", "field", "min", "max", "error_message"]
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_type = MultipleContentTypeField(feature="custom_validators", choices_as_strings=True, required=False)
     min = forms.IntegerField(required=False)
     max = forms.IntegerField(required=False)
@@ -198,7 +199,7 @@ class RequiredValidationRuleFilterForm(NautobotFilterForm):
         "field",
         "error_message",
     ]
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_type = MultipleContentTypeField(feature="custom_validators", choices_as_strings=True, required=False)
     tags = TagFilterField(model)
 
@@ -254,7 +255,7 @@ class UniqueValidationRuleFilterForm(NautobotFilterForm):
         "max_instances",
         "error_message",
     ]
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_type = MultipleContentTypeField(feature="custom_validators", choices_as_strings=True, required=False)
     max_instances = forms.IntegerField(required=False)
     tags = TagFilterField(model)
@@ -273,7 +274,7 @@ class DataComplianceFilterForm(BootstrapMixin, forms.Form):
     validated_attribute = MultiValueCharField(max_length=CHARFIELD_MAX_LENGTH, required=False)
     valid = forms.NullBooleanField(required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES))
     content_type = MultipleContentTypeField(feature="custom_validators", choices_as_strings=True, required=False)
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
 
 
 #
@@ -284,14 +285,14 @@ class DataComplianceFilterForm(BootstrapMixin, forms.Form):
 class DeviceConstraintsForm(BootstrapMixin, forms.Form):
     DEVICE_UNIQUENESS = forms.ChoiceField(
         choices=DeviceUniquenessChoices.CHOICES,
-        label="Device Uniqueness",
+        label=_("Device Uniqueness"),
         required=True,
         error_messages={
             "invalid_choice": f"Invalid value. Available options are: {', '.join(DeviceUniquenessChoices.values())}"
         },
     )
     DEVICE_NAME_REQUIRED = forms.BooleanField(
-        label="Device name required (cannot be blank or null)",
+        label=_("Device name required (cannot be blank or null)"),
         initial=False,
         required=False,
     )

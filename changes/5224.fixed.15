@@ -1,0 +1,1 @@
+Fixed form fields declared without an explicit label always rendering an English label, by inheriting the model field's translatable `verbose_name` where doing so leaves the English text unchanged.

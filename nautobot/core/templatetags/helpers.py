@@ -16,11 +16,12 @@ from django.contrib.staticfiles.finders import find
 from django.core.exceptions import ObjectDoesNotExist
 from django.templatetags.static import static, StaticNode
 from django.urls import NoReverseMatch, reverse
+from django.utils import translation
 from django.utils.formats import date_format
 from django.utils.html import format_html, format_html_join, strip_tags
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify as django_slugify
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext, gettext as _
 from django_jinja import library
 from markdown import markdown
 import yaml
@@ -384,6 +385,12 @@ def bettertitle(value):
     """
     Alternative to the builtin title(); capitalizes words without replacing letters that are already uppercase.
 
+    Capitalizing every word is an English convention. French and Spanish capitalize only the first
+    word of a heading, and German capitalizes nouns rather than every word, so applying it to
+    translated text produces visibly wrong output -- "Dispositivos De Rack", "Affectations D'adresses".
+    Under any other language only the first character is capitalized, which leaves a correctly-cased
+    translation untouched. Languages without letter case, such as Chinese, are unaffected either way.
+
     Args:
         value (str): string to convert to Title Case
 
@@ -394,6 +401,10 @@ def bettertitle(value):
         >>> bettertitle("IP address")
         "IP Address"
     """
+    value = str(value)
+    language = translation.get_language() or settings.LANGUAGE_CODE
+    if not language.split("-")[0] == "en":
+        return value[:1].upper() + value[1:]
     return " ".join([w[0].upper() + w[1:] for w in value.split()])
 
 
@@ -807,8 +818,9 @@ def render_address(address):
     if address:
         map_link = format_html(
             '<a href="https://maps.google.com/?q={}" target="_blank" class="btn btn-primary btn-xs">'
-            '<i class="mdi mdi-map-marker"></i> Map it</a>',
+            '<i class="mdi mdi-map-marker"></i> {}</a>',
             quote_plus(address),
+            _("Map it"),
         )
         address = format_html_join("", "{}<br>", ((line,) for line in address.split("\n")))
         return format_html('<div class="float-end d-print-none">{}</div>{}', map_link, address)
@@ -826,7 +838,12 @@ def render_m2m(queryset, full_listing_link, verbose_name_plural, max_visible=5):
 
     remaining = total_count - display_count
     if remaining > 0:
-        link = format_html('<a href="{}">... View {} more {}</a>', full_listing_link, remaining, verbose_name_plural)
+        link = format_html(
+            _('<a href="{url}">... View {count} more {name}</a>'),
+            url=full_listing_link,
+            count=remaining,
+            name=verbose_name_plural,
+        )
         items.append(link)
 
     return format_html_join("", "<div>{}</div>", ((item,) for item in items)) if items else HTML_NONE
@@ -995,20 +1012,29 @@ def django_querystring(context, query_dict=None, **kwargs):
 def table_config_button(table, table_name=None, extra_classes="", disabled=False):
     if table_name is None:
         table_name = table.__class__.__name__
+    # Named placeholders rather than positional, so adding the two translated strings cannot
+    # silently reorder the existing substitutions.
     html_template = """<button
             type="button"
-            class="btn border-0 float-end rounded-0 text-end text-secondary {}"
+            class="btn border-0 float-end rounded-0 text-end text-secondary {extra_classes}"
             data-nb-toggle="drawer"
-            data-nb-target="#{}_config"
-            {}
-            title="Configure table"
-            aria-controls="{}_config"
+            data-nb-target="#{table_name}_config"
+            {disabled}
+            title="{title}"
+            aria-controls="{table_name}_config"
             aria-expanded="false"
         >
             <span class="mdi mdi-cog" aria-hidden="true"></span>
-            <span class="visually-hidden">Configure</span>
+            <span class="visually-hidden">{label}</span>
         </button>"""
-    return format_html(html_template, extra_classes, table_name, "disabled" if disabled else "", table_name)
+    return format_html(
+        html_template,
+        extra_classes=extra_classes,
+        table_name=table_name,
+        disabled="disabled" if disabled else "",
+        title=gettext("Configure table"),
+        label=gettext("Configure"),
+    )
 
 
 @register.simple_tag()
@@ -1179,7 +1205,11 @@ def saved_view_modal(
                     # User should be able to see any saved view that he has the list view access to.
                     current_saved_view = SavedView.objects.get(pk=current_saved_view_pk)
                 except ObjectDoesNotExist:
-                    messages.error(request, f"Saved view {current_saved_view_pk} not found")
+                    messages.error(
+                        request,
+                        gettext("Saved view %(current_saved_view_pk)s not found")
+                        % {"current_saved_view_pk": current_saved_view_pk},
+                    )
 
         elif param == "table_changes_pending":
             table_changes_pending = filters_applied.pop(param, False)

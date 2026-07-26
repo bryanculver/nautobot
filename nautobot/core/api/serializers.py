@@ -15,6 +15,7 @@ from django.db import models
 from django.db.models.fields.related_descriptors import ManyToManyDescriptor, ReverseManyToOneDescriptor
 from django.db.models.functions import Cast
 from django.urls import NoReverseMatch
+from django.utils.translation import gettext, gettext_lazy as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema_field, PolymorphicProxySerializer as _PolymorphicProxySerializer
 from rest_framework import serializers
@@ -154,7 +155,7 @@ class BaseModelSerializer(OptInFieldsMixin, serializers.HyperlinkedModelSerializ
     serializer_related_field = NautobotHyperlinkedRelatedField
 
     id = serializers.UUIDField(read_only=False, default=serializers.CreateOnlyDefault(uuid.uuid4))
-    display = serializers.SerializerMethodField(read_only=True, help_text="Human friendly display value")
+    display = serializers.SerializerMethodField(read_only=True, help_text=_("Human friendly display value"))
     object_type = ObjectTypeField()
     # composite_key = serializers.SerializerMethodField()  # TODO: Revisit if we reintroduce composite keys
     natural_keys_values = None
@@ -613,7 +614,7 @@ class ValidatedModelSerializer(BaseModelSerializer):
                     continue
                 ct_model = ct.model_class()
                 if ct_model is None:
-                    raise ValidationError({field.ct_field: "Invalid content-type"})
+                    raise ValidationError({field.ct_field: _("Invalid content-type")})
                 qs = ct_model.objects
                 # Layer view permission on top of the existence check when we have an authenticated
                 # request; programmatic use without a request still gets the existence check.
@@ -627,7 +628,7 @@ class ValidatedModelSerializer(BaseModelSerializer):
                 try:
                     qs.get(pk=fk)
                 except ObjectDoesNotExist as e:
-                    raise ValidationError({field.fk_field: "Object not found"}) from e
+                    raise ValidationError({field.fk_field: _("Object not found")}) from e
 
         # Run clean() on an instance of the model
         if self.instance is None:
@@ -673,9 +674,13 @@ class WritableNestedSerializer(BaseModelSerializer):
             try:
                 return queryset.get(**params)
             except ObjectDoesNotExist:
-                raise ValidationError(f"Related object not found using the provided attributes: {params}")
+                raise ValidationError(
+                    gettext("Related object not found using the provided attributes: %(params)s") % {"params": params}
+                )
             except MultipleObjectsReturned:
-                raise ValidationError(f"Multiple objects match the provided attributes: {params}")
+                raise ValidationError(
+                    gettext("Multiple objects match the provided attributes: %(params)s") % {"params": params}
+                )
             except FieldError as e:
                 raise ValidationError(e)
 
@@ -688,8 +693,10 @@ class WritableNestedSerializer(BaseModelSerializer):
                 pk = int(data)
             except (TypeError, ValueError):
                 raise ValidationError(
-                    "Related objects must be referenced by ID or by dictionary of attributes. Received an "
-                    f"unrecognized value: {data}"
+                    gettext(
+                        "Related objects must be referenced by ID or by dictionary of attributes. Received an unrecognized value: %(data)s"
+                    )
+                    % {"data": data}
                 )
 
         else:
@@ -701,14 +708,16 @@ class WritableNestedSerializer(BaseModelSerializer):
                 pk = uuid.UUID(str(data))
             except (TypeError, ValueError):
                 raise ValidationError(
-                    "Related objects must be referenced by ID or by dictionary of attributes. Received an "
-                    f"unrecognized value: {data}"
+                    gettext(
+                        "Related objects must be referenced by ID or by dictionary of attributes. Received an unrecognized value: %(data)s"
+                    )
+                    % {"data": data}
                 )
 
         try:
             return queryset.get(pk=pk)
         except ObjectDoesNotExist:
-            raise ValidationError(f"Related object not found using the provided ID: {pk}")
+            raise ValidationError(gettext("Related object not found using the provided ID: %(pk)s") % {"pk": pk})
 
 
 class PolymorphicProxySerializer(_PolymorphicProxySerializer):
@@ -762,8 +771,8 @@ class BulkOperationIntegerIDSerializer(serializers.Serializer):
 
 
 class GraphQLAPISerializer(serializers.Serializer):
-    query = serializers.CharField(required=True, help_text="GraphQL query")
-    variables = serializers.JSONField(required=False, help_text="Variables in JSON Format")
+    query = serializers.CharField(required=True, help_text=_("GraphQL query"))
+    variables = serializers.JSONField(required=False, help_text=_("Variables in JSON Format"))
 
 
 class CustomFieldModelSerializerMixin(ValidatedModelSerializer):

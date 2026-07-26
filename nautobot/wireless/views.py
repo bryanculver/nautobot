@@ -1,6 +1,7 @@
 from functools import partial
 
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.templatetags import helpers
 from nautobot.core.ui import object_detail
@@ -63,7 +64,7 @@ class RadioProfileUIViewSet(NautobotUIViewSet):
             object_detail.ObjectsTablePanel(
                 weight=100,
                 section=SectionChoices.FULL_WIDTH,
-                table_title="Supported Data Rates",
+                table_title=_("Supported Data Rates"),
                 table_class=SupportedDataRateTable,
                 table_filter="radio_profiles",
                 add_button_route=None,
@@ -114,7 +115,7 @@ class WirelessNetworkUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.FULL_WIDTH,
                 weight=100,
                 table_class=ControllerManagedDeviceGroupWirelessNetworkAssignmentTable,
-                table_title="Controller Managed Device Groups",
+                table_title=_("Controller Managed Device Groups"),
                 table_filter="wireless_network",
                 related_field_name="wireless_networks",
                 exclude_columns=[

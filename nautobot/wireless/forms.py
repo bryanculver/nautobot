@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.forms import (
@@ -37,20 +38,20 @@ class ControllerManagedDeviceGroupWirelessNetworkAssignmentForm(BootstrapMixin, 
     locations = DynamicModelMultipleChoiceField(
         queryset=Location.objects.all(),
         required=False,
-        label="VLAN Locations (filter)",
+        label=_("VLAN Locations (filter)"),
         null_option="None",
     )
     vlan_group = DynamicModelChoiceField(
         queryset=VLANGroup.objects.all(),
         required=False,
-        label="VLAN group (filter)",
+        label=_("VLAN group (filter)"),
         null_option="None",
         initial_params={"vlans": "$vlan"},
     )
     vlan = DynamicModelChoiceField(
         queryset=VLAN.objects.all(),
         required=False,
-        label="VLAN",
+        label=_("VLAN"),
         query_params={
             "locations": "$locations",
             "vlan_group": "$vlan_group",
@@ -85,13 +86,13 @@ class ControllerManagedDeviceGroupWirelessNetworkAssignmentForm(BootstrapMixin, 
     def clean_wireless_network(self):
         wireless_network = self.cleaned_data.get("wireless_network")
         if not wireless_network:
-            raise forms.ValidationError("Wireless Network is required.")
+            raise forms.ValidationError(_("Wireless Network is required."))
         return wireless_network
 
     def clean_controller_managed_device_group(self):
         controller_managed_device_group = self.cleaned_data.get("controller_managed_device_group")
         if not controller_managed_device_group:
-            raise forms.ValidationError("Controller Managed Device Group is required.")
+            raise forms.ValidationError(_("Controller Managed Device Group is required."))
         return controller_managed_device_group
 
 
@@ -116,18 +117,18 @@ WirelessNetworkControllerManagedDeviceGroupFormSet = forms.inlineformset_factory
 class RadioProfileForm(NautobotModelForm):
     allowed_channel_list = NumericArrayField(
         base_field=forms.IntegerField(),
-        help_text="List of allowed channels for this radio profile.",
+        help_text=_("List of allowed channels for this radio profile."),
         required=False,
     )
     controller_managed_device_group = DynamicModelMultipleChoiceField(
         queryset=ControllerManagedDeviceGroup.objects.all(),
         required=False,
-        label="Controller Managed Device Groups",
+        label=_("Controller Managed Device Groups"),
     )
     supported_data_rates = DynamicModelMultipleChoiceField(
         queryset=SupportedDataRate.objects.all(),
         required=False,
-        label="Supported Data Rates",
+        label=_("Supported Data Rates"),
     )
 
     class Meta:
@@ -137,7 +138,7 @@ class RadioProfileForm(NautobotModelForm):
 
 class RadioProfileFilterForm(NautobotFilterForm):
     model = RadioProfile
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     tags = TagFilterField(model)
 
 
@@ -152,31 +153,31 @@ class RadioProfileBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
     add_supported_data_rates = DynamicModelMultipleChoiceField(
         queryset=SupportedDataRate.objects.all(),
         required=False,
-        label="Add Supported Data Rates",
+        label=_("Add Supported Data Rates"),
     )
     remove_supported_data_rates = DynamicModelMultipleChoiceField(
         queryset=SupportedDataRate.objects.all(),
         required=False,
-        label="Remove Supported Data Rates",
+        label=_("Remove Supported Data Rates"),
     )
     add_controller_managed_device_groups = DynamicModelMultipleChoiceField(
         queryset=ControllerManagedDeviceGroup.objects.all(),
         required=False,
-        label="Add Controller Managed Device Groups",
+        label=_("Add Controller Managed Device Groups"),
     )
     remove_controller_managed_device_groups = DynamicModelMultipleChoiceField(
         queryset=ControllerManagedDeviceGroup.objects.all(),
         required=False,
-        label="Remove Controller Managed Device Groups",
+        label=_("Remove Controller Managed Device Groups"),
     )
     allowed_channel_list = NumericArrayField(
         base_field=forms.IntegerField(),
         required=False,
-        label="Allowed Channel List",
+        label=_("Allowed Channel List"),
     )
-    tx_power_min = forms.IntegerField(required=False, label="TX Power Min")
-    tx_power_max = forms.IntegerField(required=False, label="TX Power Max")
-    rx_power_min = forms.IntegerField(required=False, label="RX Power Min")
+    tx_power_min = forms.IntegerField(required=False, label=_("TX Power Min"))
+    tx_power_max = forms.IntegerField(required=False, label=_("TX Power Max"))
+    rx_power_min = forms.IntegerField(required=False, label=_("RX Power Min"))
     regulatory_domain = forms.ChoiceField(
         choices=add_blank_choice(RadioProfileRegulatoryDomainChoices),
         required=False,
@@ -207,7 +208,7 @@ class SupportedDataRateForm(NautobotModelForm):
 
 class SupportedDataRateFilterForm(NautobotFilterForm):
     model = SupportedDataRate
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     tags = TagFilterField(model)
 
 
@@ -218,8 +219,8 @@ class SupportedDataRateBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm)
         required=False,
         widget=StaticSelect2(),
     )
-    rate = forms.IntegerField(min_value=1, required=False, label="Rate (Kbps)")
-    mcs_index = forms.IntegerField(required=False, label="MCS Index")
+    rate = forms.IntegerField(min_value=1, required=False, label=_("Rate (Kbps)"))
+    mcs_index = forms.IntegerField(required=False, label=_("MCS Index"))
 
     class Meta:
         nullable_fields = [
@@ -240,7 +241,7 @@ class WirelessNetworkForm(NautobotModelForm):
 
 class WirelessNetworkFilterForm(NautobotFilterForm):
     model = WirelessNetwork
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     tags = TagFilterField(model)
 
 
@@ -250,12 +251,12 @@ class WirelessNetworkBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
     add_controller_managed_device_groups = DynamicModelMultipleChoiceField(
         queryset=ControllerManagedDeviceGroup.objects.all(),
         required=False,
-        label="Add Controller Managed Device Groups",
+        label=_("Add Controller Managed Device Groups"),
     )
     remove_controller_managed_device_groups = DynamicModelMultipleChoiceField(
         queryset=ControllerManagedDeviceGroup.objects.all(),
         required=False,
-        label="Remove Controller Managed Device Groups",
+        label=_("Remove Controller Managed Device Groups"),
     )
     ssid = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False)
     mode = forms.ChoiceField(

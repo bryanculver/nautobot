@@ -1,6 +1,7 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.choices import ColorChoices
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
@@ -33,15 +34,11 @@ class NameColorContentTypesModel(
     """
 
     content_types = models.ManyToManyField(
-        to=ContentType,
-        help_text="The content type(s) to which this model applies.",
+        to=ContentType, help_text=_("The content type(s) to which this model applies."), verbose_name=_("content types")
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    color = ColorField(default=ColorChoices.COLOR_GREY)
-    description = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH,
-        blank=True,
-    )
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    color = ColorField(default=ColorChoices.COLOR_GREY, verbose_name=_("color"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     objects = BaseManager.from_queryset(ContentTypeRelatedQuerySet)()
 

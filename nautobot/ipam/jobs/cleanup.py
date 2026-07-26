@@ -1,5 +1,6 @@
 from django.core.exceptions import PermissionDenied
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.choices import ChoiceSet
 from nautobot.extras.jobs import DryRunVar, IPNetworkVar, Job, MultiChoiceVar, ObjectVar
@@ -13,8 +14,8 @@ class CleanupTypes(ChoiceSet):
     PREFIX = "ipam.Prefix"
 
     CHOICES = (
-        (IPADDRESS, "IP addresses"),
-        (PREFIX, "Prefixes"),
+        (IPADDRESS, _("IP addresses")),
+        (PREFIX, _("Prefixes")),
     )
 
 
@@ -24,9 +25,9 @@ class FixIPAMParents(Job):
     )
 
     restrict_to_namespace = ObjectVar(
-        model=Namespace, required=False, description="Check only records within this namespace"
+        model=Namespace, required=False, description=_("Check only records within this namespace")
     )
-    restrict_to_network = IPNetworkVar(required=False, description="Check only records within this network")
+    restrict_to_network = IPNetworkVar(required=False, description=_("Check only records within this network"))
 
     dryrun = DryRunVar()
 
@@ -54,7 +55,7 @@ class FixIPAMParents(Job):
         if CleanupTypes.PREFIX in cleanup_types:
             if not self.user.has_perm("ipam.change_prefix"):
                 self.fail('User "%s" does not have permission to update Prefix records', self.user.username)
-                raise PermissionDenied("User does not have update permission for Prefix records")
+                raise PermissionDenied(_("User does not have update permission for Prefix records"))
 
             self.logger.info("Inspecting Prefix records...")
 
@@ -184,7 +185,7 @@ class FixIPAMParents(Job):
         if CleanupTypes.IPADDRESS in cleanup_types:
             if not self.user.has_perm("ipam.change_ipaddress"):
                 self.fail('User "%s" does not have permission to update IP Address records', self.user.username)
-                raise PermissionDenied("User does not have update permission for IP Address records")
+                raise PermissionDenied(_("User does not have update permission for IP Address records"))
 
             self.logger.info("Inspecting IP Address records...")
 

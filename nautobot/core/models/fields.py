@@ -5,6 +5,7 @@ from django.core import exceptions
 from django.core.validators import MaxLengthValidator, RegexValidator
 from django.db import models
 from django.forms import TextInput
+from django.utils.translation import gettext, gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField as _AutoSlugField
 from netaddr import AddrFormatError, EUI, mac_unix_expanded
 from slugify import slugify as python_slugify
@@ -54,7 +55,7 @@ class MACAddressCharField(models.CharField):
         try:
             return EUI(value, version=48, dialect=mac_unix_expanded_uppercase)
         except AddrFormatError:
-            raise exceptions.ValidationError(f"Invalid MAC address format: {value}")
+            raise exceptions.ValidationError(gettext("Invalid MAC address format: %(value)s") % {"value": value})
 
     def get_prep_value(self, value):
         if not value:
@@ -453,7 +454,7 @@ class TagsField(TaggableManager):
 
 class PositiveRangeNumberTextField(models.TextField):
     default_error_messages = {
-        "invalid": "Invalid value. Specify a value using non-negative integers in a range format (i.e. '10-20').",
+        "invalid": _("Invalid value. Specify a value using non-negative integers in a range format (i.e. '10-20')."),
     }
 
     description = "A text based representation of positive number range."

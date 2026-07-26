@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import django_filters
 
 from nautobot.core.filters import NaturalKeyOrPKMultipleChoiceFilter, TreeNodeMultipleChoiceFilter
@@ -13,14 +14,14 @@ class TenancyModelFilterSetMixin(django_filters.FilterSet):
         queryset=TenantGroup.objects.all(),
         field_name="tenant__tenant_group",
         to_field_name="name",
-        label="Tenant Group (name or ID)",
+        label=_("Tenant Group (name or ID)"),
     )
     tenant_id = django_filters.ModelMultipleChoiceFilter(
         queryset=Tenant.objects.all(),
-        label='Tenant (ID) (deprecated, use "tenant" filter instead)',
+        label=_('Tenant (ID) (deprecated, use "tenant" filter instead)'),
     )
     tenant = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Tenant.objects.all(),
         to_field_name="name",
-        label="Tenant (name or ID)",
+        label=_("Tenant (name or ID)"),
     )

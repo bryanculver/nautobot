@@ -1,0 +1,1 @@
+Marked the remaining validation errors containing quoted values (for example `Rack "x" does not belong to location "y"`) as translatable.

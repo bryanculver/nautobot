@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete
 from django.dispatch import receiver
+from django.utils.translation import gettext
 
 from nautobot.core.signals import disable_for_loaddata
 
@@ -260,8 +261,10 @@ def handle_rackgroup_location_change(instance, created, raw=False, **kwargs):
                 if not rack_groups_permitted:
                     raise ValidationError(
                         {
-                            f"location {instance.location.name}": "RackGroups may not associate to locations of type "
-                            f'"{instance.location.location_type}"'
+                            f"location {instance.location.name}": gettext(
+                                'RackGroups may not associate to locations of type "%(location_type)s"'
+                            )
+                            % {"location_type": instance.location.location_type}
                         }
                     )
                 rackgroup.location = instance.location
@@ -272,8 +275,10 @@ def handle_rackgroup_location_change(instance, created, raw=False, **kwargs):
                 if not racks_permitted:
                     raise ValidationError(
                         {
-                            f"location {instance.location.name}": "Racks may not associate to locations of type "
-                            f'"{instance.location.location_type}"'
+                            f"location {instance.location.name}": gettext(
+                                'Racks may not associate to locations of type "%(location_type)s"'
+                            )
+                            % {"location_type": instance.location.location_type}
                         }
                     )
                 rack.location = instance.location
@@ -284,8 +289,10 @@ def handle_rackgroup_location_change(instance, created, raw=False, **kwargs):
                 if not power_panels_permitted:
                     raise ValidationError(
                         {
-                            f"location {instance.location.name}": "PowerPanels may not associate to locations of type "
-                            f'"{instance.location.location_type}"'
+                            f"location {instance.location.name}": gettext(
+                                'PowerPanels may not associate to locations of type "%(location_type)s"'
+                            )
+                            % {"location_type": instance.location.location_type}
                         }
                     )
                 powerpanel.location = instance.location
@@ -314,8 +321,10 @@ def handle_rack_location_change(instance, created, raw=False, **kwargs):
                 if not devices_permitted:
                     raise ValidationError(
                         {
-                            f"location {instance.location.name}": "Devices may not associate to locations of type "
-                            f'"{instance.location.location_type}"'
+                            f"location {instance.location.name}": gettext(
+                                'Devices may not associate to locations of type "%(location_type)s"'
+                            )
+                            % {"location_type": instance.location.location_type}
                         }
                     )
                 device.location = instance.location
@@ -402,8 +411,10 @@ def validate_vdcs_interface_relationships(sender, instance, action, **kwargs):
             raise ValidationError(
                 {
                     "virtual_device_contexts": (
-                        f"Virtual Device Context with names {list(invalid_vdcs.values_list('name', flat=True))} must all belong to the "
-                        f"same device as the interface's device."
+                        gettext(
+                            "Virtual Device Context with names %(name)s must all belong to the same device as the interface's device."
+                        )
+                        % {"name": list(invalid_vdcs.values_list("name", flat=True))}
                     )
                 }
             )
@@ -420,8 +431,10 @@ def validate_vdcs_interface_relationships(sender, instance, action, **kwargs):
             raise ValidationError(
                 {
                     "interfaces": (
-                        f"Interfaces with names {list(invalid_interfaces.values_list('name', flat=True))} must all belong to the "
-                        f"same device as the Virtual Device Context's device."
+                        gettext(
+                            "Interfaces with names %(name)s must all belong to the same device as the Virtual Device Context's device."
+                        )
+                        % {"name": list(invalid_interfaces.values_list("name", flat=True))}
                     )
                 }
             )
@@ -470,7 +483,10 @@ def content_type_changed(instance, action, **kwargs):
             raise ValidationError(
                 {
                     "content_types": (
-                        f"Cannot remove the content type {content_type} as currently at least one {model_class._meta.verbose_name} is associated to a location of this location type. "
+                        gettext(
+                            "Cannot remove the content type %(content_type)s as currently at least one %(object_name)s is associated to a location of this location type. "
+                        )
+                        % {"content_type": content_type, "object_name": model_class._meta.verbose_name}
                     )
                 }
             )

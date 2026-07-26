@@ -1,6 +1,7 @@
 """Tables for data_validation."""
 
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 import django_tables2 as tables
 
 from nautobot.core.tables import BaseTable, BooleanColumn, TagColumn, ToggleColumn
@@ -188,7 +189,7 @@ class DataComplianceTable(BaseTable):
     """Base table for viewing all DataCompliance objects."""
 
     pk = ToggleColumn()
-    id = tables.Column(linkify=True, verbose_name="ID")
+    id = tables.Column(linkify=True, verbose_name=_("ID"))
     validated_object = tables.Column(linkify=True)
     validated_attribute = ValidatedAttributeColumn()
     valid = BooleanColumn()

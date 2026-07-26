@@ -2,23 +2,66 @@ from typing import Literal, Optional, Union
 
 from django.template import Context, Template
 from django.utils.html import strip_tags
+from django.utils.translation import gettext_noop
+
+# The prose in DEFAULT_TITLES below lives inside `{% blocktrans %}` tags, because these strings are
+# rendered as Django templates and several of them need template filters. `makemessages` cannot see
+# template tags inside a Python string literal, though, so the same messages are declared here with
+# `gettext_noop` purely so that extraction finds them.
+#
+# `TitlesTestCase.test_translatable_titles_are_extractable` asserts the two stay in sync, so this
+# duplication cannot silently drift.
+TRANSLATABLE_TITLE_MESSAGES = (
+    gettext_noop("Delete %(verbose_name)s?"),
+    gettext_noop("Add a new %(verbose_name)s"),
+    gettext_noop("Editing %(verbose_name)s %(object)s"),
+    gettext_noop("Delete %(count)s %(verbose_name_plural)s?"),
+    gettext_noop("Renaming %(count)s %(verbose_name_plural)s on %(parent_name)s"),
+    gettext_noop("Editing %(count)s %(verbose_name_plural)s"),
+    gettext_noop("Approve %(verbose_name)s?"),
+    gettext_noop("Deny %(verbose_name)s?"),
+)
 
 DEFAULT_TITLES: dict[str, str] = {
+    # No prose, so nothing to translate -- the model's own verbose_name is already translatable.
     "*": "{{ verbose_name_plural|bettertitle }}",
     "list": "{{ verbose_name_plural|bettertitle }}",
     "detail": "{{ object.page_title|default:object }}",
     "retrieve": "{{ object.page_title|default:object }}",
-    "destroy": "Delete {{ verbose_name }}?",
-    "create": "Add a new {{ verbose_name }}",
-    "update": "Editing {{ verbose_name }} {{ object.page_title|default:object }}",
-    "bulk_destroy": "Delete {{ total_objs_to_delete }} {{ verbose_name_plural|bettertitle }}?",
-    "bulk_rename": "Renaming {{ selected_objects|length }} {{ verbose_name_plural|bettertitle }} on {{ parent_name }}",
-    "bulk_update": "Editing {{ objs_count }} {{ verbose_name_plural|bettertitle }}",
-    "approve": "Approve {{ verbose_name|bettertitle }}?",
-    "deny": "Deny {{ verbose_name|bettertitle }}?",
+    # Prose: wrapped so word order can differ by language.
+    "destroy": "{% blocktrans with verbose_name=verbose_name %}Delete {{ verbose_name }}?{% endblocktrans %}",
+    "create": "{% blocktrans with verbose_name=verbose_name %}Add a new {{ verbose_name }}{% endblocktrans %}",
+    "update": (
+        "{% with object_title=object.page_title|default:object %}"
+        "{% blocktrans with verbose_name=verbose_name object=object_title %}"
+        "Editing {{ verbose_name }} {{ object }}{% endblocktrans %}{% endwith %}"
+    ),
+    "bulk_destroy": (
+        "{% with plural=verbose_name_plural|bettertitle %}"
+        "{% blocktrans with count=total_objs_to_delete verbose_name_plural=plural %}"
+        "Delete {{ count }} {{ verbose_name_plural }}?{% endblocktrans %}{% endwith %}"
+    ),
+    "bulk_rename": (
+        "{% with plural=verbose_name_plural|bettertitle count=selected_objects|length %}"
+        "{% blocktrans with count=count verbose_name_plural=plural parent_name=parent_name %}"
+        "Renaming {{ count }} {{ verbose_name_plural }} on {{ parent_name }}{% endblocktrans %}{% endwith %}"
+    ),
+    "bulk_update": (
+        "{% with plural=verbose_name_plural|bettertitle %}"
+        "{% blocktrans with count=objs_count verbose_name_plural=plural %}"
+        "Editing {{ count }} {{ verbose_name_plural }}{% endblocktrans %}{% endwith %}"
+    ),
+    "approve": (
+        "{% with name=verbose_name|bettertitle %}"
+        "{% blocktrans with verbose_name=name %}Approve {{ verbose_name }}?{% endblocktrans %}{% endwith %}"
+    ),
+    "deny": (
+        "{% with name=verbose_name|bettertitle %}"
+        "{% blocktrans with verbose_name=name %}Deny {{ verbose_name }}?{% endblocktrans %}{% endwith %}"
+    ),
 }
 
-DEFAULT_PLUGINS = ["helpers"]
+DEFAULT_PLUGINS = ["helpers", "i18n"]
 
 ModeType = Literal["html", "plain"]
 

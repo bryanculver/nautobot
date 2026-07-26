@@ -7,6 +7,7 @@ it produces form fields with correct querysets, query_params, and initial values
 """
 
 from django import forms as django_forms
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.circuits.models import Circuit, CircuitTermination
 from nautobot.core.forms import DynamicModelChoiceField, StaticSelect2
@@ -166,7 +167,7 @@ class CableTerminationFieldSet:
             choices=TERMINATION_TYPE_CHOICES,
             required=False,
             initial=term_type,
-            label="Type",
+            label=_("Type"),
             widget=StaticSelect2(),
         )
         initial[type_field_name] = term_type

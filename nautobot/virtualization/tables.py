@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _, gettext_noop
 import django_tables2 as tables
 
 from nautobot.core.tables import (
@@ -23,12 +24,18 @@ __all__ = (
     "VirtualMachineVMInterfaceTable",
 )
 
+# See `nautobot.core.ui.titles`: a template fragment in a Python literal is invisible to
+# `makemessages`, so its msgid is declared here.
+TRANSLATABLE_FRAGMENT_MESSAGES = (gettext_noop("Add IP address"),)
+
+
 VMINTERFACE_BUTTONS = """
+{% load i18n %}
 {% if perms.ipam.add_ipaddress and perms.virtualization.change_vminterface %}
     <li>
         <a href="{% url 'ipam:ipaddress_add' %}?vminterface={{ record.pk }}&return_url={{ request.path }}" class="dropdown-item text-success">
             <span class="mdi mdi-plus-thick" aria-hidden="true"></span>
-            Add IP address
+            {% trans "Add IP address" %}
         </a>
     </li>
 {% endif %}
@@ -44,7 +51,7 @@ class ClusterTypeTable(BaseTable):
     pk = ToggleColumn()
     name = tables.LinkColumn()
     cluster_count = LinkedCountColumn(
-        viewname="virtualization:cluster_list", url_params={"cluster_type": "pk"}, verbose_name="Clusters"
+        viewname="virtualization:cluster_list", url_params={"cluster_type": "pk"}, verbose_name=_("Clusters")
     )
     actions = ButtonsColumn(ClusterType)
 
@@ -63,7 +70,7 @@ class ClusterGroupTable(BaseTable):
     pk = ToggleColumn()
     name = tables.LinkColumn()
     cluster_count = LinkedCountColumn(
-        viewname="virtualization:cluster_list", url_params={"cluster_group": "pk"}, verbose_name="Clusters"
+        viewname="virtualization:cluster_list", url_params={"cluster_group": "pk"}, verbose_name=_("Clusters")
     )
     actions = ButtonsColumn(ClusterGroup)
 
@@ -82,18 +89,18 @@ class ClusterTable(BaseTable):
     pk = ToggleColumn()
     name = tables.LinkColumn()
     tenant = tables.Column(linkify=True)
-    cluster_type = tables.Column(linkify=True, verbose_name="Cluster Type")
-    cluster_group = tables.Column(linkify=True, verbose_name="Cluster Group")
+    cluster_type = tables.Column(linkify=True, verbose_name=_("Cluster Type"))
+    cluster_group = tables.Column(linkify=True, verbose_name=_("Cluster Group"))
     device_count = LinkedCountColumn(
         viewname="dcim:device_list",
         url_params={"clusters": "pk"},
         reverse_lookup="clusters",
-        verbose_name="Devices",
+        verbose_name=_("Devices"),
     )
     vm_count = LinkedCountColumn(
         viewname="virtualization:virtualmachine_list",
         url_params={"cluster": "pk"},
-        verbose_name="VMs",
+        verbose_name=_("VMs"),
     )
     tags = TagColumn(url_name="virtualization:cluster_list")
 
@@ -149,9 +156,9 @@ class VirtualMachineTable(StatusTableMixin, RoleTableMixin, BaseTable):
 
 
 class VirtualMachineDetailTable(VirtualMachineTable):
-    primary_ip4 = tables.Column(linkify=True, verbose_name="IPv4 Address")
-    primary_ip6 = tables.Column(linkify=True, verbose_name="IPv6 Address")
-    primary_ip = tables.Column(linkify=True, verbose_name="IP Address", order_by=("primary_ip6", "primary_ip4"))
+    primary_ip4 = tables.Column(linkify=True, verbose_name=_("IPv4 Address"))
+    primary_ip6 = tables.Column(linkify=True, verbose_name=_("IPv6 Address"))
+    primary_ip = tables.Column(linkify=True, verbose_name=_("IP Address"), order_by=("primary_ip6", "primary_ip4"))
     tags = TagColumn(url_name="virtualization:virtualmachine_list")
 
     class Meta(BaseTable.Meta):

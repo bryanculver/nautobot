@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 import django_tables2 as tables
 
 
@@ -10,7 +11,7 @@ class InstalledAppsTable(tables.Table):
     """
 
     name = tables.Column(linkify=lambda record: reverse("apps:app_detail", kwargs={"app": record["app_label"]}))
-    package = tables.Column(verbose_name="Package Name")
+    package = tables.Column(verbose_name=_("Package Name"))
     author = tables.Column()
     author_email = tables.Column()
     headline = tables.Column()
@@ -55,7 +56,7 @@ class InstalledAppsTable(tables.Table):
         self.configurable = configurable
 
         if self.empty_text is None:
-            self.empty_text = "No installed Apps found"
+            self.empty_text = _("No installed Apps found")
 
         # Hide non-default columns
         default_columns = list(self.Meta.default_columns)

@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.http import urlencode
+from django.utils.translation import gettext, gettext_lazy as _
 from django.views.generic import View
 from django_tables2 import RequestConfig
 import netaddr
@@ -102,7 +103,7 @@ class NamespaceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=800,
                 tab_id="vrfs",
-                label="VRFs",
+                label=_("VRFs"),
                 url_name="ipam:namespace_vrfs",
                 related_object_attribute="vrfs",
                 panels=[
@@ -125,7 +126,7 @@ class NamespaceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=900,
                 tab_id="prefixes",
-                label="Prefixes",
+                label=_("Prefixes"),
                 url_name="ipam:namespace_prefixes",
                 related_object_attribute="prefixes",
                 panels=[
@@ -148,7 +149,7 @@ class NamespaceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=1000,
                 tab_id="ip-addresses",
-                label="IP Addresses",
+                label=_("IP Addresses"),
                 url_name="ipam:namespace_ip_addresses",
                 related_object_attribute="ip_addresses",
                 panels=[
@@ -171,7 +172,7 @@ class NamespaceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=1100,
                 tab_id="ip-address-ranges",
-                label="IP Address Ranges",
+                label=_("IP Address Ranges"),
                 related_object_attribute="ip_address_ranges",
                 url_name="ipam:namespace_ipaddressranges",
                 panels=[
@@ -325,7 +326,7 @@ class VRFUIViewSet(NautobotUIViewSet):
                 weight=100,
                 table_class=tables.RouteTargetTable,
                 table_filter="importing_vrfs",
-                table_title="Import Route Targets",
+                table_title=_("Import Route Targets"),
                 add_button_route=None,
             ),
             object_detail.ObjectsTablePanel(
@@ -333,7 +334,7 @@ class VRFUIViewSet(NautobotUIViewSet):
                 weight=200,
                 table_class=tables.RouteTargetTable,
                 table_filter="exporting_vrfs",
-                table_title="Export Route Targets",
+                table_title=_("Export Route Targets"),
                 add_button_route=None,
             ),
             object_detail.ObjectsTablePanel(
@@ -341,7 +342,7 @@ class VRFUIViewSet(NautobotUIViewSet):
                 weight=100,
                 table_class=tables.PrefixTable,
                 table_filter="vrfs",
-                table_title="Assigned Prefixes",
+                table_title=_("Assigned Prefixes"),
                 hide_hierarchy_ui=True,
                 exclude_columns=["namespace"],
                 add_button_route=None,
@@ -351,7 +352,7 @@ class VRFUIViewSet(NautobotUIViewSet):
                 weight=200,
                 table_class=tables.VRFDeviceAssignmentTable,
                 table_filter="vrf",
-                table_title="Assigned Devices",
+                table_title=_("Assigned Devices"),
                 related_list_url_name="dcim:device_list",
                 related_field_name="vrfs",
                 exclude_columns=["vrf", "namespace", "rd"],
@@ -392,14 +393,14 @@ class RouteTargetUIViewSet(NautobotUIViewSet):
                 weight=100,
                 table_class=tables.VRFTable,
                 table_filter="import_targets",
-                table_title="Importing VRFs",
+                table_title=_("Importing VRFs"),
             ),
             object_detail.ObjectsTablePanel(
                 section=SectionChoices.RIGHT_HALF,
                 weight=200,
                 table_class=tables.VRFTable,
                 table_filter="export_targets",
-                table_title="Exporting VRFs",
+                table_title=_("Exporting VRFs"),
             ),
         ),
     )
@@ -429,7 +430,7 @@ class RIRUIViewSet(NautobotUIViewSet):
             object_detail.ObjectsTablePanel(
                 section=SectionChoices.FULL_WIDTH,
                 weight=100,
-                table_title="Assigned Prefixes",
+                table_title=_("Assigned Prefixes"),
                 table_class=tables.PrefixTable,
                 table_filter="rir",
                 hide_hierarchy_ui=True,
@@ -497,7 +498,7 @@ class PrefixUIViewSet(NautobotUIViewSet):
             ui.PrefixObjectFieldsPanel(
                 weight=100,
                 section=SectionChoices.LEFT_HALF,
-                label="Prefix",
+                label=_("Prefix"),
                 # TODO: can be changed to __all__ as a part of NAUTOBOT-1053
                 fields=[
                     "namespace",
@@ -523,7 +524,7 @@ class PrefixUIViewSet(NautobotUIViewSet):
                 weight=100,
                 table_class=tables.PrefixTable,
                 table_attribute="default_ancestors",
-                table_title="Ancestor Prefixes",
+                table_title=_("Ancestor Prefixes"),
                 exclude_columns=["namespace"],
                 related_field_name="ancestors",
                 add_button_route=None,
@@ -534,7 +535,7 @@ class PrefixUIViewSet(NautobotUIViewSet):
                 weight=130,
                 table_class=tables.PrefixTable,
                 table_attribute="default_siblings",
-                table_title="Sibling Prefixes",
+                table_title=_("Sibling Prefixes"),
                 exclude_columns=["namespace"],
                 related_field_name="parent",
                 add_button_route=None,
@@ -546,7 +547,7 @@ class PrefixUIViewSet(NautobotUIViewSet):
                 weight=160,
                 table_class=tables.PrefixTable,
                 table_attribute="children",
-                table_title="Child Prefixes",
+                table_title=_("Child Prefixes"),
                 exclude_columns=["namespace"],
                 related_field_name="parent",
                 add_button_route=None,
@@ -558,7 +559,7 @@ class PrefixUIViewSet(NautobotUIViewSet):
                 weight=200,
                 table_class=tables.VRFPrefixAssignmentTable,
                 table_attribute="vrf_assignments",
-                table_title="Assigned VRFs",
+                table_title=_("Assigned VRFs"),
                 related_field_name="prefix",
                 related_list_url_name="ipam:vrf_list",
                 add_button_route=None,
@@ -570,7 +571,7 @@ class PrefixUIViewSet(NautobotUIViewSet):
                 weight=300,
                 table_class=CloudNetworkTable,
                 table_attribute="cloud_networks",
-                table_title="Assigned Cloud Networks",
+                table_title=_("Assigned Cloud Networks"),
                 exclude_columns=["actions", "assigned_prefix_count", "circuit_count", "cloud_service_count"],
                 related_field_name="prefixes",
                 add_button_route=None,
@@ -582,7 +583,7 @@ class PrefixUIViewSet(NautobotUIViewSet):
                 weight=300,
                 table_class=VPNTunnelEndpointTable,
                 table_attribute="vpn_tunnel_endpoints",
-                table_title="VPN Tunnel Endpoints Protecting Prefix",
+                table_title=_("VPN Tunnel Endpoints Protecting Prefix"),
                 exclude_columns=[
                     "vpn_profile",
                     "destination_ipaddress",
@@ -601,7 +602,7 @@ class PrefixUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=800,
                 tab_id="prefixes",
-                label="Descendant Prefixes",
+                label=_("Descendant Prefixes"),
                 related_object_attribute="default_descendants",
                 url_name="ipam:prefix_prefixes",
                 panels=(
@@ -624,7 +625,7 @@ class PrefixUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=900,
                 tab_id="ip-addresses",
-                label="IP Addresses",
+                label=_("IP Addresses"),
                 related_object_attribute="all_ips",
                 url_name="ipam:prefix_ipaddresses",
                 panels=[
@@ -647,7 +648,7 @@ class PrefixUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=950,
                 tab_id="ip-address-ranges",
-                label="IP Address Ranges",
+                label=_("IP Address Ranges"),
                 related_object_attribute="all_ip_address_ranges",
                 url_name="ipam:prefix_ipaddressranges",
                 panels=[
@@ -671,13 +672,13 @@ class PrefixUIViewSet(NautobotUIViewSet):
         extra_buttons=[
             object_detail.Button(
                 weight=100,
-                label="Available",
+                label=_("Available"),
                 render_on_tab_id=["prefixes"],
                 template_path="ipam/inc/toggle_available.html",
             ),
             ui.AddChildPrefixButton(
                 weight=200,
-                label="Add Child Prefix",
+                label=_("Add Child Prefix"),
                 link_name="ipam:prefix_add",
                 color=ButtonActionColorChoices.SUBMIT,
                 icon="mdi-plus-thick",
@@ -686,13 +687,13 @@ class PrefixUIViewSet(NautobotUIViewSet):
             ),
             object_detail.Button(
                 weight=100,
-                label="Available",
+                label=_("Available"),
                 render_on_tab_id=["ip-addresses"],
                 template_path="ipam/inc/toggle_available.html",
             ),
             ui.AddIPAddressButton(
                 weight=200,
-                label="Add an IP Address",
+                label=_("Add an IP Address"),
                 link_name="ipam:ipaddress_add",
                 color=ButtonActionColorChoices.SUBMIT,
                 icon="mdi-plus-thick",
@@ -701,7 +702,7 @@ class PrefixUIViewSet(NautobotUIViewSet):
             ),
             ui.AddIPAddressRangeButton(
                 weight=100,
-                label="Add IP Address Range",
+                label=_("Add IP Address Range"),
                 link_name="ipam:ipaddressrange_add",
                 color=ButtonActionColorChoices.SUBMIT,
                 icon="mdi-plus-thick",
@@ -763,13 +764,17 @@ class PrefixUIViewSet(NautobotUIViewSet):
                 messages.warning(
                     request,
                     format_html(
-                        "The <code>parent</code> field on this record appears to be set incorrectly. "
-                        'You may wish to <a href="{}">run the {} system Job</a> to repair this and other records.',
-                        reverse(
+                        gettext(
+                            "The <code>parent</code> field on this record appears to be set incorrectly. "
+                            'You may wish to <a href="{url}">run the {job_name} system Job</a> to repair '
+                            "this and other records."
+                        ),
+                        url=reverse(
                             "extras:job_run_by_class_path",
                             kwargs={"class_path": "nautobot.ipam.jobs.cleanup.FixIPAMParents"},
                         ),
-                        "Check/Fix IPAM Parents",
+                        # Job names are stored in the database and always render in English.
+                        job_name="Check/Fix IPAM Parents",
                     ),
                 )
         extra_context = super().get_extra_context(request, instance)
@@ -1063,13 +1068,17 @@ class IPAddressView(generic.ObjectView):
                 messages.warning(
                     request,
                     format_html(
-                        "The <code>parent</code> field on this record appears to be set incorrectly. "
-                        'You may wish to <a href="{}">run the {} system Job</a> to repair this and other records.',
-                        reverse(
+                        gettext(
+                            "The <code>parent</code> field on this record appears to be set incorrectly. "
+                            'You may wish to <a href="{url}">run the {job_name} system Job</a> to repair '
+                            "this and other records."
+                        ),
+                        url=reverse(
                             "extras:job_run_by_class_path",
                             kwargs={"class_path": "nautobot.ipam.jobs.cleanup.FixIPAMParents"},
                         ),
-                        "Check/Fix IPAM Parents",
+                        # Job names are stored in the database and always render in English.
+                        job_name="Check/Fix IPAM Parents",
                     ),
                 )
         except ValidationError:  # No valid parent found
@@ -1093,10 +1102,12 @@ class IPAddressView(generic.ObjectView):
             messages.warning(
                 request,
                 format_html(
-                    "The <code>parent</code> field on this record appears to be set incorrectly, and furthermore "
-                    "there appears to be no valid Prefix to contain this record at present. "
-                    'Consider <a href="{}">creating an appropriate Prefix</a> to resolve this issue.',
-                    add_url,
+                    gettext(
+                        "The <code>parent</code> field on this record appears to be set incorrectly, and "
+                        "furthermore there appears to be no valid Prefix to contain this record at present. "
+                        'Consider <a href="{url}">creating an appropriate Prefix</a> to resolve this issue.'
+                    ),
+                    url=add_url,
                 ),
             )
 
@@ -1191,7 +1202,10 @@ class IPAddressAssignView(view_mixins.GetReturnURLMixin, generic.ObjectView):
             if max_page_size and paginate["per_page"] > max_page_size:
                 messages.warning(
                     request,
-                    f'Requested "per_page" is too large. No more than {max_page_size} items may be displayed at a time.',
+                    gettext(
+                        'Requested "per_page" is too large. No more than %(max_page_size)s items may be displayed at a time.'
+                    )
+                    % {"max_page_size": max_page_size},
                 )
 
         return render(
@@ -1211,7 +1225,7 @@ class IPAddressAssignView(view_mixins.GetReturnURLMixin, generic.ObjectView):
             ip_addresses = IPAddress.objects.restrict(request.user, "view").filter(pk__in=pks)
             interface.ip_addresses.add(*ip_addresses)
             return redirect(self.get_return_url(request))
-        messages.error(request, "Please select at least one IP Address from the table.")
+        messages.error(request, gettext("Please select at least one IP Address from the table."))
         return redirect(request.get_full_path())
 
 
@@ -1349,11 +1363,11 @@ class IPAddressMergeView(view_mixins.GetReturnURLMixin, view_mixins.ObjectPermis
                         handle_protectederror(collapsed_ips, request, e)
                         return redirect(self.get_return_url(request))
                     msg = format_html(
-                        'Merged {} {} into <a href="{}">{}</a>',
-                        deleted_count,
-                        self.queryset.model._meta.verbose_name,
-                        merged_ip.get_absolute_url(),
-                        merged_ip,
+                        gettext('Merged {count} {name} into <a href="{url}">{target}</a>'),
+                        count=deleted_count,
+                        name=self.queryset.model._meta.verbose_name,
+                        url=merged_ip.get_absolute_url(),
+                        target=merged_ip,
                     )
                     logger_msg = f"Merged {deleted_count} {self.queryset.model._meta.verbose_name} into {merged_ip}"
                     merged_ip.validated_save()
@@ -1533,7 +1547,7 @@ class IPAddressRangeUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.FULL_WIDTH,
                 weight=200,
                 table_class=tables.IPAddressTable,
-                table_title="IP Addresses",
+                table_title=_("IP Addresses"),
                 order_by_fields=["host"],
                 exclude_columns=["parent"],
                 max_display_count=10,
@@ -1674,7 +1688,7 @@ class VLANUIViewSet(NautobotUIViewSet):  # 3.0 TODO: remove, unused BulkImportVi
         extra_tabs=(
             object_detail.DistinctViewTab(
                 weight=100,
-                label="Device Interfaces",
+                label=_("Device Interfaces"),
                 url_name="ipam:vlan_device_interfaces",
                 tab_id="device_interfaces",
                 related_object_attribute="interfaces",
@@ -1682,7 +1696,7 @@ class VLANUIViewSet(NautobotUIViewSet):  # 3.0 TODO: remove, unused BulkImportVi
                     object_detail.ObjectsTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="Device Interfaces",
+                        table_title=_("Device Interfaces"),
                         table_class=tables.VLANDevicesTable,
                         table_filter=["untagged_vlan", "tagged_vlans"],
                         related_field_name="vlan_id",
@@ -1692,7 +1706,7 @@ class VLANUIViewSet(NautobotUIViewSet):  # 3.0 TODO: remove, unused BulkImportVi
             ),
             object_detail.DistinctViewTab(
                 weight=200,
-                label="VM Interfaces",
+                label=_("VM Interfaces"),
                 url_name="ipam:vlan_vm_interfaces",
                 tab_id="vm_interfaces",
                 related_object_attribute="vminterfaces",
@@ -1700,7 +1714,7 @@ class VLANUIViewSet(NautobotUIViewSet):  # 3.0 TODO: remove, unused BulkImportVi
                     object_detail.ObjectsTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="Virtual Machine Interfaces",
+                        table_title=_("Virtual Machine Interfaces"),
                         table_class=tables.VLANVirtualMachinesTable,
                         table_filter=["untagged_vlan", "tagged_vlans"],
                         related_field_name="vlan_id",

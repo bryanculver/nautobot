@@ -12,6 +12,7 @@ from django.http import QueryDict
 from django.test.client import RequestFactory
 from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext
 from django_tables2 import RequestConfig
 from prometheus_client import REGISTRY
 from prometheus_client.utils import floatToGoString
@@ -168,6 +169,9 @@ def get_csv_form_fields_from_serializer_class(serializer_class):
     fields = []
     # Note lots of "noqa: S308" in this function. That's `suspicious-mark-safe-usage`, but in all of the below cases
     # we control the input string and it's known to be safe, so mark_safe() is being used correctly here.
+    # The translated hints are flagged where the literals are not, because the argument is a catalog lookup
+    # rather than a literal; the catalogs ship with Nautobot and are reviewed like source, so the markup in
+    # them is as trusted as the markup that was there before.
     for field_name, field in serializer.fields.items():
         if field.read_only:
             continue
@@ -186,7 +190,7 @@ def get_csv_form_fields_from_serializer_class(serializer_class):
                     "help_text": cf_form_field.help_text,
                 }
                 if cf.type == CustomFieldTypeChoices.TYPE_BOOLEAN:
-                    field_info["format"] = mark_safe("<code>true</code> or <code>false</code>")
+                    field_info["format"] = mark_safe(gettext("<code>true</code> or <code>false</code>"))  # noqa: S308
                 elif cf.type == CustomFieldTypeChoices.TYPE_DATE:
                     field_info["format"] = mark_safe("<code>YYYY-MM-DD</code>")
                 elif cf.type == CustomFieldTypeChoices.TYPE_DATETIME:
@@ -207,27 +211,29 @@ def get_csv_form_fields_from_serializer_class(serializer_class):
             "help_text": field.help_text,
         }
         if isinstance(field, serializers.BooleanField):
-            field_info["format"] = mark_safe("<code>true</code> or <code>false</code>")
+            field_info["format"] = mark_safe(gettext("<code>true</code> or <code>false</code>"))  # noqa: S308
         elif isinstance(field, serializers.DateField):
             field_info["format"] = mark_safe("<code>YYYY-MM-DD</code>")
         elif isinstance(field, TimeZoneSerializerField):
-            field_info["format"] = mark_safe(
-                '<a href="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones">available options</a>'
+            field_info["format"] = format_html(
+                '<a href="{}">{}</a>',
+                "https://en.wikipedia.org/wiki/List_of_tz_database_time_zones",
+                gettext("available options"),
             )
         elif isinstance(field, serializers.ManyRelatedField):
             if field.field_name == "tags":
-                field_info["format"] = mark_safe('<code>"name,name"</code> or <code>"UUID,UUID"</code>')
+                field_info["format"] = mark_safe(gettext('<code>"name,name"</code> or <code>"UUID,UUID"</code>'))  # noqa: S308
             elif isinstance(field.child_relation, ContentTypeField):
                 field_info["format"] = mark_safe('<code>"app_label.model,app_label.model"</code>')
             else:
                 field_info["foreign_key"] = field.child_relation.queryset.model._meta.label_lower
-                field_info["format"] = mark_safe('<code>"UUID,UUID"</code> or combination of fields')
+                field_info["format"] = mark_safe(gettext('<code>"UUID,UUID"</code> or combination of fields'))  # noqa: S308
         elif isinstance(field, serializers.RelatedField):
             if isinstance(field, ContentTypeField):
                 field_info["format"] = mark_safe("<code>app_label.model</code>")
             else:
                 field_info["foreign_key"] = field.queryset.model._meta.label_lower
-                field_info["format"] = mark_safe("<code>UUID</code> or combination of fields")
+                field_info["format"] = mark_safe(gettext("<code>UUID</code> or combination of fields"))  # noqa: S308
         elif isinstance(field, (serializers.ListField, serializers.MultipleChoiceField)):
             field_info["format"] = mark_safe('<code>"value,value"</code>')
         elif isinstance(field, (serializers.DictField, serializers.JSONField)):

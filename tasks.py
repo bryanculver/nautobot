@@ -1169,6 +1169,54 @@ def makemessages(context, locale=None):
     # The `djangojs` domain covers strings passed through gettext in the webpack sources; it has to
     # be extracted separately because Django keys catalogs by domain, not by file type.
     run_command(context, _makemessages_command(locales, domain="djangojs"))
+    _clear_fuzzy_translations(context)
+
+
+def _clear_fuzzy_translations(context):
+    """Empty any translation `msgmerge` guessed from a similar string.
+
+    Django's `makemessages` has no way to disable msgmerge's fuzzy matching. Its guesses are wrong
+    as often as not ("Circuit" inheriting the translation of "Circuits"), and gettext ignores fuzzy
+    entries at runtime -- so they render as English while *looking* translated in the catalog, which
+    is the worst possible state for anyone auditing coverage. Better to leave them empty and
+    honestly untranslated.
+    """
+    # Deliberately not `msgattrib --clear-fuzzy --empty`: the PO *header* entry is itself flagged
+    # fuzzy, so that would empty the header -- losing the charset declaration and leaving a catalog
+    # msgfmt rejects. Skipping entries with an empty msgid is what keeps the header intact.
+    #
+    # Both `msgstr "..."` and the `msgstr[N] "..."` forms of a plural entry have to be emptied.
+    # Clearing only the singular form would strip the `#, fuzzy` marker off a plural entry while
+    # leaving msgmerge's guess in place -- promoting it from an ignored guess to a translation
+    # gettext actually serves, which is the opposite of what this function is for.
+    #
+    # A msgid containing embedded newlines is split across continuation lines even under
+    # `--no-wrap`, so emptying only the `msgstr ""` line would leave the guess behind on the lines
+    # after it. Splitting the block at the first `msgstr` avoids that: everything before it is
+    # msgid material (whose own continuation lines must survive), everything after it is the
+    # translation and is replaced wholesale.
+    script = (
+        "import glob, io, re\n"
+        "for path in sorted(glob.glob('nautobot/locale/*/LC_MESSAGES/*.po')):\n"
+        "    blocks = io.open(path, encoding='utf-8').read().split('\\n\\n')\n"
+        "    out = []\n"
+        "    for b in blocks:\n"
+        "        fuzzy = re.search(r'^#, fuzzy', b, re.M)\n"
+        "        named = re.search(r'^msgid \"(.+)\"$', b, re.M) or re.search(r'^msgid \"\"\\n\"', b, re.M)\n"
+        "        if fuzzy and named:\n"
+        "            lines = b.split('\\n')\n"
+        "            first = next(i for i, l in enumerate(lines) if l.startswith('msgstr'))\n"
+        "            head = [l for l in lines[:first]\n"
+        "                    if not l.startswith('#, fuzzy') and not l.startswith('#| ')]\n"
+        "            tail = lines[first:]\n"
+        "            forms = [re.sub(r'^(msgstr(?:\\[\\d+\\])?) .*', r'\\1 \"\"', l)\n"
+        "                     for l in tail if l.startswith('msgstr')]\n"
+        "            trailing = [l for l in tail if not l.startswith(('msgstr', '\"'))]\n"
+        "            b = '\\n'.join(head + forms + trailing)\n"
+        "        out.append(b)\n"
+        "    io.open(path, 'w', encoding='utf-8').write('\\n\\n'.join(out))\n"
+    )
+    run_command(context, f"python -c {shlex.quote(script)}")
 
 
 @task(

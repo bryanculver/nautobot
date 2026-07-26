@@ -4,6 +4,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import CASCADE, PROTECT
 from django.db.models.signals import pre_delete
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.choices import ChoiceSet
 from nautobot.core.utils.config import get_settings_or_config
@@ -19,8 +20,8 @@ class CleanupTypes(ChoiceSet):
     OBJECT_CHANGE = "extras.ObjectChange"
 
     CHOICES = (
-        (JOB_RESULT, "Job results"),
-        (OBJECT_CHANGE, "Change logs"),
+        (JOB_RESULT, _("Job results")),
+        (OBJECT_CHANGE, _("Change logs")),
     )
 
 
@@ -36,10 +37,12 @@ class LogsCleanup(Job):
 
     max_age = IntegerVar(
         description=(
-            "Maximum age of records to retain, in days. "
-            "Leave empty to use the CHANGELOG_RETENTION setting as the maximum."
+            _(
+                "Maximum age of records to retain, in days. "
+                "Leave empty to use the CHANGELOG_RETENTION setting as the maximum."
+            )
         ),
-        label="Max Age",
+        label=_("Max Age"),
         min_value=0,
         required=False,
     )
@@ -107,11 +110,11 @@ class LogsCleanup(Job):
 
         if CleanupTypes.JOB_RESULT in cleanup_types and not self.user.has_perm("extras.delete_jobresult"):
             self.logger.error('User "%s" does not have permission to delete JobResult records', self.user)
-            raise PermissionDenied("User does not have delete permissions for JobResult records")
+            raise PermissionDenied(_("User does not have delete permissions for JobResult records"))
 
         if CleanupTypes.OBJECT_CHANGE in cleanup_types and not self.user.has_perm("extras.delete_objectchange"):
             self.logger.error('User "%s" does not have permission to delete ObjectChange records', self.user)
-            raise PermissionDenied("User does not have delete permissions for ObjectChange records")
+            raise PermissionDenied(_("User does not have delete permissions for ObjectChange records"))
 
         # Bulk delete goes much faster if Django doesn't have signals to process.
         # Temporarily detach the ones we *know* to be irrelevant.

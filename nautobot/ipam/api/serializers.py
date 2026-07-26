@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueTogetherValidator
@@ -333,7 +334,7 @@ class IPAddressSerializer(NautobotModelSerializer, TaggedModelSerializerMixin):
 
         # Only assert namespace/parent on create.
         if self.instance is None and not any([namespace, parent]):
-            raise ValidationError({"__all__": "One of parent or namespace must be provided"})
+            raise ValidationError({"__all__": _("One of parent or namespace must be provided")})
 
         super().validate(attrs)
         return attrs
@@ -375,7 +376,7 @@ class IPAddressRangeSerializer(NautobotModelSerializer, TaggedModelSerializerMix
 
         # Only assert namespace/parent on create (parent is auto-resolved from namespace + start/end host).
         if self.instance is None and not any([namespace, parent]):
-            raise ValidationError({"__all__": "One of parent or namespace must be provided"})
+            raise ValidationError({"__all__": _("One of parent or namespace must be provided")})
 
         super().validate(attrs)
         return attrs
