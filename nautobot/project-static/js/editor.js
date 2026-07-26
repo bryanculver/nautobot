@@ -284,7 +284,11 @@
       Promise.allSettled(containers.map(host => Editor.create(host)))
           .then(results => results.forEach((result, i) => {
               if (result.status === 'rejected') {
-                  containers[i].textContent = 'Editor initialization failed';
+                  // Not an ES module, so it cannot import the i18n shim; fall back to English
+                  // if the JavaScript catalog has not loaded.
+                  containers[i].textContent =
+                      globalThis.django?.gettext('Editor initialization failed')
+                      ?? 'Editor initialization failed';
                   console.error('Monaco error:', result.reason);
               }
           }));

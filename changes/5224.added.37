@@ -1,0 +1,1 @@
+Added `TranslationCatalogTestCaseMixin` to `nautobot.apps.testing`, so an App can assert that its own translation catalogs are compiled, current, and declare the correct number of plural forms.

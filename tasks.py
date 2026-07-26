@@ -1107,6 +1107,117 @@ def check_migrations(context):
     run_command(context, command)
 
 
+# ------------------------------------------------------------------------------
+# TRANSLATIONS
+# ------------------------------------------------------------------------------
+# Nautobot's translatable languages, as locale names (`django.utils.translation.to_locale` form).
+# Keep in sync with the `LANGUAGES` setting in nautobot/core/settings.py.
+TRANSLATED_LOCALES = ["de", "es", "fr", "zh_Hans"]
+
+
+def _makemessages_command(locales, domain=None):
+    """Build a `nautobot-server makemessages` invocation for the given locales."""
+    command = "nautobot-server makemessages"
+    for locale in locales:
+        command += f" --locale {locale}"
+    # --no-wrap keeps one msgid per line, so catalog diffs stay reviewable: without it, an unrelated
+    # edit to a long string rewraps its neighbours and buries the real change.
+    command += " --no-wrap"
+    for ignore in (
+        # Third-party JS, not ours to translate.
+        "nautobot/ui/node_modules/*",
+        # Build output and vendored bundles. Named individually rather than ignoring the whole
+        # `project-static` tree, because `project-static/js` is 14 hand-written files of ours --
+        # webpack writes to `project-static/dist`, not there. Version numbers are globbed so
+        # upgrading a vendored library cannot silently start extracting its bundle; a newly
+        # vendored directory still has to be added here.
+        "nautobot/project-static/dist/*",
+        "nautobot/project-static/docs/*",
+        "nautobot/project-static/jquery/*",
+        "nautobot/project-static/monaco-editor-*/*",
+        "nautobot/project-static/bootstrap-filestyle-*/*",
+        # Historical records. Their strings are frozen and never rendered as UI chrome.
+        "*/migrations/*",
+        # Test fixtures deliberately exercise gettext; their strings are not product surface.
+        "*/tests/*",
+        "*/test_jobs/*",
+        # Documentation sources are a separate (deferred) translation workstream.
+        "nautobot/docs/*",
+        # The example Apps ship their own catalogs, exactly as a pip-installed App does. Without
+        # this, `makemessages` would hoist their strings into Nautobot's catalogs -- Django treats
+        # any directory named `locale` as an additional output path -- and the App would end up
+        # translated by core rather than by itself, which is the opposite of what it demonstrates.
+        "examples/*",
+    ):
+        command += f" --ignore '{ignore}'"
+    if domain:
+        command += f" --domain {domain}"
+    return command
+
+
+@task(
+    help={
+        "locale": "Locale to extract, repeatable (default: all locales Nautobot ships).",
+    },
+    iterable=["locale"],
+)
+def makemessages(context, locale=None):
+    """Extract translatable strings from Python, templates, and JavaScript into .po catalogs."""
+    locales = locale or TRANSLATED_LOCALES
+
+    run_command(context, _makemessages_command(locales))
+    # The `djangojs` domain covers strings passed through gettext in the webpack sources; it has to
+    # be extracted separately because Django keys catalogs by domain, not by file type.
+    run_command(context, _makemessages_command(locales, domain="djangojs"))
+
+
+@task(
+    help={
+        "locale": "Locale to compile, repeatable (default: all locales Nautobot ships).",
+    },
+    iterable=["locale"],
+)
+def compilemessages(context, locale=None):
+    """Compile .po catalogs into the .mo files Django actually reads at runtime."""
+    locales = locale or TRANSLATED_LOCALES
+
+    command = "nautobot-server compilemessages"
+    for loc in locales:
+        command += f" --locale {loc}"
+
+    run_command(context, command)
+
+
+@task
+def check_translations(context):
+    """Check that translation catalogs are valid and up to date with the source strings."""
+    # msgfmt --check catches malformed catalogs and, importantly, printf-placeholder mismatches
+    # between msgid and msgstr -- both a crash vector and the classic translation-injection vector.
+    command = (
+        "bash -c 'set -e; "
+        "found=0; "
+        'for po in $(find nautobot/locale -name "*.po"); do '
+        '  echo "checking $po"; msgfmt --check --output-file=/dev/null "$po"; found=1; '
+        "done; "
+        'if [ "$found" -eq 0 ]; then echo "No .po catalogs found under nautobot/locale"; exit 1; fi\''
+    )
+    run_command(context, command)
+
+    # Re-extract and fail if the catalogs move: a PR that adds or edits a translatable string
+    # without re-running `invoke makemessages` silently leaves the catalogs stale.
+    run_command(context, _makemessages_command(TRANSLATED_LOCALES))
+    run_command(context, _makemessages_command(TRANSLATED_LOCALES, domain="djangojs"))
+    # POT-Creation-Date changes on every extraction and says nothing about content, so ignore it.
+    command = (
+        'bash -c \'if ! git diff --quiet --ignore-matching-lines="^\\"POT-Creation-Date:" -- nautobot/locale; then '
+        '  echo "ERROR: translation catalogs are out of date; run \\"invoke makemessages\\" and commit the result."; '
+        "  git diff --stat -- nautobot/locale; exit 1; "
+        "fi'"
+    )
+    run_command(context, command)
+    print("check-translations successful!")
+
+
 @task(
     help={
         "api_version": "Check a single specified API version only.",
@@ -1298,6 +1409,7 @@ def lint(context, fix=False):
         partial(djlint, context),
         partial(check_migrations, context),
         partial(check_schema, context),
+        partial(check_translations, context),
         partial(build_and_check_docs, context),
     )
 

@@ -1,4 +1,5 @@
 import * as bootstrap from 'bootstrap';
+import { gettext } from './i18n.js';
 import { createElement, removeElementClasses } from './utils.js';
 
 const TABS_HIDDEN_CLASSES = ['invisible', 'position-absolute'];
@@ -54,7 +55,7 @@ export const collapseTabs = (tabs) => {
    */
   const dropdownMenu = createElement('ul', { className: 'dropdown-menu dropdown-menu-end' });
   const dropdownToggleIcon = createElement('span', { className: 'mdi mdi-menu' });
-  const dropdownToggleLabel = createElement('span', { className: 'visually-hidden' }, 'Toggle Dropdown');
+  const dropdownToggleLabel = createElement('span', { className: 'visually-hidden' }, gettext('Toggle Dropdown'));
   const dropdownToggle = createElement(
     'button',
     {

@@ -724,6 +724,9 @@ TEMPLATES = [
                 "nautobot.core.context_processors.sso_auth",
             ],
             "environment": "jinja2.sandbox.SandboxedEnvironment",
+            # Gives Jinja2 templates the same {% trans %}/{% blocktrans %} vocabulary as the Django
+            # backend, so a template's translatability does not depend on which engine renders it.
+            "extensions": ["jinja2.ext.i18n"],
         },
     },
 ]

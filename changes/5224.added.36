@@ -1,0 +1,1 @@
+Added support for Nautobot Apps to ship their own translation catalogs. An App that provides `<package>/locale/<language>/LC_MESSAGES/` is now translated alongside Nautobot core, with no registration required beyond appearing in `PLUGINS`.

@@ -1,5 +1,6 @@
 import Fuse from 'fuse.js';
 import htmx from 'htmx.org';
+import { gettext, interpolate } from './i18n.js';
 import { createElement, rem } from './utils.js';
 
 const FORM_CONTROL_PADDING_X = rem(12);
@@ -33,7 +34,10 @@ export const initializeSearch = () => {
 
   /*
    * Pick only the lowest level of nested `nav_menu` object. In TypeScript, it would be manifested as the following type:
-   * `{ [item_link: string]: { name: string; weight: number } };`.
+   * `{ [item_link: string]: { name: string; label: string; weight: number } };`.
+   *
+   * `name` is the stable English key; `label` is the localized display text. Nav entries registered
+   * without an explicit label get `label === name`, so untranslated apps behave exactly as before.
    */
   const SEARCHABLE_MODELS = Object.fromEntries(
     Object.entries(NAV_MENU.tabs).flatMap(([, tab_details]) =>
@@ -47,13 +51,19 @@ export const initializeSearch = () => {
   const BADGE_REG_EXP = new RegExp(
     `${IN_REG_EXP.source}(${Object.entries(SEARCHABLE_MODELS)
       // Extend simple vanilla model name match with more word delimiter variants (or no word delimiters at all).
-      .flatMap(([, { name }]) => [name, ...['', '_', '\\-'].map((delimiter) => name.replace(/\s+/g, delimiter))])
+      .flatMap(([, { name, label }]) => {
+        const text = label ?? name;
+        return [text, ...['', '_', '\\-'].map((delimiter) => text.replace(/\s+/g, delimiter))];
+      })
       .join('|')})\\s+`,
     'i',
   );
 
   const fuse = new Fuse(
-    Object.entries(SEARCHABLE_MODELS).map(([item_link, item_details]) => ({ item_link, name: item_details?.name })),
+    Object.entries(SEARCHABLE_MODELS).map(([item_link, item_details]) => ({
+      item_link,
+      name: item_details?.label ?? item_details?.name,
+    })),
     { keys: ['name'], threshold: 0.4, useTokenSearch: true },
   );
 
@@ -230,19 +240,20 @@ export const initializeSearch = () => {
     document.body.appendChild(overlay);
 
     const addBadge = (link) => {
-      const name = Object.entries(SEARCHABLE_MODELS).find(([item_link]) => item_link === link)?.[1]?.name ?? link;
+      const details = Object.entries(SEARCHABLE_MODELS).find(([item_link]) => item_link === link)?.[1];
+      const name = details?.label ?? details?.name ?? link;
 
       const removeButton = createElement(
         'button',
         { type: 'button' },
         createElement('span', { 'aria-hidden': 'true', class: 'mdi mdi-close' }),
-        createElement('span', { class: 'visually-hidden' }, 'Remove'),
+        createElement('span', { class: 'visually-hidden' }, gettext('Remove')),
       );
 
       const badge = createElement(
         'span',
         { className: 'badge border', 'data-nb-link': link },
-        `in: ${name}`,
+        interpolate(gettext('in: %(name)s'), { name }),
         removeButton,
       );
 
@@ -341,7 +352,7 @@ export const initializeSearch = () => {
               .toLowerCase()
               .replace(/\s|_|-/g, '');
           const link = Object.entries(SEARCHABLE_MODELS).find(
-            ([, { name }]) => normalize(name) === normalize(model),
+            ([, { name, label }]) => normalize(label ?? name) === normalize(model),
           )?.[0];
 
           if (link) {
@@ -361,7 +372,11 @@ export const initializeSearch = () => {
               'aria-hidden': 'true',
               className: 'mdi mdi-magnify text-secondary',
             });
-            const itemBadge = createElement('span', { className: 'badge border' }, `in: ${item.name}`);
+            const itemBadge = createElement(
+              'span',
+              { className: 'badge border' },
+              interpolate(gettext('in: %(name)s'), { name: item.name }),
+            );
             const itemButton = createElement(
               'button',
               { 'aria-selected': 'false', className: 'nb-search-list-group-item', type: 'button' },
