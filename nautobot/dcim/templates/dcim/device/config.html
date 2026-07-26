@@ -1,17 +1,18 @@
 {% extends 'generic/object_retrieve.html' %}
 
-{% block title %}{{ object }} - Config{% endblock %}
+{% load i18n %}
+{% block title %}{% blocktrans with object=object %}{{ object }} - Config{% endblocktrans %}{% endblock %}
 
 {% block content %}
     {% include 'inc/ajax_loader.html' %}
     <div class="row">
         <div class="col-lg-10 offset-lg-1">
             <div class="card">
-                <div class="card-header"><strong>Device Configuration</strong></div>
+                <div class="card-header"><strong>{% trans "Device Configuration" %}</strong></div>
                 <ul class="nav nav-tabs mt-16" role="tablist">
-                    <li class="nav-item" role="presentation"><a class="nav-link active" href="#running" aria-controls="running" role="tab" data-bs-toggle="tab">Running</a></li>
-                    <li class="nav-item" role="presentation"><a class="nav-link" href="#startup" aria-controls="startup" role="tab" data-bs-toggle="tab">Startup</a></li>
-                    <li class="nav-item" role="presentation"><a class="nav-link" href="#candidate" aria-controls="candidate" role="tab" data-bs-toggle="tab">Candidate</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link active" href="#running" aria-controls="running" role="tab" data-bs-toggle="tab">{% trans "Running" %}</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="#startup" aria-controls="startup" role="tab" data-bs-toggle="tab">{% trans "Startup" %}</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="#candidate" aria-controls="candidate" role="tab" data-bs-toggle="tab">{% trans "Candidate" %}</a></li>
                 </ul>
                 <div class="tab-content">
                     <div role="tabpanel" class="tab-pane fade show active" id="running">

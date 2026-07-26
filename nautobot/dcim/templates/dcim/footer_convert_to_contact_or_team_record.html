@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load perms %}
 {% load helpers %}
 {% if perms.dcim.contact_association %}
@@ -6,7 +7,7 @@
             <div class="float-end d-print-none">
                 <a href="{% url 'dcim:location_migrate_data_to_contact' pk=object.pk %}?return_url={{ return_url }}" class="btn btn-primary btn-sm">
                     <span class="mdi mdi-account-edit" aria-hidden="true"></span>
-                    Convert to contact/team record
+                    {% trans "Convert to contact/team record" %}
                 </a>
             </div>
         {% endwith %}

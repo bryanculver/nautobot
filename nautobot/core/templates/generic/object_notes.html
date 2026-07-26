@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load i18n %}
 {% load helpers %}
 {% load form_helpers %}
 
@@ -7,10 +8,10 @@
         <form action="{% url 'extras:note_add' %}?return_url={{ request.path }}?tab=notes" method="post" enctype="multipart/form-data">
             <div class="row justify-content-center">
                 <div class="col-md-10 col-lg-8">
-                    <h3 class="mb-16">Add a new note</h3>
+                    <h3 class="mb-16">{% trans "Add a new note" %}</h3>
                     <div class="card">
                         <div class="card-header">
-                            <strong>Note</strong>
+                            <strong>{% trans "Note" %}</strong>
                         </div>
                         <div class="card-body">
                             {% csrf_token %}
@@ -23,11 +24,11 @@
                 <div class="col-md-10 col-lg-8 gap-8 hstack justify-content-end mb-16">
                     <button id="createNote" type="submit" class="btn btn-primary">
                         <span aria-hidden="true" class="mdi mdi-check me-4"></span><!--
-                        -->Create
+                        -->{% trans "Create" %}
                     </button>
                     <a href="{{ object.get_absolute_url }}" class="btn btn-secondary">
                         <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-                        -->Cancel
+                        -->{% trans "Cancel" %}
                     </a>
                 </div>
             </div>

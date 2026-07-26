@@ -1,9 +1,10 @@
+{% load i18n %}
 {% load static %}
 {% load helpers %}
 
 <h1 class="d-flex fs-2 gap-8 lh-sm py-6">
     <img
-        alt="Nautobot chevron"
+        alt="{% trans "Nautobot chevron" %}"
         class="align-self-start flex-grow-0 flex-shrink-0 my-n4"
         role="presentation"
         src="{% static 'img/nautobot_chevron.svg' %}"
@@ -14,7 +15,7 @@
             <span id="copy_title">{{ title }}</span>{% saved_view_title %}
             <button type="button" class="btn btn-secondary align-self-end nb-btn-inline-hover" data-clipboard-text="{{ title }}">
                 <span aria-hidden="true" class="mdi mdi-content-copy"></span>
-                <span class="visually-hidden">Copy</span>
+                <span class="visually-hidden">{% trans "Copy" %}</span>
             </button>
         </span>
     {% else %}

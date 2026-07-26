@@ -1,9 +1,10 @@
 {% comment %}4.0 TODO: remove this template, which only exists for backward compatibility with 3.0 and earlier{% endcomment %}
+{% load i18n %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Static Media Failure - {{ settings.BRANDING_TITLE }}</title>
+        <title>{% trans "Static Media Failure" %} - {{ settings.BRANDING_TITLE }}</title>
         <meta charset="UTF-8">
         <style type="text/css">
             body {
@@ -17,21 +18,24 @@
     </head>
     <body>
         <div style="margin: auto; width: 800px">
-            <h1>Static Media Failure</h1>
+            <h1>{% trans "Static Media Failure" %}</h1>
             <h3>
-                The following static media file failed to load:
+                {% trans "The following static media file failed to load:" %}
                 <a href="{% static filename %}"><code style="color: red">{{ filename }}</code></a>
             </h3>
-            <p>Check the following:</p>
+            <p>{% trans "Check the following:" %}</p>
             <ul>
                 <li class="tip">
-                    <code><strong>nautobot-server collectstatic</strong></code> was run during the most recent upgrade. This installs the most recent
-                    iteration of each static file into the static root path.
+                    {% blocktrans trimmed %}
+                        <code><strong>nautobot-server collectstatic</strong></code> was run during the most recent
+                        upgrade. This installs the most recent iteration of each static file into the static root path.
+                    {% endblocktrans %}
                 </li>
                 <li class="tip">
-                    The HTTP service (e.g. NGINX) is configured to serve files from the <code>STATIC_ROOT</code> path.
-                    Refer to <a href="https://docs.nautobot.com/projects/core/en/v{{ settings.VERSION }}/installation/">the installation
-                        documentation</a> for further guidance.
+                    {% blocktrans trimmed with docs_url="https://docs.nautobot.com/projects/core/en/v"|add:settings.VERSION|add:"/installation/" %}
+                        The HTTP service (e.g. NGINX) is configured to serve files from the <code>STATIC_ROOT</code>
+                        path. Refer to <a href="{{ docs_url }}">the installation documentation</a> for further guidance.
+                    {% endblocktrans %}
                     <ul>
                         {% if request.user.is_staff or request.user.is_superuser %}
                             <li><code>STATIC_ROOT: <strong>{{ settings.STATIC_ROOT }}</strong></code></li>
@@ -40,10 +44,18 @@
                     </ul>
                 </li>
                 <li class="tip">
-                    The file <code>{{ filename }}</code> exists in the static root directory and is readable by the HTTP process.
+                    {% blocktrans trimmed %}
+                        The file <code>{{ filename }}</code> exists in the static root directory and is readable by the
+                        HTTP process.
+                    {% endblocktrans %}
                 </li>
             </ul>
-            <p>Click <a href="{% url 'home' %}">here</a> to attempt loading {{ settings.BRANDING_TITLE }} again.</p>
+            {% url 'home' as home_url %}
+            <p>
+                {% blocktrans trimmed with branding_title=settings.BRANDING_TITLE %}
+                    Click <a href="{{ home_url }}">here</a> to attempt loading {{ branding_title }} again.
+                {% endblocktrans %}
+            </p>
         </div>
     </body>
 </html>

@@ -1,13 +1,14 @@
+{% load i18n %}
 <div class="card-header">
-    <strong>Logs</strong>
+    <strong>{% trans "Logs" %}</strong>
     <div class="float-end d-print-none">
         <input
             class="form-control"
             id="log-filter"
             name="q"
             type="text"
-            placeholder="Filter log level or message"
-            title="Filter log level or message"
+            placeholder="{% trans "Filter log level or message" %}"
+            title="{% trans "Filter log level or message" %}"
             style="height: 1.4375rem; width: 11.875rem;"
             {% if result and result.pk %}
                 hx-get="{% url 'extras:jobresult_log-table' pk=result.pk %}"

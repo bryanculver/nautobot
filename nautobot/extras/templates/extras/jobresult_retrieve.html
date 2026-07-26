@@ -1,9 +1,10 @@
 {% extends 'generic/object_retrieve.html' %}
+{% load i18n %}
 {% load helpers %}
 {% load static %}
 
 {% block title %}
-    Job Result:
+    {% trans "Job Result:" %}
     {% if result.job_model is not None %}
         {{ result.job_model }}
     {% elif associated_record %}

@@ -9,28 +9,29 @@ Required context:
   - `object`: the child (sub)interface. Caller must ensure `object.get_breakout_lane_cable_path` is
     non-None (i.e. the parent is cabled and this lane resolves to a path) before including this.
 {% endcomment %}
+{% load i18n %}
 {% load helpers %}
 {% load cables %}
 {% with parent=object.parent_interface lane=object.get_breakout_lane breakout_path=object.get_breakout_lane_cable_path %}
     <table class="table table-hover attr-table">
         <tr>
-            <td>Cable</td>
+            <td>{% trans "Cable" %}</td>
             <td>
                 {{ parent.cable|hyperlinked_object }}
                 <span class="text-secondary">(via {{ parent|hyperlinked_object }})</span>
                 <span class="float-end">
-                    <a href="{% url 'dcim:interface_trace' pk=parent.pk %}?cablepath_id={{ breakout_path.pk }}" class="btn btn-primary btn-sm" title="Trace">
+                    <a href="{% url 'dcim:interface_trace' pk=parent.pk %}?cablepath_id={{ breakout_path.pk }}" class="btn btn-primary btn-sm" title="{% trans "Trace" %}">
                         <span class="mdi mdi-transit-connection-variant" aria-hidden="true"></span>
                     </a>
                 </span>
             </td>
         </tr>
         <tr>
-            <td>Cable Status</td>
+            <td>{% trans "Cable Status" %}</td>
             <td>{{ parent.cable.status|hyperlinked_object_with_color }}</td>
         </tr>
         <tr>
-            <td>Cable Peer</td>
+            <td>{% trans "Cable Peer" %}</td>
             <td>
                 {% if lane.far_termination %}
                     {{ lane.far_termination.parent|hyperlinked_object }}
@@ -42,7 +43,7 @@ Required context:
             </td>
         </tr>
         <tr>
-            <td>Endpoint</td>
+            <td>{% trans "Endpoint" %}</td>
             <td>
                 {% with endpoint=object.get_breakout_connected_endpoint %}
                     {% if endpoint %}
@@ -52,9 +53,9 @@ Required context:
                         {# If the endpoint is itself a breakout trunk, annotate it with the child interface mapped back to the parent. #}
                         {% with trunk_child=endpoint|breakout_trunk_child_interface:parent %}{% if trunk_child %} [{{ trunk_child|hyperlinked_object }}]{% endif %}{% endwith %}
                         {% if breakout_path.is_active %}
-                            <span class="badge bg-success">Reachable</span>
+                            <span class="badge bg-success">{% trans "Reachable" %}</span>
                         {% else %}
-                            <span class="badge bg-danger">Not Reachable</span>
+                            <span class="badge bg-danger">{% trans "Not Reachable" %}</span>
                         {% endif %}
                     {% else %}
                         {{ ""|placeholder }}

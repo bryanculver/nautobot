@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load form_helpers %}
 
 {% if not exclude_html_form %}
@@ -26,11 +27,11 @@
     <div class="justify-content-between mb-n20 nb-form-sticky-footer">
         <button type="submit" class="btn btn-primary">
             <span class="mdi mdi-check me-4" aria-hidden="true"></span><!--
-            -->Apply Specified
+            -->{% trans "Apply Specified" %}
         </button>
         <button type="reset" class="btn btn-secondary">
             <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-            -->Clear All
+            -->{% trans "Clear All" %}
         </button>
     </div>
 {% endif %}

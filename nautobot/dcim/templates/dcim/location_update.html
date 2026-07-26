@@ -1,9 +1,10 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load form_helpers %}
 
 {% block form %}
     <div class="card">
-        <div class="card-header"><strong>Location</strong></div>
+        <div class="card-header"><strong>{% trans "Location" %}</strong></div>
         <div class="card-body">
             {% render_field form.location_type %}
             {% render_field form.parent %}
@@ -17,7 +18,7 @@
     </div>
     {% include 'inc/tenancy_form_panel.html' %}
     <div class="card">
-        <div class="card-header"><strong>Contact Info</strong></div>
+        <div class="card-header"><strong>{% trans "Contact Info" %}</strong></div>
         <div class="card-body">
             {% render_field form.physical_address %}
             {% render_field form.shipping_address %}
@@ -30,7 +31,7 @@
     </div>
     {% include 'inc/extras_features_edit_form_fields.html' %}
     <div class="card">
-        <div class="card-header"><strong>Comments</strong></div>
+        <div class="card-header"><strong>{% trans "Comments" %}</strong></div>
         <div class="card-body">
             {% render_field form.comments %}
         </div>

@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load helpers %}
 
 {% block extra_styles %}
@@ -23,15 +24,15 @@
                     <a href="{% url 'extras:job_run' pk=row.record.pk %}"
                        class="btn btn-primary btn-sm p-2 rounded-circle"
                        data-bs-toggle="tooltip"
-                       data-bs-title="Run/Schedule">
-                        <span class="mdi mdi-play" aria-hidden="true"><span class="visually-hidden">Run/Schedule</span></span>
+                       data-bs-title="{% trans "Run/Schedule" %}">
+                        <span class="mdi mdi-play" aria-hidden="true"><span class="visually-hidden">{% trans "Run/Schedule" %}</span></span>
                     </a>
                 {% else %}
                     <a aria-disabled="true"
                        class="btn btn-primary btn-sm disabled p-2 rounded-circle"
                        data-bs-toggle="tooltip"
-                       data-bs-title="Run/Schedule">
-                        <span class="mdi mdi-play" aria-hidden="true"><span class="visually-hidden">Run/Schedule</span></span>
+                       data-bs-title="{% trans "Run/Schedule" %}">
+                        <span class="mdi mdi-play" aria-hidden="true"><span class="visually-hidden">{% trans "Run/Schedule" %}</span></span>
                     </a>
                 {% endif %}
 
@@ -43,19 +44,19 @@
                     {% endfor %}
                 {% endcomment %}
                 <div class="dropdown">
-                    <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-bs-title="Actions">
-                        <span class="mdi mdi-dots-horizontal" aria-hidden="true"><span class="visually-hidden">Actions</span></span>
+                    <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-bs-title="{% trans "Actions" %}">
+                        <span class="mdi mdi-dots-horizontal" aria-hidden="true"><span class="visually-hidden">{% trans "Actions" %}</span></span>
                     </button>
                     {% with request.path|add:"?display=tiles"|urlencode as return_url %}
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{% url 'extras:job' pk=row.record.pk %}"><span class="mdi mdi-information-outline text-secondary" aria-hidden="true"></span>Details</a></li>
-                            <li><a class="dropdown-item" href="{% url 'extras:job_changelog' pk=row.record.pk %}"><span class="mdi mdi-history text-secondary" aria-hidden="true"></span>Change log</a></li>
+                            <li><a class="dropdown-item" href="{% url 'extras:job' pk=row.record.pk %}"><span class="mdi mdi-information-outline text-secondary" aria-hidden="true"></span>{% trans "Details" %}</a></li>
+                            <li><a class="dropdown-item" href="{% url 'extras:job_changelog' pk=row.record.pk %}"><span class="mdi mdi-history text-secondary" aria-hidden="true"></span>{% trans "Change log" %}</a></li>
                             {% if perms.extras.change_job %}
-                                <li><a class="dropdown-item" href="{% url 'extras:job_edit' pk=row.record.pk %}?return_url={{return_url}}"><span class="mdi mdi-pencil text-secondary" aria-hidden="true"></span>Edit</a></li>
+                                <li><a class="dropdown-item" href="{% url 'extras:job_edit' pk=row.record.pk %}?return_url={{return_url}}"><span class="mdi mdi-pencil text-secondary" aria-hidden="true"></span>{% trans "Edit" %}</a></li>
                             {% endif %}
                             {% if perms.extras.delete_job %}
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{% url 'extras:job_delete' pk=row.record.pk %}?return_url={{return_url}}"><span class="mdi mdi-trash-can-outline text-danger" aria-hidden="true"></span><span class="text-danger">Delete</span></a></li>
+                                <li><a class="dropdown-item" href="{% url 'extras:job_delete' pk=row.record.pk %}?return_url={{return_url}}"><span class="mdi mdi-trash-can-outline text-danger" aria-hidden="true"></span><span class="text-danger">{% trans "Delete" %}</span></a></li>
                             {% endif %}
                         </ul>
                     {% endwith %}
@@ -68,16 +69,16 @@
 
             <footer class="nb-tile-footer">
                 <div class="flex-fill">
-                    Last run:
+                    {% trans "Last run:" %}
                     {% if row.record.latest_result %}
-                        <a href="{{ row.record.latest_result.get_absolute_url }}">{{ row.record.latest_result.date_created|date:"DATETIME_FORMAT" }} by {{ row.record.latest_result.user }}</a>
+                        <a href="{{ row.record.latest_result.get_absolute_url }}">{% blocktrans with when=row.record.latest_result.date_created|date:"DATETIME_FORMAT" who=row.record.latest_result.user %}{{ when }} by {{ who }}{% endblocktrans %}</a>
                     {% else %}
-                        <span class="text-secondary">Never</span>
+                        <span class="text-secondary">{% trans "Never" %}</span>
                     {% endif %}
                 </div>
 
                 <div>
-                    Last status:
+                    {% trans "Last status:" %}
                     {% include 'extras/inc/job_label.html' with result=row.record.latest_result %}
                 </div>
             </footer>

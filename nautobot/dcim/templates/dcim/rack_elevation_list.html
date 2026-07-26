@@ -1,32 +1,33 @@
 {% extends 'generic/object_list.html' %}
+{% load i18n %}
 {% load helpers %}
 {% load static %}
 
 {% block buttons %}
     <button class="btn btn-secondary toggle-fullname" selected="selected">
-        <span class="mdi mdi-checkbox-marked-circle-outline" aria-hidden="true"></span> Show Device Full Name
+        <span class="mdi mdi-checkbox-marked-circle-outline" aria-hidden="true"></span> {% trans "Show Device Full Name" %}
     </button>
     <button class="btn btn-secondary toggle-images" selected="selected">
-        <span class="mdi mdi-checkbox-marked-circle-outline" aria-hidden="true"></span> Show Images
+        <span class="mdi mdi-checkbox-marked-circle-outline" aria-hidden="true"></span> {% trans "Show Images" %}
     </button>
     <div class="btn-group" role="group">
         <a href="{% django_querystring face='front' %}"
            class="btn btn-primary{% if rack_face == 'front' %} bg-primary nb-text-body-bg{% endif %}">
-            <span class="mdi mdi-flip-to-front"></span> Front
+            <span class="mdi mdi-flip-to-front"></span> {% trans "Front" %}
         </a>
         <a href="{% django_querystring face='rear' %}"
            class="btn btn-primary{% if rack_face == 'rear' %} bg-primary nb-text-body-bg{% endif %}">
-            <span class="mdi mdi-flip-to-back"></span> Rear
+            <span class="mdi mdi-flip-to-back"></span> {% trans "Rear" %}
         </a>
     </div>
     <div class="btn-group" role="group">
         <a href="{% django_querystring reverse=None %}"
            class="btn btn-primary{% if not reverse %} bg-primary nb-text-body-bg{% endif %}">
-            <span class="mdi mdi-arrow-right"></span> Normal
+            <span class="mdi mdi-arrow-right"></span> {% trans "Normal" %}
         </a>
         <a href="{% django_querystring reverse='true' %}"
            class="btn btn-primary{% if reverse %} bg-primary nb-text-body-bg{% endif %}">
-            <span class="mdi mdi-arrow-left"></span> Reversed
+            <span class="mdi mdi-arrow-left"></span> {% trans "Reversed" %}
         </a>
     </div>
 {% endblock %}
@@ -61,7 +62,7 @@
         <br />
         {% include 'inc/paginator.html' %}
     {% else %}
-        <p>No racks found</p>
+        <p>{% trans "No racks found" %}</p>
     {% endif %}
 {% endblock %}
 

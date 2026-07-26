@@ -17,7 +17,7 @@
             <div class="col-lg-8">
                 {% if form.non_field_errors %}
                     <div class="card border-danger">
-                        <div class="card-header bg-danger-subtle border-danger text-body"><strong>Errors</strong></div>
+                        <div class="card-header bg-danger-subtle border-danger text-body"><strong>{% trans "Errors" %}</strong></div>
                         <div class="card-body">
                             {{ form.non_field_errors }}
                         </div>
@@ -48,14 +48,7 @@
                                             {% get_attr settings "PLUGINS_CONFIG" as app_settings %}
                                             {% if app_settings|get_item:app_name|get_item:name is not None %}
                                                 <div class="alert alert-warning" role="alert">
-                                                    <code>{{ name }} = {{ app_settings|get_item:app_name|get_item:name | quote_string }}</code>
-                                                    is set via an environment variable or otherwise explicitly
-                                                    set in <code>{{ settings.SETTINGS_PATH }}</code>
-                                                    under PLUGINS_CONFIG[{{app_name}}],
-                                                    therefore it is not currently editable here.
-                                                    <br>Remove that environment variable and/or the declaration in
-                                                    <code>{{ settings.SETTINGS_PATH }}</code>
-                                                    if you want to manage it via this interface instead.
+                                                    {% blocktrans with value=app_settings|get_item:app_name|get_item:name|quote_string path=settings.SETTINGS_PATH app=app_name %}<code>{{ name }} = {{ value }}</code> is set via an environment variable or otherwise explicitly set in <code>{{ path }}</code> under PLUGINS_CONFIG[{{ app }}], therefore it is not currently editable here.<br>Remove that environment variable and/or the declaration in <code>{{ path }}</code> if you want to manage it via this interface instead.{% endblocktrans %}
                                                 </div>
                                                 {{ item.form_field.as_hidden }}
                                             {% else %}
@@ -79,13 +72,7 @@
                                         {% get_attr settings item.name as settings_value %}
                                         {% if settings_value is not None %}
                                             <div class="alert alert-warning" role="alert">
-                                                <code>{{ item.name }} = {{ settings_value | quote_string }}</code>
-                                                is set via an environment variable or otherwise explicitly
-                                                set in <code>{{ settings.SETTINGS_PATH }}</code>,
-                                                therefore it is not currently editable here.
-                                                <br>Remove that environment variable and/or the declaration in
-                                                <code>{{ settings.SETTINGS_PATH }}</code>
-                                                if you want to manage it via this interface instead.
+                                                {% blocktrans with name=item.name value=settings_value|quote_string path=settings.SETTINGS_PATH %}<code>{{ name }} = {{ value }}</code> is set via an environment variable or otherwise explicitly set in <code>{{ path }}</code>, therefore it is not currently editable here.<br>Remove that environment variable and/or the declaration in <code>{{ path }}</code> if you want to manage it via this interface instead.{% endblocktrans %}
                                             </div>
                                             {{ item.form_field.as_hidden }}
                                         {% else %}

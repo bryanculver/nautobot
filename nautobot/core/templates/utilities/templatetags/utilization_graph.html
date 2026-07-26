@@ -1,4 +1,5 @@
-<div {% if utilization_count and total_count %}title="Used: {{ utilization_count }}&#13;Count: {{ total_count }}" {% endif %}class="progress text-center">
+{% load i18n %}
+<div {% if utilization_count and total_count %}title="{% blocktrans with used=utilization_count total=total_count %}Used: {{ used }}&#13;Count: {{ total }}{% endblocktrans %}" {% endif %}class="progress text-center">
     {% if utilization < 30 %}<span>{{ utilization }}%</span>{% endif %}
     <div class="progress-bar bg-{% if utilization >= danger_threshold %}danger{% elif utilization >= warning_threshold %}warning{% else %}success{% endif %}"
          role="progressbar" aria-valuenow="{{ utilization }}" aria-valuemin="0" aria-valuemax="100" style="width: {% if utilization > 100 %}100{% else %}{{ utilization }}{% endif %}%">

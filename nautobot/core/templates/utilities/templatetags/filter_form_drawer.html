@@ -1,25 +1,26 @@
+{% load i18n %}
 {% load form_helpers %}
 {% load helpers %}
 {% load static %}
 
 <section class="nb-drawer" tabindex="-1" id="{{ filter_form_name }}_drawer">
     <div class="nb-drawer-header">
-        <h1>Filters</h1>
-        <button type="button" class="btn-close" data-nb-dismiss="drawer" aria-label="Close"></button>
+        <h1>{% trans "Filters" %}</h1>
+        <button type="button" class="btn-close" data-nb-dismiss="drawer" aria-label="{% trans "Close" %}"></button>
     </div>
     <div class="nb-drawer-body">
         <ul id="filter-tabs" class="nav nav-tabs">
             {% if filter_form %}
                 <li role="presentation" class="nav-item">
                     <a class="nav-link{% if filter_form %} active{% endif %}"  href="#default-filter" role="tab" data-bs-toggle="tab">
-                        Basic
+                        {% trans "Basic" %}
                     </a>
                 </li>
             {% endif %}
             {% if dynamic_filter_form %}
                 <li role="presentation" class="nav-item">
                     <a class="nav-link position-relative{% if not filter_form %} active{% endif %}" href="#advanced-filter" role="tab" data-bs-toggle="tab">
-                        Advanced
+                        {% trans "Advanced" %}
                         {% advanced_filter_indicator basic_filter_form=filter_form filter_params=filter_params %}
                     </a>
                 </li>
@@ -46,7 +47,7 @@
                             </div>
                             <button class="nb-dynamic-filter-add btn btn-primary d-block ms-auto my-20" type="button">
                                 <span aria-hidden="true" class="mdi mdi-plus me-4"></span><!--
-                                -->Add Filter
+                                -->{% trans "Add Filter" %}
                             </button>
                             <hr class="border-top my-20">
                             {% include "inc/dynamic_filter_items.html" %}
@@ -55,11 +56,11 @@
                         <div class="d-print-none justify-content-between mb-n20 nb-form-sticky-footer">
                             <button type="submit" class="btn btn-primary">
                                 <span class="mdi mdi-check me-4" aria-hidden="true"></span><!--
-                                -->Apply Specified
+                                -->{% trans "Apply Specified" %}
                             </button>
                             <button type="reset" class="btn btn-secondary">
                                 <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-                                -->Clear All
+                                -->{% trans "Clear All" %}
                             </button>
                         </div>
                     </form>

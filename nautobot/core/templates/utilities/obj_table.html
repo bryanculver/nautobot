@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load helpers %}
 {% if permissions.change or permissions.delete %}
     <form method="post" class="form form-horizontal">
@@ -9,7 +10,9 @@
                     <div class="form-check flex-grow-1 mb-0">
                         <input class="form-check-input" id="select_all" name="_all" type="checkbox">
                         <label class="form-check-label" for="select_all">
-                            Select <strong>all {{ table.rows|length }} {{ table.data.verbose_name_plural }}</strong> matching query
+                            {% blocktrans trimmed with counter=table.rows|length object_name=table.data.verbose_name_plural %}
+                                Select <strong>all {{ counter }} {{ object_name }}</strong> matching query
+                            {% endblocktrans %}
                         </label>
                     </div>
                     <div class="hstack gap-8">
@@ -19,7 +22,7 @@
                                     formaction="{% url bulk_edit_url %}{% if bulk_querystring %}?{{ bulk_querystring }}{% elif request.GET %}?{{ request.GET.urlencode }}{% endif %}"
                                     class="btn btn-warning btn-sm"
                                     disabled>
-                                <span class="mdi mdi-pencil me-4" aria-hidden="true"></span>Edit All
+                                <span class="mdi mdi-pencil me-4" aria-hidden="true"></span>{% trans "Edit All" %}
                             </button>
                         {% endif %}
                         {% if bulk_delete_url and permissions.delete %}
@@ -28,7 +31,7 @@
                                     formaction="{% url bulk_delete_url %}{% if bulk_querystring %}?{{ bulk_querystring }}{% elif request.GET %}?{{ request.GET.urlencode }}{% endif %}"
                                     class="btn btn-danger btn-sm"
                                     disabled>
-                                <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span>Delete All
+                                <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span>{% trans "Delete All" %}
                             </button>
                         {% endif %}
                     </div>
@@ -40,12 +43,12 @@
             {% block extra_actions %}{% endblock %}
             {% if bulk_edit_url and permissions.change %}
                 <button type="submit" name="_edit" formaction="{% url bulk_edit_url %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-warning btn-sm">
-                    <span class="mdi mdi-pencil" aria-hidden="true"></span> Edit Selected
+                    <span class="mdi mdi-pencil" aria-hidden="true"></span> {% trans "Edit Selected" %}
                 </button>
             {% endif %}
             {% if bulk_delete_url and permissions.delete %}
                 <button type="submit" name="_delete" formaction="{% url bulk_delete_url %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-danger btn-sm">
-                    <span class="mdi mdi-trash-can-outline" aria-hidden="true"></span> Delete Selected
+                    <span class="mdi mdi-trash-can-outline" aria-hidden="true"></span> {% trans "Delete Selected" %}
                 </button>
             {% endif %}
         </div>

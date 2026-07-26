@@ -1,9 +1,10 @@
 {% extends 'generic/object_list.html' %}
 
+{% load i18n %}
 {% block export_list_element %}
     <li>
         <a class="dropdown-item" href="{% url 'dcim-api:cable-list' %}?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}termination_type=dcim.interface&format=csv">
-            <span class="mdi mdi-database-export text-secondary" aria-hidden="true"></span> Export as CSV
+            <span class="mdi mdi-database-export text-secondary" aria-hidden="true"></span> {% trans "Export as CSV" %}
         </a>
     </li>
 {% endblock export_list_element %}

@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
 Panel header for the Device "Module Bays" tab: the standard table title/count
 badge plus an "Expand all"/"Collapse all" toggle. The toggle fetches the
@@ -17,10 +18,10 @@ pushes the URL so the state survives a full reload and is shareable.
        hx-push-url="true">
         {% if expand_all %}
             <span class="mdi mdi-arrow-collapse-vertical" aria-hidden="true"></span>
-            Collapse All
+            {% trans "Collapse All" %}
         {% else %}
             <span class="mdi mdi-arrow-expand-vertical" aria-hidden="true"></span>
-            Expand All
+            {% trans "Expand All" %}
         {% endif %}
     </a>
 {% endif %}

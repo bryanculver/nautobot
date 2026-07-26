@@ -1,28 +1,29 @@
 {% extends 'generic/object_retrieve.html' %}
+{% load i18n %}
 {% load helpers %}
 
 {% block content_left_page %}
     <div class="card">
         <div class="card-header">
-            <strong>Cable</strong>
+            <strong>{% trans "Cable" %}</strong>
         </div>
         <table class="table table-hover card-body attr-table">
             <tr>
-                <td>Type</td>
+                <td>{% trans "Type" %}</td>
                 <td>{{ object.get_type_display|placeholder }}</td>
             </tr>
             <tr>
-                <td>Status</td>
+                <td>{% trans "Status" %}</td>
                 <td>
                     {{ object.status| hyperlinked_object_with_color }}
                 </td>
             </tr>
             <tr>
-                <td>Label</td>
+                <td>{% trans "Label" %}</td>
                 <td>{{ object.label|placeholder }}</td>
             </tr>
             <tr>
-                <td>Cable Type</td>
+                <td>{% trans "Cable Type" %}</td>
                 <td>
                     {% if object.cable_type %}
                         {{ object.cable_type|hyperlinked_object }}
@@ -33,7 +34,7 @@
             </tr>
             {% if object.cable_type %}
                 <tr>
-                    <td>Lanes</td>
+                    <td>{% trans "Lanes" %}</td>
                     <td>{{ object.connected_lanes }} / {{ object.total_lanes }} connected</td>
                 </tr>
             {% elif not object.breakout_eligible %}
@@ -41,13 +42,13 @@
                     <td></td>
                     <td>
                         <small class="text-secondary">
-                            <span class="mdi mdi-information-outline me-4"></span>Breakout not available for this cable's termination types
+                            <span class="mdi mdi-information-outline me-4"></span>{% trans "Breakout not available for this cable's termination types" %}
                         </small>
                     </td>
                 </tr>
             {% endif %}
             <tr>
-                <td>Color</td>
+                <td>{% trans "Color" %}</td>
                 <td>
                     {% if object.color %}
                         <span class="label nb-color-block" style="background-color: #{{ object.color }}">&nbsp;</span>
@@ -57,7 +58,7 @@
                 </td>
             </tr>
             <tr>
-                <td>Length</td>
+                <td>{% trans "Length" %}</td>
                 <td>
                     {% if object.length %}
                         {{ object.length }} {{ object.get_length_unit_display }}
@@ -74,7 +75,7 @@
     {% with conns=object.get_connections %}
         <div class="card">
             <div class="card-header">
-                <strong>Connections</strong>
+                <strong>{% trans "Connections" %}</strong>
                 {% if object.cable_type.is_breakout %}
                     <span class="badge bg-info float-end">{{ conns.a_connector_count }}A &rarr; {{ conns.b_connector_count }}B</span>
                 {% endif %}
@@ -82,8 +83,8 @@
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
-                        <th>Side A</th>
-                        <th>Side B</th>
+                        <th>{% trans "Side A" %}</th>
+                        <th>{% trans "Side B" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -118,7 +119,7 @@
         {% if object.cable_type %}
             <div class="card mt-3">
                 <div class="card-header">
-                    <strong>Lane Mapping</strong>
+                    <strong>{% trans "Lane Mapping" %}</strong>
                     <span class="float-end">{{ object.cable_type|hyperlinked_object }}</span>
                 </div>
                 <div id="lane-mapping-scroll" class="card-body" style="overflow-x: auto;">

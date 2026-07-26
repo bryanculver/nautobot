@@ -1,4 +1,5 @@
 {% extends 'users/base.html' %}
+{% load i18n %}
 {% load helpers %}
 
 {% block usercontent %}
@@ -6,16 +7,16 @@
         <div class="col-md-8 offset-md-2">
             <div class="card">
                 <div class="card-header">
-                    <strong>User Profile</strong>
+                    <strong>{% trans "User Profile" %}</strong>
                 </div>
                 <div class="collapse show">
                     <table class="table table-hover attr-table">
                         <tr>
-                            <td>User login</td>
+                            <td>{% trans "User login" %}</td>
                             <td>{{ request.user.username }}</td>
                         </tr>
                         <tr>
-                            <td>Full name</td>
+                            <td>{% trans "Full name" %}</td>
                             {% if request.user.first_name or request.user.last_name %}
                                 <td>{{ request.user.first_name }} {{ request.user.last_name }}</td>
                             {% else %}
@@ -23,23 +24,23 @@
                             {% endif %}
                         </tr>
                         <tr>
-                            <td>Email</td>
+                            <td>{% trans "Email" %}</td>
                             <td>{{ request.user.email|hyperlinked_email }}</td>
                         </tr>
                         <tr>
-                            <td>Registered</td>
+                            <td>{% trans "Registered" %}</td>
                             <td>{{ request.user.date_joined|date:"SHORT_DATETIME_FORMAT" }}</td>
                         </tr>
                         <tr>
-                            <td>Groups</td>
+                            <td>{% trans "Groups" %}</td>
                             <td>{{ request.user.groups.all|join:', '|placeholder }}</td>
                         </tr>
                         <tr>
-                            <td>Admin access</td>
+                            <td>{% trans "Admin access" %}</td>
                             <td>{{ request.user.is_staff|render_boolean }}</td>
                         </tr>
                         <tr>
-                            <td>Superuser access</td>
+                            <td>{% trans "Superuser access" %}</td>
                             <td>{{ request.user.is_superuser|render_boolean }}</td>
                         </tr>
                     </table>

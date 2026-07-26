@@ -1,7 +1,8 @@
+{% load i18n %}
 {% if export_url %}
     {% if list_element %}
         {% if export_templates %}
-            <li class="dropdown-header fs-5">Export Templates</li>
+            <li class="dropdown-header fs-5">{% trans "Export Templates" %}</li>
         {% endif %}
         {% if include_yaml_option %}
             <li>
@@ -12,7 +13,7 @@
                     <input type="hidden" name="_schedule_type" value="immediately">
                     <input type="hidden" name="export_format" value="yaml">
                     <button class="dropdown-item" type="submit">
-                        <span class="mdi mdi-database-export text-secondary" aria-hidden="true"></span> Export as YAML
+                        <span class="mdi mdi-database-export text-secondary" aria-hidden="true"></span> {% trans "Export as YAML" %}
                     </button>
                 </form>
             </li>
@@ -25,7 +26,7 @@
                 <input type="hidden" name="_schedule_type" value="immediately">
                 <input type="hidden" name="export_format" value="csv">
                 <button class="dropdown-item" type="submit">
-                    <span class="mdi mdi-database-export text-secondary" aria-hidden="true"></span> Export as CSV
+                    <span class="mdi mdi-database-export text-secondary" aria-hidden="true"></span> {% trans "Export as CSV" %}
                 </button>
             </form>
         </li>
@@ -50,7 +51,7 @@
             <div class="btn-group">
                 <button type="submit" class="btn btn-success" form="export_default">
                     <span class="mdi mdi-database-export" aria-hidden="true"></span>
-                    Export
+                    {% trans "Export" %}
                 </button>
                 <form id="export_default" class="d-inline-block" action="{{ export_url }}" method="post">
                     {% csrf_token %}
@@ -61,12 +62,12 @@
                     <input type="hidden" name="_schedule_type" value="immediately">
                 </form>
                 <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <span class="visually-hidden">Toggle Dropdown</span>
+                    <span class="visually-hidden">{% trans "Toggle Dropdown" %}</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     {% if include_yaml_option %}
                         <li>
-                            <button type="submit" class="dropdown-item" form="export_default">Export as YAML</button>
+                            <button type="submit" class="dropdown-item" form="export_default">{% trans "Export as YAML" %}</button>
                         </li>
                         <li>
                             <form action="{{ export_url }}" method="post">
@@ -74,12 +75,12 @@
                                 <input type="hidden" name="content_type" value="{{ content_type.pk }}">
                                 <input type="hidden" name="query_string" value="{{ query_string }}">
                                 <input type="hidden" name="_schedule_type" value="immediately">
-                                <button type="submit" class="dropdown-item">Export as CSV</button>
+                                <button type="submit" class="dropdown-item">{% trans "Export as CSV" %}</button>
                             </form>
                         </li>
                     {% else %}
                         <li>
-                            <button type="submit" class="dropdown-item" form="export_default">CSV format</button>
+                            <button type="submit" class="dropdown-item" form="export_default">{% trans "CSV format" %}</button>
                         </li>
                     {% endif %}
                     {% if export_templates %}
@@ -108,7 +109,7 @@
                 <input type="hidden" name="query_string" value="{{ query_string }}">
                 <input type="hidden" name="_schedule_type" value="immediately">
                 <button type="submit" class="btn btn-success">
-                    <span class="mdi mdi-database-export" aria-hidden="true"></span> Export
+                    <span class="mdi mdi-database-export" aria-hidden="true"></span> {% trans "Export" %}
                 </button>
             </form>
         {% endif %}

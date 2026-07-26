@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load helpers %}
 {% include 'inc/modal_header.html' with title=title %}
 
@@ -14,13 +15,13 @@
          {% endif %}>
         <div class="container-fluid gy-3">
             <div class="row align-items-center" style="margin-bottom: 12px;">
-                <div class="col-4 text-end fw-semibold">Job Status:</div>
+                <div class="col-4 text-end fw-semibold">{% trans "Job Status:" %}</div>
                 <div class="col-8">
                     {% include 'extras/inc/job_label.html' with result=result %}
                 </div>
             </div>
             <div class="row align-items-center" style="margin-bottom: 12px;">
-                <div class="col-4 text-end fw-semibold">Duration:</div>
+                <div class="col-4 text-end fw-semibold">{% trans "Duration:" %}</div>
                 <div class="col-8">
                     {% if job_is_pending %}
                         <div class="d-flex align-items-center">
@@ -32,11 +33,11 @@
                 </div>
             </div>
             <div class="row align-items-center" style="margin-bottom: 12px;">
-                <div class="col-4 text-end fw-semibold">Details</div>
+                <div class="col-4 text-end fw-semibold">{% trans "Details" %}</div>
                 <div class="col-8">
                     {% if job_is_pending %}
                         <div class="d-flex align-items-center">
-                            <span class="text-secondary">Job is running, please wait...</span>
+                            <span class="text-secondary">{% trans "Job is running, please wait..." %}</span>
                         </div>
                     {% else %}
                         <pre class="form-control bg-body-tertiary" style="min-height: 44px;"><!--
@@ -57,13 +58,13 @@
         </a>
     {% endif %}
     <a href="{{ result.get_absolute_url }}" class="btn btn-primary"><!--
-        -->View Job Results
+        -->{% trans "View Job Results" %}
     </a>
     <button type="button"
             class="btn btn-secondary"
             data-bs-dismiss="modal"
     >
         <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-        -->Close
+        -->{% trans "Close" %}
     </button>
 </div>

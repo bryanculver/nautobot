@@ -1,10 +1,11 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load form_helpers %}
 {% load static %}
 
 {% block form %}
     <div class="card">
-        <div class="card-header"><strong>Metadata Type</strong></div>
+        <div class="card-header"><strong>{% trans "Metadata Type" %}</strong></div>
         <div class="card-body">
             {% render_field form.name %}
             {% render_field form.description %}
@@ -12,13 +13,13 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Assignment</strong></div>
+        <div class="card-header"><strong>{% trans "Assignment" %}</strong></div>
         <div class="card-body">
             {% render_field form.content_types %}
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Choices (select and multi-select data types)</strong></div>
+        <div class="card-header"><strong>{% trans "Choices (select and multi-select data types)" %}</strong></div>
         <div class="card-body overflow-auto">
             {{ choices.non_field_errors }}
             <table class="table" id="metadata-choices">

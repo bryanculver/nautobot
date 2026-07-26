@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load static %}
 {% load registry %}
 {% load helpers %}
@@ -8,7 +9,7 @@
         <button
             aria-controls="sidenav"
             aria-expanded="{% if cookie_sidenav_collapsed == 'true' %}false{% else %}true{% endif %}"
-            aria-label="Collapse sidenav"
+            aria-label="{% trans "Collapse sidenav" %}"
             class="bg-warning btn btm-sm btn-warning overflow-hidden p-4 position-absolute nb-sidenav-toggler"
             data-bs-theme="dark"
             type="button"
@@ -27,8 +28,8 @@
                     <li>
                         {% url 'plugins:nautobot_version_control:branch_list' as branch_list_url %}
                         <a class="nb-sidenav-list-item nb-sidenav-list-item-flat" href="{{ branch_list_url }}">
-                            <img alt="branch icon" src="{% static 'nautobot-icons/branch.svg' %}">
-                            <span>Branches</span>
+                            <img alt="{% trans "branch icon" %}" src="{% static 'nautobot-icons/branch.svg' %}">
+                            <span>{% trans "Branches" %}</span>
                         </a>
                     </li>
                     <li>
@@ -47,14 +48,14 @@
                                 value="{{ request.build_absolute_uri }}"
                             >
                             <select
-                                aria-label="Find a branch..."
+                                aria-label="{% trans "Find a branch..." %}"
                                 class="form-select nautobot-select2-api"
                                 data-allow-clear="false"
                                 data-url="{% url 'plugins-api:nautobot_version_control-api:branch-list' %}"
                                 display-field="name"
                                 id="sidenav-branch-picker-select"
                                 name="branch"
-                                placeholder="Find a branch..."
+                                placeholder="{% trans "Find a branch..." %}"
                                 search-field="name__ic"
                                 value-field="name"
                             >
@@ -68,13 +69,13 @@
                         {% if nav_menu_version_control.active_branch == 'main' %}
                             <button class="nb-sidenav-list-item nb-sidenav-list-item-flat" disabled type="button">
                                 <img alt="list-unordered icon" src="{% static 'nautobot-icons/list-unordered.svg' %}">
-                                <span>View diffs</span>
+                                <span>{% trans "View diffs" %}</span>
                             </button>
                         {% else %}
                             {% url 'plugins:nautobot_version_control:branch_diffs' pk=nav_menu_version_control.active_branch as branch_diffs_url %}
                             <a class="nb-sidenav-list-item nb-sidenav-list-item-flat" href="{{ branch_diffs_url }}">
                                 <img alt="list-unordered icon" src="{% static 'nautobot-icons/list-unordered.svg' %}">
-                                <span>View diffs</span>
+                                <span>{% trans "View diffs" %}</span>
                             </a>
                         {% endif %}
                     </li>
@@ -88,7 +89,7 @@
                             method="post"
                         >
                             {# djlint:off B081 #}
-                            <img alt="history icon" data-toggle src="{% static 'nautobot-icons/history.svg' %}">
+                            <img alt="{% trans "history icon" %}" data-toggle src="{% static 'nautobot-icons/history.svg' %}">
                             {# djlint:on B081 #}
                             {% csrf_token %}
                             <input
@@ -102,7 +103,7 @@
                                 class="bg-transparent border-0 form-control fw-medium text-uppercase"
                                 data-input
                                 name="version_control_time_travel_date"
-                                placeholder="Time Travel"
+                                placeholder="{% trans "Time Travel" %}"
                                 value="{{ nav_menu_version_control.active_time_travel_date|default:"" }}"
                             >
                             <button id="timetravel-cancel" class="btn btn-sm d-none" type="button" data-clear>
@@ -120,8 +121,8 @@
                         class="nb-sidenav-list-item"
                         type="button"
                     >
-                        <img alt="star icon" src="{% static 'nautobot-icons/star.svg' %}">
-                        <span>Favorites</span>
+                        <img alt="{% trans "star icon" %}" src="{% static 'nautobot-icons/star.svg' %}">
+                        <span>{% trans "Favorites" %}</span>
                     </button>
                     <div class="nb-sidenav-flyout" id="sidenav-flyout-favorites" hx-swap-oob="true">
                         {% include "inc/nav_favorites.html" %}
@@ -182,7 +183,7 @@
                                                     data-delete-url="{% url "user:navbar_favorites_delete" %}"
                                                 >
                                                     <span class="visually-hidden">
-                                                        Add to favorites
+                                                        {% trans "Add to favorites" %}
                                                     </span>
                                                 </button>
                                             </li>

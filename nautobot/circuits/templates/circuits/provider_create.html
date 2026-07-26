@@ -1,16 +1,17 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load form_helpers %}
 
 {% block form %}
     <div class="card">
-        <div class="card-header"><strong>Provider</strong></div>
+        <div class="card-header"><strong>{% trans "Provider" %}</strong></div>
         <div class="card-body">
             {% render_field form.name %}
             {% render_field form.asn %}
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Support Info</strong></div>
+        <div class="card-header"><strong>{% trans "Support Info" %}</strong></div>
         <div class="card-body">
             {% render_field form.account %}
             {% render_field form.portal_url %}
@@ -20,7 +21,7 @@
     </div>
     {% include 'inc/extras_features_edit_form_fields.html' %}
     <div class="card">
-        <div class="card-header"><strong>Comments</strong></div>
+        <div class="card-header"><strong>{% trans "Comments" %}</strong></div>
         <div class="card-body">
             {% render_field form.comments %}
         </div>

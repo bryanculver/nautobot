@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load form_helpers %}
 
 <div class="mb-10 d-lg-flex justify-content-center{% if field.errors %} has-error{% endif %}">
@@ -8,7 +9,7 @@
         <div class="form-check my-6{% if override_field.errors %} has-error{% endif %}">
             {{ override_field }}
             <label class="form-check-label" for="{{ override_field.id_for_label }}">
-                <i>Override default value</i>
+                <i>{% trans "Override default value" %}</i>
                 {% if override_field.help_text %}
                     <span class="form-text">{{ override_field.help_text|safe }}</span>
                 {% endif %}

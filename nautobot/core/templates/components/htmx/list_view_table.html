@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load buttons %}
 {% load helpers %}
 {% load perms %}
@@ -12,7 +13,9 @@
                     <div class="form-check flex-grow-1 mb-0">
                         <input class="form-check-input" id="select_all" name="_all" type="checkbox">
                         <label class="form-check-label" for="select_all">
-                            Select <strong>all {{ table.rows|length }} {{ table.data.verbose_name_plural }}</strong> matching query
+                            {% blocktrans trimmed with counter=table.rows|length object_name=table.data.verbose_name_plural %}
+                                Select <strong>all {{ counter }} {{ object_name }}</strong> matching query
+                            {% endblocktrans %}
                         </label>
                     </div>
                     <div class="hstack gap-8">
@@ -24,7 +27,7 @@
                                     data-objects="all"
                                     class="btn btn-primary btn-sm"
                                     disabled>
-                                <span class="mdi mdi-group me-4" aria-hidden="true"></span>Update Group Assignment for All
+                                <span class="mdi mdi-group me-4" aria-hidden="true"></span>{% trans "Update Group Assignment for All" %}
                             </button>
                         {% endif %}
                         {% if bulk_edit_url and permissions.change %}
@@ -33,7 +36,7 @@
                                     formaction="{% url bulk_edit_url %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
                                     class="btn btn-warning btn-sm"
                                     disabled>
-                                <span class="mdi mdi-pencil me-4" aria-hidden="true"></span>Edit All
+                                <span class="mdi mdi-pencil me-4" aria-hidden="true"></span>{% trans "Edit All" %}
                             </button>
                         {% endif %}
                         {% if bulk_delete_url and permissions.delete %}
@@ -42,7 +45,7 @@
                                     formaction="{% url bulk_delete_url %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
                                     class="btn btn-danger btn-sm"
                                     disabled>
-                                <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span>Delete All
+                                <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span>{% trans "Delete All" %}
                             </button>
                         {% endif %}
                     </div>

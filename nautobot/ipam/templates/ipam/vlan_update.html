@@ -1,4 +1,5 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load form_helpers %}
 
 {% block form %}
@@ -13,7 +14,7 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Assignment</strong></div>
+        <div class="card-header"><strong>{% trans "Assignment" %}</strong></div>
         <div class="card-body">
             {% render_field form.locations %}
             {% render_field form.vlan_group %}

@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load helpers %}
 {% comment %}
 Renders a "Add Cable" button that links to the unified cable_add form with the given termination
@@ -9,6 +10,6 @@ Optional context:  `return_url` (defaults to termination.get_absolute_url).
 Caller is responsible for guarding on `perms.dcim.add_cable`.
 {% endcomment %}
 {% firstof return_url termination.get_absolute_url as cable_return_url %}
-<a href="{% url 'dcim:cable_add' %}?termination_a_type={{ termination|meta:'app_label' }}.{{ termination|meta:'model_name' }}&termination_a_id={{ termination.pk }}&return_url={{ cable_return_url }}" title="Add Cable" class="btn btn-primary btn-sm float-end">
-    <span class="mdi mdi-ethernet-cable me-4" aria-hidden="true"></span>Add Cable
+<a href="{% url 'dcim:cable_add' %}?termination_a_type={{ termination|meta:'app_label' }}.{{ termination|meta:'model_name' }}&termination_a_id={{ termination.pk }}&return_url={{ cable_return_url }}" title="{% trans "Add Cable" %}" class="btn btn-primary btn-sm float-end">
+    <span class="mdi mdi-ethernet-cable me-4" aria-hidden="true"></span>{% trans "Add Cable" %}
 </a>

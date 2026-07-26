@@ -1,10 +1,11 @@
+{% load i18n %}
 {% if "detail" in buttons %}
-    <a href="{{ record.get_absolute_url }}?return_url={{ request.path }}{{ return_url_extra }}" class="btn btn-sm btn-secondary" title="Details">
+    <a href="{{ record.get_absolute_url }}?return_url={{ request.path }}{{ return_url_extra }}" class="btn btn-sm btn-secondary" title="{% trans "Details" %}">
         <span class="mdi mdi-information-outline"></span>
     </a>
 {% endif %}
 {% if "changelog" in buttons %}
-    <a href="{% url changelog_route pk=record.pk %}" class="btn btn-secondary btn-sm" title="Change log">
+    <a href="{% url changelog_route pk=record.pk %}" class="btn btn-secondary btn-sm" title="{% trans "Change log" %}">
         <span class="mdi mdi-history"></span>
     </a>
 {% endif %}

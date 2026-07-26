@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load helpers %}
 {% load form_helpers %}
 
-{% block title %}Search{% endblock %}
+{% block title %}{% trans "Search" %}{% endblock %}
 
 {% block content %}
     {% if request.GET.q %}
@@ -22,7 +23,7 @@
                     {% endfor %}
                     <div id="search-results-htmx-indicator" class="htmx-indicator text-center">
                         <div class="spinner-border">
-                            <span class="visually-hidden">Loading...</span>
+                            <span class="visually-hidden">{% trans "Loading..." %}</span>
                         </div>
                     </div>
                 </div>
@@ -30,7 +31,7 @@
             <div class="col-lg-2" style="padding-top: 20px;">
                 <div class="card">
                     <div class="card-header">
-                        <strong>Search Results</strong>
+                        <strong>{% trans "Search Results" %}</strong>
                     </div>
                     <div class="list-group">
                         <div id="nb-search-results-summaries">
@@ -43,7 +44,7 @@
             </div>
         </div>
     {% else %}
-        <h3 class="text-secondary text-center">Please enter your desired search in the above search box.</h3>
+        <h3 class="text-secondary text-center">{% trans "Please enter your desired search in the above search box." %}</h3>
     {% endif %}
 {% endblock %}
 

@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
+{% load helpers %}
+{% load i18n %}
 {% load form_helpers %}
 
-{% block title %}Add {{ model_name|title }}{% endblock %}
+{% block title %}{% blocktrans with model_name=model_name|bettertitle %}Add {{ model_name }}{% endblocktrans %}{% endblock %}
 
 {% block content %}
     <form action="." method="post" class="h-100 vstack">
@@ -25,7 +27,7 @@
                 {% if form.non_field_errors %}
                     <div class="card border-danger">
                         <div class="card-header bg-danger-subtle border-danger text-body">
-                            <strong>Errors</strong>
+                            <strong>{% trans "Errors" %}</strong>
                         </div>
                         <div class="card-body">
                             {{ form.non_field_errors }}
@@ -33,7 +35,7 @@
                     </div>
                 {% endif %}
                 <div class="card">
-                    <div class="card-header"><strong>{{ model_name|title }} to Add</strong></div>
+                    <div class="card-header"><strong>{% blocktrans with model_name=model_name|bettertitle %}{{ model_name }} to Add{% endblocktrans %}</strong></div>
                     <div class="card-body">
                         {% for field in form.visible_fields %}
                             {% if not form.custom_fields or field.name not in form.custom_fields %}
@@ -50,11 +52,11 @@
         <div class="nb-form-sticky-footer">
             <button type="submit" name="_create" class="btn btn-primary">
                 <span aria-hidden="true" class="mdi mdi-check me-4"></span><!--
-                -->Create
+                -->{% trans "Create" %}
             </button>
             <a href="{{ return_url }}" class="btn btn-secondary">
                 <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-                -->Cancel
+                -->{% trans "Cancel" %}
             </a>
         </div>
     </form>

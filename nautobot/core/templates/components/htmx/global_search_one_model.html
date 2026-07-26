@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load helpers %}
 
 <div id="{{ model|slugify }}-results-table">
@@ -7,9 +8,9 @@
         <a href="{{ url }}" class="btn btn-primary float-end">
             <span class="mdi mdi-arrow-right-bold" aria-hidden="true"></span>
             {% if table.page.has_next %}
-                See all {{ table.page.paginator.count }} results
+                {% blocktrans with count=table.page.paginator.count %}See all {{ count }} results{% endblocktrans %}
             {% else %}
-                Refine search
+                {% trans "Refine search" %}
             {% endif %}
         </a>
         <div class="clearfix"></div>

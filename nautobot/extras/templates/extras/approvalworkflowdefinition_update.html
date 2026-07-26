@@ -1,10 +1,11 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load static %}
 {% load form_helpers %}
 
 {% block form %}
     <div class="card">
-        <div class="card-header"><strong>Approval Workflow Definition</strong></div>
+        <div class="card-header"><strong>{% trans "Approval Workflow Definition" %}</strong></div>
         <div class="card-body">
             {% render_field form.name %}
             {% render_field form.model_content_type %}
@@ -13,7 +14,7 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Approval Workflow Stage Definitions</strong></div>
+        <div class="card-header"><strong>{% trans "Approval Workflow Stage Definitions" %}</strong></div>
         <div class="card-body overflow-auto">
             <table class="table" id="approval-workflow-stages">
                 {{ stages.management_form }}

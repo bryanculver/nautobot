@@ -1,12 +1,13 @@
+{% load i18n %}
 <table class="table table-sm table-hover">
     <thead>
         <tr>
-            <th>A Connector</th>
-            <th>A Position</th>
+            <th>{% trans "A Connector" %}</th>
+            <th>{% trans "A Position" %}</th>
             <th></th>
-            <th>B Connector</th>
-            <th>B Position</th>
-            <th>Label</th>
+            <th>{% trans "B Connector" %}</th>
+            <th>{% trans "B Position" %}</th>
+            <th>{% trans "Label" %}</th>
         </tr>
     </thead>
     <tbody>
@@ -50,7 +51,7 @@
                 </td>
             </tr>
         {% empty %}
-            <tr><td colspan="6" class="text-secondary text-center">Set connector and position counts above to generate a mapping.</td></tr>
+            <tr><td colspan="6" class="text-secondary text-center">{% trans "Set connector and position counts above to generate a mapping." %}</td></tr>
         {% endfor %}
     </tbody>
 </table>

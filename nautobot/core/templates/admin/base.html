@@ -11,7 +11,7 @@
 <html lang="{{ LANGUAGE_CODE|default:'en' }}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}"{% if request.COOKIES|get_item:"theme" == 'dark' %} data-theme="dark"{% endif %}>
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Admin Home{% endblock %} - Nautobot</title>
+        <title>{% block title %}{% trans "Admin Home" %}{% endblock %} - Nautobot</title>
         {% include 'inc/media.html' %}
         {% block extrahead %}{% endblock %}
         {% block extrastyle %}{% endblock %}
@@ -89,7 +89,7 @@
                         </div>
                         {% include 'inc/header.html' %}
                         <div class="col-12">
-                            <nav aria-label="Breadcrumbs" class="mt-1">
+                            <nav aria-label="{% trans "Breadcrumbs" %}" class="mt-1">
                                 {% block breadcrumbs %}{% endblock breadcrumbs %}
                             </nav>
                         </div>

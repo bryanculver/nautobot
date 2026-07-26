@@ -1,14 +1,15 @@
 {% extends 'generic/object_retrieve.html' %}
+{% load i18n %}
 {% load helpers %}
 
 {% block content_left_page %}
     <div class="card">
         <div class="card-header">
-            <strong>Module Family</strong>
+            <strong>{% trans "Module Family" %}</strong>
         </div>
         <table class="table table-hover card-body attr-table">
             <tr>
-                <td>Description</td>
+                <td>{% trans "Description" %}</td>
                 <td>{{ object.description|placeholder }}</td>
             </tr>
         </table>
@@ -18,13 +19,13 @@
 {% block content_right_page %}
     <div class="card">
         <div class="card-header">
-            <strong>Module Types</strong>
+            <strong>{% trans "Module Types" %}</strong>
         </div>
         {% include 'inc/table.html' with table=module_type_table %}
     </div>
     <div class="card">
         <div class="card-header">
-            <strong>Module Bays</strong>
+            <strong>{% trans "Module Bays" %}</strong>
         </div>
         {% include 'inc/table.html' with table=module_bay_table %}
     </div>

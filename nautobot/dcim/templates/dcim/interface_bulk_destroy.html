@@ -1,3 +1,4 @@
 {% extends 'generic/object_bulk_destroy.html' %}
+{% load i18n %}
 
-{% block message_extra %}This would also delete any/all child interfaces of these interfaces.{% endblock %}
+{% block message_extra %}{% trans "This would also delete any/all child interfaces of these interfaces." %}{% endblock %}

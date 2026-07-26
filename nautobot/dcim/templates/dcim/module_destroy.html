@@ -1,5 +1,6 @@
 {% extends "generic/object_destroy.html" %}
 
+{% load i18n %}
 {% block message_extra %}
-    <p><strong>Note: This will also delete any installed modules!</strong></p>
+    <p><strong>{% trans "Note: This will also delete any installed modules!" %}</strong></p>
 {% endblock %}

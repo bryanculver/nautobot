@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load helpers %}
 {% load cables %}
 
@@ -8,7 +9,7 @@
             {% if trace_svg %}
                 <div class="card">
                     <div class="card-header">
-                        <strong>Cable Trace</strong>
+                        <strong>{% trans "Cable Trace" %}</strong>
                     </div>
                     <div class="card-body text-center" style="overflow-x: auto;">
                         {{ trace_svg }}
@@ -22,14 +23,14 @@
 
             <div class="card">
                 <div class="card-header">
-                    <strong>Related Paths</strong>
+                    <strong>{% trans "Related Paths" %}</strong>
                 </div>
                 <table class="table table-hover card-body">
                     <thead>
                         <tr>
-                            <th>Origin</th>
-                            <th>Destination</th>
-                            <th>Segments</th>
+                            <th>{% trans "Origin" %}</th>
+                            <th>{% trans "Destination" %}</th>
+                            <th>{% trans "Segments" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -40,7 +41,7 @@
                                     <td colspan="3">
                                         <a href="{% url trace_url pk=object.pk %}">
                                             <span class="mdi mdi-transit-connection-horizontal" aria-hidden="true"></span>
-                                            View full trace ({{ object.parent }} / {{ object }} &mdash; all paths)
+                                            {% blocktrans with parent=object.parent current=object %}View full trace ({{ parent }} / {{ current }} &mdash; all paths){% endblocktrans %}
                                         </a>
                                     </td>
                                 </tr>
@@ -58,7 +59,7 @@
                                     {% if cablepath.destination %}
                                         {{ cablepath.destination }} ({{ cablepath.destination.parent }})
                                     {% else %}
-                                        <span class="text-secondary">Incomplete</span>
+                                        <span class="text-secondary">{% trans "Incomplete" %}</span>
                                     {% endif %}
                                 </td>
                                 <td class="text-end">
@@ -67,7 +68,7 @@
                             </tr>
                         {% empty %}
                             <td colspan="3" class="text-secondary">
-                                None found
+                                {% trans "None found" %}
                             </td>
                         {% endfor %}
                     </tbody>

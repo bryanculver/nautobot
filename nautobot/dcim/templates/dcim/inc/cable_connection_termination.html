@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load cables %}
 {% load helpers %}
 {% comment %}Render a single cable connection termination with type icon, parent, and link.{% endcomment %}
@@ -8,5 +9,5 @@
     {% endif %}
     {{ term|hyperlinked_object }}
 {% else %}
-    <span class="badge bg-warning">Not connected</span>
+    <span class="badge bg-warning">{% trans "Not connected" %}</span>
 {% endif %}

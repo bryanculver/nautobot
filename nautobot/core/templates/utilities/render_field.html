@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load helpers %}
 {% load form_helpers %}
 
@@ -17,7 +18,7 @@
             {% if bulk_nullable %}
                 <div class="form-check mt-6">
                     <input class="form-check-input" id="{{ field.id_for_label }}_nullify" name="_nullify" type="checkbox" value="{{ field.name }}">
-                    <label class="form-check-label" for="{{ field.id_for_label }}_nullify">Set null</label>
+                    <label class="form-check-label" for="{{ field.id_for_label }}_nullify">{% trans "Set null" %}</label>
                 </div>
             {% endif %}
             {% if field.help_text %}
@@ -29,7 +30,7 @@
             {% if bulk_nullable %}
                 <div class="form-check mt-6">
                     <input class="form-check-input" id="{{ field.id_for_label }}_nullify" name="_nullify" type="checkbox" value="{{ field.name }}">
-                    <label class="form-check-label" for="{{ field.id_for_label }}_nullify">Set null</label>
+                    <label class="form-check-label" for="{{ field.id_for_label }}_nullify">{% trans "Set null" %}</label>
                 </div>
             {% endif %}
             {% if field.help_text %}
@@ -44,7 +45,7 @@
                 <div class="flex-grow-1 nb-w-0">{{ field }}</div>
                 {% if should_render_embedded_create %}
                     {% with verbose_name=field.field.queryset.model|meta:"verbose_name" %}
-                        <span data-bs-title="Add a new {{ verbose_name }}" data-bs-toggle="tooltip" data-bs-trigger="hover">
+                        <span data-bs-title="{% blocktrans with verbose_name=verbose_name %}Add a new {{ verbose_name }}{% endblocktrans %}" data-bs-toggle="tooltip" data-bs-trigger="hover">
                             <button
                                 class="btn btn-primary flex-grow-0 flex-shrink-0"
                                 data-bs-toggle="modal"
@@ -57,14 +58,14 @@
                                 {% if field.field.disabled %}disabled=""{% endif %}
                             >
                                 <span class="mdi mdi-plus-thick"></span>
-                                <span class="visually-hidden">Add a new {{ verbose_name }}</span>
+                                <span class="visually-hidden">{% blocktrans with verbose_name=verbose_name %}Add a new {{ verbose_name }}{% endblocktrans %}</span>
                             </button>
                         </span>
                     {% endwith %}
                 {% endif %}
                 {% if should_render_embedded_search %}
                     {% with verbose_name_plural=field.field.queryset.model|meta:"verbose_name_plural" %}
-                        <span data-bs-title="Search {{ verbose_name_plural }}" data-bs-toggle="tooltip" data-bs-trigger="hover">
+                        <span data-bs-title="{% blocktrans %}Search {{ verbose_name_plural }}{% endblocktrans %}" data-bs-toggle="tooltip" data-bs-trigger="hover">
                             <button
                                 class="btn btn-secondary flex-grow-0 flex-shrink-0"
                                 data-bs-toggle="modal"
@@ -77,7 +78,7 @@
                                 {% if field.field.disabled %}disabled=""{% endif %}
                             >
                                 <span class="mdi mdi-filter"></span>
-                                <span class="visually-hidden">Search {{ verbose_name_plural }}</span>
+                                <span class="visually-hidden">{% blocktrans %}Search {{ verbose_name_plural }}{% endblocktrans %}</span>
                             </button>
                         </span>
                     {% endwith %}
@@ -88,7 +89,7 @@
             {% if bulk_nullable %}
                 <div class="form-check mt-6 w-100">
                     <input class="form-check-input" id="{{ field.id_for_label }}_nullify" name="_nullify" type="checkbox" value="{{ field.name }}">
-                    <label class="form-check-label" for="{{ field.id_for_label }}_nullify">Set null</label>
+                    <label class="form-check-label" for="{{ field.id_for_label }}_nullify">{% trans "Set null" %}</label>
                 </div>
             {% endif %}
             {% if field.help_text %}

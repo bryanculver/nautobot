@@ -1,16 +1,17 @@
+{% load i18n %}
 {% load form_helpers %}
 {% load static %}
 
 <section class="nb-drawer" tabindex="-1" id="{{ table_name }}_config">
     <div class="nb-drawer-header">
-        <h1>Table Configuration</h1>
-        <button type="button" class="btn-close" data-nb-dismiss="drawer" aria-label="Close"></button>
+        <h1>{% trans "Table Configuration" %}</h1>
+        <button type="button" class="btn-close" data-nb-dismiss="drawer" aria-label="{% trans "Close" %}"></button>
     </div>
     <div class="nb-drawer-body">
         <form class="userconfigform h-100 pb-20 px-20 vstack" data-config-root="tables.{{ table_config_form.table_name }}">
             <div class="vstack align-content-start flex-fill">
                 <div class="alert alert-warning">
-                    Column choices may negatively affect loading times.
+                    {% trans "Column choices may negatively affect loading times." %}
                     <a href="{% static 'docs/user-guide/platform-functionality/user-interface/configurablecolumns.html' %}" class="btn btn-link btn-sm" target="_blank" rel="noopener">
                         <span class="mdi mdi-information"></span>
                     </a>
@@ -21,8 +22,8 @@
                 {% endwith %}
             </div>
             <div class="nb-form-sticky-footer">
-                <button class="btn btn-primary" type="submit">Save</button>
-                <button class="btn btn-danger" type="reset">Reset</button>
+                <button class="btn btn-primary" type="submit">{% trans "Save" %}</button>
+                <button class="btn btn-danger" type="reset">{% trans "Reset" %}</button>
             </div>
         </form>
     </div>

@@ -1,0 +1,1 @@
+Marked the remaining conditional page titles as translatable by splitting each branch into its own translatable sentence, rather than embedding template logic in a message.

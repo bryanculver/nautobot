@@ -1,11 +1,13 @@
 {% extends 'generic/object_create.html' %}
+{% load helpers %}
+{% load i18n %}
 {% load form_helpers %}
 {% load static %}
 
 {% block form %}
     <div class="card">
         <div class="card-header">
-            <strong>{{ obj_type|title }}</strong>
+            <strong>{{ obj_type|bettertitle }}</strong>
         </div>
         <div class="card-body">
             {% for field in form.hidden_fields %}{{ field }}{% endfor %}
@@ -23,7 +25,7 @@
                     <span class="form-text">
                         <span id="software_version_image_description"><img src="{% static 'img/ajax-loader.gif' %}"></span>
                         <ul id="software_version_image_list">
-                            <li> Software images for the selected software version will appear here </li>
+                            <li> {% trans "Software images for the selected software version will appear here" %} </li>
                         </ul>
                     </span>
                 </div>

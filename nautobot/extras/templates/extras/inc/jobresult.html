@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load helpers %}
 {% load ui_framework %}
 
@@ -5,6 +6,6 @@
     {% render_default_panels_for_object result %}
 {% else %}
     <div class="alert alert-warning">
-        No synchronization JobResult found.
+        {% trans "No synchronization JobResult found." %}
     </div>
 {% endif %}

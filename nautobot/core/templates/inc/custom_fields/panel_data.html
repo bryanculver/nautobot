@@ -1,8 +1,9 @@
+{% load i18n %}
 {% load helpers %}
 {% if custom_fields %}
     <div class="card">
         <div class="card-header">
-            <strong>Custom Fields</strong>
+            <strong>{% trans "Custom Fields" %}</strong>
             <button
                 aria-expanded="true"
                 class="btn btn-primary btn-sm float-end"
@@ -10,7 +11,7 @@
                 data-nb-toggle="collapse-all"
                 type="button"
             >
-                Collapse All Groups
+                {% trans "Collapse All Groups" %}
             </button>
         </div>
         <table id="custom_fields_accordion_{{ advanced_ui }}" class="table table-hover card-body attr-table">
@@ -50,14 +51,14 @@
                                         <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse"
                                                 data-bs-target="#cf_{{ field.key }}" aria-expanded="false"
                                                 aria-controls="cf_{{ field.key }}">
-                                            Show/Hide
+                                            {% trans "Show/Hide" %}
                                         </button>
                                     </p>
                                     <pre class="collapse" id="cf_{{ field.key }}">{{ value|render_json }}</pre>
                                 {% elif value or value == 0 %}
                                     {{ value }}
                                 {% elif field.required %}
-                                    <span class="text-warning">Not defined</span>
+                                    <span class="text-warning">{% trans "Not defined" %}</span>
                                 {% else %}
                                     <span class="text-secondary">&mdash;</span>
                                 {% endif %}

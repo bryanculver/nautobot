@@ -1,8 +1,9 @@
+{% load i18n %}
 {% load helpers %}
 {% if computed_fields %}
     <div class="card">
         <div class="card-header">
-            <strong>Computed Fields</strong>
+            <strong>{% trans "Computed Fields" %}</strong>
             <button
                 aria-expanded="true"
                 class="btn btn-primary btn-sm float-end"
@@ -10,7 +11,7 @@
                 data-nb-toggle="collapse-all"
                 type="button"
             >
-                Collapse All Groups
+                {% trans "Collapse All Groups" %}
             </button>
         </div>
         <table id="computed_fields_accordion_{{ advanced_ui }}" class="table table-hover card-body attr-table">

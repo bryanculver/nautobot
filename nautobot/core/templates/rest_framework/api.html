@@ -24,7 +24,7 @@
                 {% include 'inc/header.html' %}
                 <div class="col-12">
                     {% block breadcrumbs %}
-                        <nav aria-label="Breadcrumbs" class="mt-1">
+                        <nav aria-label="{% trans "Breadcrumbs" %}" class="mt-1">
                             <ol class="breadcrumb">
                                 {% for breadcrumb_name, breadcrumb_url in breadcrumblist %}
                                     <li class="breadcrumb-item"><a href="{{ breadcrumb_url }}">{{ breadcrumb_name }}</a></li>
@@ -47,21 +47,21 @@
                             <fieldset>
                                 {% if api_settings.URL_FORMAT_OVERRIDE %}
                                     <div class="btn-group format-selection">
-                                        <a class="btn btn-primary js-tooltip" href="{{ request.get_full_path }}" rel="nofollow" title="Make a GET request on the {{ name }} resource">GET</a>
+                                        <a class="btn btn-primary js-tooltip" href="{{ request.get_full_path }}" rel="nofollow" title="{% blocktrans %}Make a GET request on the {{ name }} resource{% endblocktrans %}">GET</a>
 
-                                        <button class="btn btn-primary dropdown-toggle js-tooltip" data-bs-toggle="dropdown" title="Specify a format for the GET request">
+                                        <button class="btn btn-primary dropdown-toggle js-tooltip" data-bs-toggle="dropdown" title="{% trans "Specify a format for the GET request" %}">
                                             <span class="mdi mdi-chevron-down"></span>
                                         </button>
                                         <ul class="dropdown-menu">
                                             {% for format in available_formats %}
                                                 <li>
-                                                    <a class="js-tooltip format-option dropdown-item" href="{% add_query_param request api_settings.URL_FORMAT_OVERRIDE format %}" rel="nofollow" title="Make a GET request on the {{ name }} resource with the format set to `{{ format }}`">{{ format }}</a>
+                                                    <a class="js-tooltip format-option dropdown-item" href="{% add_query_param request api_settings.URL_FORMAT_OVERRIDE format %}" rel="nofollow" title="{% blocktrans %}Make a GET request on the {{ name }} resource with the format set to `{{ format }}`{% endblocktrans %}">{{ format }}</a>
                                                 </li>
                                             {% endfor %}
                                         </ul>
                                     </div>
                                 {% else %}
-                                    <a class="btn btn-primary js-tooltip" href="{{ request.get_full_path }}" rel="nofollow" title="Make a GET request on the {{ name }} resource">GET</a>
+                                    <a class="btn btn-primary js-tooltip" href="{{ request.get_full_path }}" rel="nofollow" title="{% blocktrans %}Make a GET request on the {{ name }} resource{% endblocktrans %}">GET</a>
                                 {% endif %}
                             </fieldset>
                         </form>
@@ -70,7 +70,7 @@
                     {% if options_form %}
                         {# djlint:off H029 OPTIONS is an HTTP method #}
                         <form class="button-form" action="{{ request.get_full_path }}" data-method="OPTIONS">
-                            <button class="btn btn-primary js-tooltip" title="Make an OPTIONS request on the {{ name }} resource">OPTIONS</button>
+                            <button class="btn btn-primary js-tooltip" title="{% blocktrans %}Make an OPTIONS request on the {{ name }} resource{% endblocktrans %}">OPTIONS</button>
                         </form>
                         {# djlint:on H029 #}
                     {% endif %}

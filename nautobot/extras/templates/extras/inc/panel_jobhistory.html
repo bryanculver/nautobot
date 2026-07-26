@@ -1,3 +1,4 @@
+{% load i18n %}
 {% if job_results and perms.extras.view_jobresult %}
     {% for result in job_results %}
         <div class="list-group-item">
@@ -14,16 +15,16 @@
         </div>
         {% if forloop.last %}
             <div class="list-group-item text-end">
-                <a href="{% url 'extras:jobresult_list' %}">View All History</a>
+                <a href="{% url 'extras:jobresult_list' %}">{% trans "View All History" %}</a>
             </div>
         {% endif %}
     {% endfor %}
 {% elif perms.extras.view_jobresult %}
     <div class="card-body text-secondary">
-        None found
+        {% trans "None found" %}
     </div>
 {% else %}
     <div class="card-body text-secondary">
-        <span class="mdi mdi-lock" aria-hidden="true"></span> No permission
+        <span class="mdi mdi-lock" aria-hidden="true"></span> {% trans "No permission" %}
     </div>
 {% endif %}

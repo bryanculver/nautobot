@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load i18n %}
 {% load helpers %}
 {% load static %}
 
@@ -7,7 +8,7 @@
         <div class="col-lg-6">
             <div class="card">
                 <div class="card-header">
-                    <strong>Rendered Context</strong>
+                    <strong>{% trans "Rendered Context" %}</strong>
                     {% include 'extras/inc/configcontext_format.html' with data_format=format %}
                 </div>
                 <div class="card-body">
@@ -18,31 +19,31 @@
         <div class="col-lg-6">
             <div class="card">
                 <div class="card-header">
-                    <strong>Local Config Context</strong>
+                    <strong>{% trans "Local Config Context" %}</strong>
                 </div>
                 <div class="card-body">
                     {% if object.local_config_context_data %}
                         {% if object.local_config_context_schema %}
-                            <span>Schema {{ object.local_config_context_schema|hyperlinked_object }}</span>
+                            <span>{% blocktrans with schema=object.local_config_context_schema|hyperlinked_object %}Schema {{ schema }}{% endblocktrans %}</span>
                         {% endif %}
                         {% if object.local_config_context_data_owner %}
-                            Owned by <strong>{{ object.local_config_context_data_owner|hyperlinked_object }}</strong>
+                            {% blocktrans with owner=object.local_config_context_data_owner|hyperlinked_object %}Owned by <strong>{{ owner }}</strong>{% endblocktrans %}
                         {% endif %}
                         {% include 'extras/inc/json_data.html' with data=object.local_config_context_data format=format %}
                     {% else %}
-                        <span class="text-secondary">None</span>
+                        <span class="text-secondary">{% trans "None" %}</span>
                     {% endif %}
                 </div>
                 <div class="card-footer">
                     <span class="form-text">
                         <span class="mdi mdi-information-outline"></span>
-                        The local config context overwrites all source contexts.
+                        {% trans "The local config context overwrites all source contexts." %}
                     </span>
                 </div>
             </div>
             <div class="card">
                 <div class="card-header">
-                    <strong>Source Contexts</strong>
+                    <strong>{% trans "Source Contexts" %}</strong>
                 </div>
                 {% for context in source_contexts %}
                     <div class="card-body">
@@ -57,7 +58,7 @@
                     </div>
                 {% empty %}
                     <div class="card-body">
-                        <span class="text-secondary">None found</span>
+                        <span class="text-secondary">{% trans "None found" %}</span>
                     </div>
                 {% endfor %}
             </div>

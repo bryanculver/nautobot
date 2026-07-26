@@ -1,5 +1,6 @@
 {% extends 'generic/object_retrieve.html' %}
 {# TODO: this file is unused as far as I can tell. Remove it? #}
+{% load i18n %}
 {% load helpers %}
 {% load render_table from django_tables2 %}
 
@@ -7,7 +8,7 @@
     <h1>
         <span><span id="copy_title">{{ object }}</span><button type="button" class="btn btn-secondary nb-btn-inline-hover" data-clipboard-text="{{ object }}">
             <span aria-hidden="true" class="mdi mdi-content-copy"></span>
-            <span class="visually-hidden">Copy</span>
+            <span class="visually-hidden">{% trans "Copy" %}</span>
         </button>
         </span>
     </h1>
@@ -16,43 +17,43 @@
 {% block content_left_page %}
     <div class="card">
         <div class="card-header">
-            <strong>IP Address to Interface</strong>
+            <strong>{% trans "IP Address to Interface" %}</strong>
         </div>
         <table class="table table-hover card-body attr-table">
             <tr>
-                <td>IP Address</td>
+                <td>{% trans "IP Address" %}</td>
                 <td>{{ object.ip_address|hyperlinked_object }}</td>
             </tr>
             <tr>
-                <td>Interface</td>
+                <td>{% trans "Interface" %}</td>
                 <td>{{ object.interface|hyperlinked_object }}</td>
             </tr>
             <tr>
-                <td>VM Interface</td>
+                <td>{% trans "VM Interface" %}</td>
                 <td>{{ object.vm_interface|hyperlinked_object }}</td>
             </tr>
             <tr>
-                <td>Is source?</td>
+                <td>{% trans "Is source?" %}</td>
                 <td>{{ object.is_source }}</td>
             </tr>
             <tr>
-                <td>Is destination?</td>
+                <td>{% trans "Is destination?" %}</td>
                 <td>{{ object.is_destination }}</td>
             </tr>
             <tr>
-                <td>Is default?</td>
+                <td>{% trans "Is default?" %}</td>
                 <td>{{ object.is_default }}</td>
             </tr>
             <tr>
-                <td>Is primary?</td>
+                <td>{% trans "Is primary?" %}</td>
                 <td>{{ object.is_primary }}</td>
             </tr>
             <tr>
-                <td>Is secondary?</td>
+                <td>{% trans "Is secondary?" %}</td>
                 <td>{{ object.is_secondary }}</td>
             </tr>
             <tr>
-                <td>Is standby?</td>
+                <td>{% trans "Is standby?" %}</td>
                 <td>{{ object.is_standby }}</td>
             </tr>
         </table>

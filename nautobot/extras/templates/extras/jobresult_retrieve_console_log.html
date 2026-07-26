@@ -1,11 +1,12 @@
 {% extends 'extras/jobresult_retrieve.html' %}
 
+{% load i18n %}
 {% block extra_tab_content %}
     <div class="card h-100 mb-0">
         <div class="card-header">
-            <strong>Console Log</strong>
+            <strong>{% trans "Console Log" %}</strong>
             {% if job_is_pending %}
-                <small class="nb-console-log-loading-in-progress text-secondary" id="job-status-message">(updating every 2 seconds...)</small>
+                <small class="nb-console-log-loading-in-progress text-secondary" id="job-status-message">{% trans "(updating every 2 seconds...)" %}</small>
             {% endif %}
             <div class="float-end">
                 <span id="job-status">{% include 'extras/inc/job_label.html' with result=object %}</span>

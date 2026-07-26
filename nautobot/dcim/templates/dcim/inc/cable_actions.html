@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
 Renders the trace + cable-action dropdown for a connected cable on a CableTermination detail view.
 Required context: `object` (the CableTermination), `trace_url_name` (e.g. 'dcim:interface_trace').
@@ -47,7 +48,7 @@ the new value. Table views load `connection_toggles.js` separately and update th
     });
 </script>
 <span class="float-end">
-    <a href="{% url trace_url_name pk=object.pk %}" class="btn btn-primary btn-sm" title="Trace">
+    <a href="{% url trace_url_name pk=object.pk %}" class="btn btn-primary btn-sm" title="{% trans "Trace" %}">
         <span class="mdi mdi-transit-connection-variant" aria-hidden="true"></span>
     </a>
     <span class="dropdown">

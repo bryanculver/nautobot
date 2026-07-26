@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% load helpers %}
 {% load static %}
 {% load ui_framework %}
@@ -63,7 +64,7 @@
     <div class="row d-print-none mb-16">
         <div class="col-lg-12">
             <div class="float-end">
-                <a class="btn btn-primary" href="{% url 'apps:apps_list' %}">See Installed Apps</a>
+                <a class="btn btn-primary" href="{% url 'apps:apps_list' %}">{% trans "See Installed Apps" %}</a>
             </div>
         </div>
     </div>
@@ -100,7 +101,7 @@
                             <footer class="nb-tile-footer">
                                 <div>By: {{ app.author }}</div>
                                 <div>
-                                    {% if app.installed %}<span class="badge bg-success">Installed</span>{% endif %}
+                                    {% if app.installed %}<span class="badge bg-success">{% trans "Installed" %}</span>{% endif %}
                                     <span class="badge bg-body-secondary border">{{ app.availability }}</span>
                                 </div>
                             </footer>
@@ -113,9 +114,9 @@
                         -->
                         <div class="nb-tile-actions">
                             {% if app.docs|default:None != None %}
-                                <a href="{{ app.docs }}" class="btn btn-info btn-sm" target="_blank" data-bs-title="Docs">
+                                <a href="{{ app.docs }}" class="btn btn-info btn-sm" target="_blank" data-bs-title="{% trans "Docs" %}">
                             {% else %}
-                                <a aria-disabled="true" class="btn btn-info btn-sm disabled" data-bs-title="No docs provided">
+                                <a aria-disabled="true" class="btn btn-info btn-sm disabled" data-bs-title="{% trans "No docs provided" %}">
                             {% endif %}
                             <span class="mdi mdi-book-open-page-variant"></span>
                         </a>
@@ -128,9 +129,9 @@
                                 <div class="modal-header">
                                     <h4 class="modal-title">
                                         {{ app.name }}
-                                        {% if app.installed %}<span class="badge bg-success">Installed</span>{% endif %}
+                                        {% if app.installed %}<span class="badge bg-success">{% trans "Installed" %}</span>{% endif %}
                                     </h4>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}"></button>
                                 </div>
 
                                 <div class="modal-body">
@@ -143,14 +144,14 @@
                                             />
 
                                             <dl class="mb-0">
-                                                <dt class="text-secondary text-uppercase">By</dt>
+                                                <dt class="text-secondary text-uppercase">{% trans "By" %}</dt>
                                                 <dd>{{ app.author }}</dd>
 
-                                                <dt class="text-secondary text-uppercase">License</dt>
+                                                <dt class="text-secondary text-uppercase">{% trans "License" %}</dt>
                                                 <dd><label class="badge bg-body-secondary border">{{ app.availability }}</label></dd>
 
                                                 {% if app.requires|length > 0 %}
-                                                    <dt class="text-secondary text-uppercase">Requirements</dt>
+                                                    <dt class="text-secondary text-uppercase">{% trans "Requirements" %}</dt>
                                                     <dd>
                                                         <ul>
                                                             {% for requirement in app.requires %}
@@ -171,7 +172,7 @@
                                                     </dd>
                                                 {% endif %}
 
-                                                <dt class="text-secondary text-uppercase">Package name</dt>
+                                                <dt class="text-secondary text-uppercase">{% trans "Package name" %}</dt>
                                                 <dd class="mb-0"><code>{{ app.package_name }}</code></dd>
                                             </dl>
                                         </div>
@@ -184,7 +185,7 @@
                                             {% if app.docs|default:None != None %}
                                                 <p>
                                                     <span>
-                                                        Docs:
+                                                        {% trans "Docs:" %}
                                                         <a href="{{ app.docs }}" target="_blank">{{ app.docs }}</a>
                                                     </span>
                                                 </p>
@@ -193,11 +194,11 @@
                                             {% if app.availability == "NTC License" or app.availability == "Professional" or app.availability == "Enterprise" %}
                                                 <p>
                                                     <strong>
-                                                        This Nautobot App requires a license to use.
+                                                        {% trans "This Nautobot App requires a license to use." %}
                                                         <a href="https://networktocode.com/contact/" target="_blank">
-                                                            Reach out to Network to Code
+                                                            {% trans "Reach out to Network to Code" %}
                                                         </a>
-                                                        for more information.
+                                                        {% trans "for more information." %}
                                                     </strong>
                                                 </p>
                                             {% endif %}
@@ -213,7 +214,7 @@
 
                                 <div class="modal-footer">
                                     <button class="btn btn-primary" data-bs-dismiss="modal" type="button">
-                                        Done
+                                        {% trans "Done" %}
                                     </button>
                                 </div>
                             </div>

@@ -1,3 +1,4 @@
+{% load i18n %}
 <div class="vstack gap-8">
     {% if widget.is_initial %}
         <div class="d-flex gap-8 mt-6">
@@ -16,7 +17,7 @@
         <input type="{{ widget.type }}" name="{{ widget.name }}" class="form-control" {% include "django/forms/widgets/attrs.html" %}>
         <button class="btn btn-secondary btn-sm" type="button" onclick="document.querySelector('input#{{ widget.attrs.id }}').value = '';">
             <span aria-hidden="true" class="mdi mdi-close"></span>
-            <span class="visually-hidden">Clear</span>
+            <span class="visually-hidden">{% trans "Clear" %}</span>
         </button>
     </div>
 </div>

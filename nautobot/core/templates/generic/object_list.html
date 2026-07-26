@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load buttons %}
 {% load helpers %}
 {% load perms %}
@@ -45,18 +46,18 @@
                 {% add_button content_type.model_class|validated_viewname:"add" verbose_name=model|meta:"verbose_name"|bettertitle %}
                 {% if 'import' in action_buttons or 'export' in action_buttons %}
                     <button type="button" id="actions-dropdown" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
-                        <span class="visually-hidden">Toggle Dropdown</span>
+                        <span class="visually-hidden">{% trans "Toggle Dropdown" %}</span>
                         <span class="mdi mdi-chevron-down" aria-hidden="true"></span>
                     </button>
                 {% endif %}
             {% elif permissions.add and 'import' in action_buttons %}
                 <button type="button" id="actions-dropdown" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
-                    Actions
+                    {% trans "Actions" %}
                     <span class="mdi mdi-chevron-down" aria-hidden="true"></span>
                 </button>
             {% elif 'export' in action_buttons %}
                 <button type="button" id="actions-dropdown" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
-                    Actions
+                    {% trans "Actions" %}
                     <span class="mdi mdi-chevron-down" aria-hidden="true"></span>
                 </button>
             {% endif %}
@@ -94,23 +95,23 @@
                     class="btn position-relative text-secondary"
                     data-nb-toggle="drawer"
                     data-nb-target="#SavedViews_drawer"
-                    title="Saved Views"
+                    title="{% trans "Saved Views" %}"
                     aria-expanded="false"
                     aria-controls="SavedViews_drawer"
                 >
                     <span class="mdi mdi-view-compact-outline" aria-hidden="true"></span>
-                    <span class="visually-hidden">Saved Views</span>
+                    <span class="visually-hidden">{% trans "Saved Views" %}</span>
                     {% if current_saved_view %}
                         <span
                             aria-hidden="true"
                             {% if current_saved_view == user_default_saved_view %}
                                 class="nb-btn-indicator mdi mdi-star"
                                 data-bs-toggle="tooltip"
-                                data-bs-title="Your default saved view"
+                                data-bs-title="{% trans "Your default saved view" %}"
                             {% elif current_saved_view == global_saved_view %}
                                 class="nb-btn-indicator mdi mdi-earth"
                                 data-bs-toggle="tooltip"
-                                data-bs-title="Global default saved view"
+                                data-bs-title="{% trans "Global default saved view" %}"
                             {% else %}
                                 class="nb-btn-indicator"
                             {% endif %}
@@ -124,13 +125,13 @@
                     class="btn position-relative text-secondary"
                     data-nb-toggle="drawer"
                     data-nb-target="#FilterForm_drawer"
-                    title="Add Filters"
+                    title="{% trans "Add Filters" %}"
                     id="id__filterbtn"
                     aria-controls="FilterForm_drawer"
                     aria-expanded="false"
                 >
                     <span class="mdi mdi-filter" aria-hidden="true"></span>
-                    <span class="visually-hidden">Add Filters</span>
+                    <span class="visually-hidden">{% trans "Add Filters" %}</span>
                     {% if filter_params %}
                         <span aria-hidden="true" class="nb-btn-indicator"></span>
                     {% endif %}
@@ -203,8 +204,8 @@
     {% endif %}
     <section class="nb-drawer" tabindex="-1" id="SavedViews_drawer">
         <div class="nb-drawer-header">
-            <h1>Saved Views</h1>
-            <button type="button" class="btn-close" data-nb-dismiss="drawer" aria-label="Close"></button>
+            <h1>{% trans "Saved Views" %}</h1>
+            <button type="button" class="btn-close" data-nb-dismiss="drawer" aria-label="{% trans "Close" %}"></button>
         </div>
         <div class="nb-drawer-body pb-20 px-20">
             <div class="align-items-start vstack flex-grow-0 gap-10">
@@ -219,22 +220,22 @@
                             {% if current_saved_view %}
                                 {{current_saved_view.name}}
                             {% else %}
-                                <i>No saved view</i>
+                                <i>{% trans "No saved view" %}</i>
                             {% endif %}
                             <span class="mdi mdi-chevron-down"></span>
-                            <span class="visually-hidden">Toggle Dropdown</span>
+                            <span class="visually-hidden">{% trans "Toggle Dropdown" %}</span>
                         </button>
                         <ul class="dropdown-menu w-100">
                             <li>
                                 {% if not current_saved_view %}
                                     <button class="dropdown-item text-primary" type="button">
                                         <span class="mdi mdi-check" aria-hidden="true"></span>
-                                        <i>No saved view</i>
+                                        <i>{% trans "No saved view" %}</i>
                                     </button>
                                 {% else %}
                                     <a class="dropdown-item" href="{% url list_url %}?clear_view=true">
                                         <span class="mdi mdi-card-remove-outline" aria-hidden="true"></span>
-                                        <i>No saved view</i>
+                                        <i>{% trans "No saved view" %}</i>
                                     </a>
                                 {% endif %}
                             </li>
@@ -245,11 +246,11 @@
                                             <span class="mdi mdi-check" aria-hidden="true"></span>
                                             {{saved_view.name}}
                                             {% if saved_view == user_default_saved_view %}
-                                                <span class="mdi mdi-star ms-auto" aria-hidden="true" data-bs-toggle="tooltip" data-bs-title="Your default" data-bs-fallback-placements="[&quot;top&quot;]"></span>
+                                                <span class="mdi mdi-star ms-auto" aria-hidden="true" data-bs-toggle="tooltip" data-bs-title="{% trans "Your default" %}" data-bs-fallback-placements="[&quot;top&quot;]"></span>
                                             {% elif saved_view == global_saved_view %}
-                                                <span class="mdi mdi-earth ms-auto" aria-hidden="true" data-bs-toggle="tooltip" data-bs-title="Global default" data-bs-fallback-placements="[&quot;top&quot;]"></span>
+                                                <span class="mdi mdi-earth ms-auto" aria-hidden="true" data-bs-toggle="tooltip" data-bs-title="{% trans "Global default" %}" data-bs-fallback-placements="[&quot;top&quot;]"></span>
                                             {% elif saved_view.is_shared %}
-                                                <span class="mdi mdi-account-group ms-auto" aria-hidden="true" data-bs-toggle="tooltip" data-bs-title="Shared" data-bs-fallback-placements="[&quot;top&quot;]"></span>
+                                                <span class="mdi mdi-account-group ms-auto" aria-hidden="true" data-bs-toggle="tooltip" data-bs-title="{% trans "Shared" %}" data-bs-fallback-placements="[&quot;top&quot;]"></span>
                                             {% endif %}
                                         </button>
                                     {% else %}
@@ -257,11 +258,11 @@
                                             <span class="mdi mdi-view-compact-outline" aria-hidden="true"></span>
                                             {{saved_view.name}}
                                             {% if saved_view == user_default_saved_view %}
-                                                <span class="mdi mdi-star ms-auto" aria-hidden="true" data-bs-toggle="tooltip" data-bs-title="Your default" data-bs-fallback-placements="[&quot;top&quot;]"></span>
+                                                <span class="mdi mdi-star ms-auto" aria-hidden="true" data-bs-toggle="tooltip" data-bs-title="{% trans "Your default" %}" data-bs-fallback-placements="[&quot;top&quot;]"></span>
                                             {% elif saved_view == global_saved_view %}
-                                                <span class="mdi mdi-earth ms-auto" aria-hidden="true" data-bs-toggle="tooltip" data-bs-title="Global default" data-bs-fallback-placements="[&quot;top&quot;]"></span>
+                                                <span class="mdi mdi-earth ms-auto" aria-hidden="true" data-bs-toggle="tooltip" data-bs-title="{% trans "Global default" %}" data-bs-fallback-placements="[&quot;top&quot;]"></span>
                                             {% elif saved_view.is_shared %}
-                                                <span class="mdi mdi-account-group ms-auto" aria-hidden="true" data-bs-toggle="tooltip" data-bs-title="Shared" data-bs-fallback-placements="[&quot;top&quot;]"></span>
+                                                <span class="mdi mdi-account-group ms-auto" aria-hidden="true" data-bs-toggle="tooltip" data-bs-title="{% trans "Shared" %}" data-bs-fallback-placements="[&quot;top&quot;]"></span>
                                             {% endif %}
                                         </a>
                                     {% endif %}
@@ -275,35 +276,35 @@
                 <hr class="border-top my-20" />
             {% endif %}
             <div class="align-items-start vstack gap-10">
-                Actions:
+                {% trans "Actions:" %}
                 {% if current_saved_view %}
                     {% if current_saved_view.owner == user %}
                         <a class="btn btn-secondary" href="{% url 'extras:savedview_update_config' pk=current_saved_view.pk %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
-                            <span class="mdi mdi-content-save-outline me-4" aria-hidden="true"></span>Update Current
+                            <span class="mdi mdi-content-save-outline me-4" aria-hidden="true"></span>{% trans "Update Current" %}
                         </a>
                     {% else %}
-                        <span data-bs-toggle="tooltip" data-bs-title="You cannot update another user's saved view.">
+                        <span data-bs-toggle="tooltip" data-bs-title="{% trans "You cannot update another user's saved view." %}">
                             <button class="btn btn-secondary" disabled type="button">
-                                <span class="mdi mdi-content-save-outline me-4" aria-hidden="true"></span>Update Current
+                                <span class="mdi mdi-content-save-outline me-4" aria-hidden="true"></span>{% trans "Update Current" %}
                             </button>
                         </span>
                     {% endif %}
                     <a class="btn btn-secondary" href="{% url 'extras:savedview_set_default' pk=current_saved_view.pk %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
-                        <span class="mdi mdi-star me-4" aria-hidden="true"></span>Set As My Default
+                        <span class="mdi mdi-star me-4" aria-hidden="true"></span>{% trans "Set As My Default" %}
                     </a>
                 {% endif %}
                 <a class="btn btn-secondary" href="" data-bs-toggle="modal" data-bs-target="#saved_view_modal">
-                    <span class="mdi mdi-content-save-plus-outline me-4" aria-hidden="true"></span>Save As New
+                    <span class="mdi mdi-content-save-plus-outline me-4" aria-hidden="true"></span>{% trans "Save As New" %}
                 </a>
                 {% if current_saved_view %}
                     {% if current_saved_view.owner == user %}
                         <a class="btn btn-danger" href="{% url 'extras:savedview_delete' pk=current_saved_view.pk %}?return_url={{ request.path }}">
-                            <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span>Delete Current
+                            <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span>{% trans "Delete Current" %}
                         </a>
                     {% else %}
-                        <span data-bs-toggle="tooltip" data-bs-title="You cannot delete another user's saved view.">
+                        <span data-bs-toggle="tooltip" data-bs-title="{% trans "You cannot delete another user's saved view." %}">
                             <button class="btn btn-danger" disabled type="button">
-                                <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span>Delete Current
+                                <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span>{% trans "Delete Current" %}
                             </button>
                         </span>
                     {% endif %}

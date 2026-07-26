@@ -1,4 +1,5 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load form_helpers %}
 {% load helpers %}
 
@@ -10,7 +11,7 @@
 
 {% block form %}
     <div class="card">
-        <div class="card-header"><strong>Contact</strong></div>
+        <div class="card-header"><strong>{% trans "Contact" %}</strong></div>
         <div class="card-body">
             {% render_field form.name %}
             {% render_field form.phone %}
@@ -21,7 +22,7 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Contact Association</strong></div>
+        <div class="card-header"><strong>{% trans "Contact Association" %}</strong></div>
         <div class="card-body">
             {% render_field form.role %}
             {% render_field form.status %}

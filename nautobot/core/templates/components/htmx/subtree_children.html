@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load helpers %}
 {% with last_column_name=table.columns.names|last %}
     <table>
@@ -26,7 +27,7 @@
                         <span class="nb-subtree"></span>
                     {% endfor %}
                     <span class="nb-subtree nb-subtree-not-expandable"></span>
-                    &hellip; and
+                    {% trans "… and" %}
                     <a href="{{ table.context.next_page_url }}{% django_querystring page=table.page.number|add:1 %}"
                        hx-get="{{ table.context.next_page_url }}{% django_querystring page=table.page.number|add:1 %}"
                        hx-indicator="closest .table-responsive"

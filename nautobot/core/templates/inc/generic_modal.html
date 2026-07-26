@@ -1,3 +1,4 @@
+{% load i18n %}
 <div
     class="modal fade"
     id="nautobot-generic-modal"
@@ -11,13 +12,14 @@
             hx-on:htmx:load="jsify_form(this);"
         >
             {# --- FALLBACK CONTENT --- #}
-            {% include 'inc/modal_header.html' with title="Loading..."%}
+            {% trans "Loading..." as modal_title %}
+            {% include 'inc/modal_header.html' with title=modal_title %}
             <div class="modal-body text-center p-5">
                 <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
+                    <span class="visually-hidden">{% trans "Loading..." %}</span>
                 </div>
                 <p class="mt-2 text-secondary">
-                    Please wait while we fetch the content...
+                    {% trans "Please wait while we fetch the content..." %}
                 </p>
             </div>
             {# --- END FALLBACK CONTENT --- #}

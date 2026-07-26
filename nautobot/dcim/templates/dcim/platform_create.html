@@ -1,4 +1,5 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load form_helpers %}
 {% load helpers %}
 {% load static %}
@@ -9,12 +10,12 @@
     {% render_field form.manufacturer %}
 
     <div class="mb-10 d-md-flex justify-content-center{% if form.network_driver.errors %} has-error{% endif %}">
-        <label class="col-md-3 col-form-label" for="id_network_driver">Network driver</label>
+        <label class="col-md-3 col-form-label" for="id_network_driver">{% trans "Network driver" %}</label>
         <div class="col-md-9">
             {{ form.network_driver }}
             <span class="form-text">
-                The <a href="https://netutils.readthedocs.io/en/latest/user/lib_use_cases_lib_mapper/">normalized network driver</a> to use when interacting with devices
-                <span class="mdi mdi-help-circle-outline"></span> <a href="#network_driver_choices" data-bs-toggle="modal" data-bs-target="#network_driver_choices">Show Configured Choices</a>
+                {% blocktrans with url="https://netutils.readthedocs.io/en/latest/user/lib_use_cases_lib_mapper/" %}The <a href="{{ url }}">normalized network driver</a> to use when interacting with devices{% endblocktrans %}
+                <span class="mdi mdi-help-circle-outline"></span> <a href="#network_driver_choices" data-bs-toggle="modal" data-bs-target="#network_driver_choices">{% trans "Show Configured Choices" %}</a>
             </span>
             {% if form.network_driver.errors %}
                 <ul>
@@ -31,11 +32,13 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Network Driver Choices</h4>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h4 class="modal-title">{% trans "Network Driver Choices" %}</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Drivers selected from the below list can be used to automatically map to a driver name in supported tools using the platform's <a href="{% static 'docs/models/dcim/platform.html' %}"><code>network_driver_mappings</code></a> property. For advanced automation purposes, the network driver field may be set to a value not present in this list but will not provide automatic mapping unless the <a href="{% static 'docs/configuration/optional-settings.html' %}#network_drivers"><code>NETWORK_DRIVERS</code></a> setting is updated to add the new value.</p>
+                    {% static 'docs/models/dcim/platform.html' as mappings_doc_url %}
+                    {% static 'docs/configuration/optional-settings.html' as settings_doc_url %}
+                    <p>{% blocktrans with mappings_url=mappings_doc_url settings_url=settings_doc_url %}Drivers selected from the below list can be used to automatically map to a driver name in supported tools using the platform's <a href="{{ mappings_url }}"><code>network_driver_mappings</code></a> property. For advanced automation purposes, the network driver field may be set to a value not present in this list but will not provide automatic mapping unless the <a href="{{ settings_url }}"><code>NETWORK_DRIVERS</code></a> setting is updated to add the new value.{% endblocktrans %}</p>
                     <table class="table table-striped">
                         {% for value in network_driver_names %}
                             {% if value %}<tr><td><samp>{{ value }}</samp></td></tr>{% endif %}

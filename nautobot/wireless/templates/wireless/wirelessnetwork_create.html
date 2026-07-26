@@ -1,10 +1,11 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load static %}
 {% load form_helpers %}
 
 {% block form %}
     <div class="card">
-        <div class="card-header"><strong>Wireless Network</strong></div>
+        <div class="card-header"><strong>{% trans "Wireless Network" %}</strong></div>
         <div class="card-body">
             {% render_field form.name %}
             {% render_field form.ssid %}
@@ -17,11 +18,11 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Controller Managed Device Group Assignment</strong></div>
+        <div class="card-header"><strong>{% trans "Controller Managed Device Group Assignment" %}</strong></div>
         <div class="card-body overflow-auto">
             {% if controller_managed_device_groups.errors %}
                 <div class="text-danger">
-                    Please correct the error(s) below:
+                    {% trans "Please correct the error(s) below:" %}
 
                     {% for controller_managed_device_group in controller_managed_device_groups.forms %}
                         {% if controller_managed_device_group.errors %}

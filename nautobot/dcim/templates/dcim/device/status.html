@@ -1,41 +1,42 @@
 {% extends 'generic/object_retrieve.html' %}
+{% load i18n %}
 {% load helpers %}
 
-{% block title %}{{ object }} - Status{% endblock %}
+{% block title %}{% blocktrans with object=object %}{{ object }} - Status{% endblocktrans %}{% endblock %}
 
 {% block content %}
     {% include 'inc/ajax_loader.html' %}
     <div class="row">
         <div class="col-lg-6">
             <div class="card">
-                <div class="card-header"><strong>Device Facts</strong></div>
+                <div class="card-header"><strong>{% trans "Device Facts" %}</strong></div>
                 <table class="table card-body">
                     <tr>
-                        <th>Hostname</th>
+                        <th>{% trans "Hostname" %}</th>
                         <td id="hostname"></td>
                     </tr>
                     <tr>
-                        <th>FQDN</th>
+                        <th>{% trans "FQDN" %}</th>
                         <td id="fqdn"></td>
                     </tr>
                     <tr>
-                        <th>Vendor</th>
+                        <th>{% trans "Vendor" %}</th>
                         <td id="vendor"></td>
                     </tr>
                     <tr>
-                        <th>Model</th>
+                        <th>{% trans "Model" %}</th>
                         <td id="model"></td>
                     </tr>
                     <tr>
-                        <th>Serial Number</th>
+                        <th>{% trans "Serial Number" %}</th>
                         <td id="serial_number"></td>
                     </tr>
                     <tr>
-                        <th>OS Version</th>
+                        <th>{% trans "OS Version" %}</th>
                         <td id="os_version"></td>
                     </tr>
                     <tr>
-                        <th>Uptime</th>
+                        <th>{% trans "Uptime" %}</th>
                         <td id="uptime"></td>
                     </tr>
                 </table>
@@ -43,22 +44,22 @@
         </div>
         <div class="col-lg-6">
             <div class="card">
-                <div class="card-header"><strong>Environment</strong></div>
+                <div class="card-header"><strong>{% trans "Environment" %}</strong></div>
                 <table class="table card-body">
                     <tr id="cpu">
-                        <th colspan="2"><span class="mdi mdi-gauge"></span> CPU</th>
+                        <th colspan="2"><span class="mdi mdi-gauge"></span> {% trans "CPU" %}</th>
                     </tr>
                     <tr id="memory">
-                        <th colspan="2"><span class="mdi mdi-chip"></span> Memory</th>
+                        <th colspan="2"><span class="mdi mdi-chip"></span> {% trans "Memory" %}</th>
                     </tr>
                     <tr id="temperature">
-                        <th colspan="2"><span class="mdi mdi-thermometer"></span> Temperature</th>
+                        <th colspan="2"><span class="mdi mdi-thermometer"></span> {% trans "Temperature" %}</th>
                     </tr>
                     <tr id="fans">
-                        <th colspan="2"><span class="mdi mdi-fan"></span> Fans</th>
+                        <th colspan="2"><span class="mdi mdi-fan"></span> {% trans "Fans" %}</th>
                     </tr>
                     <tr id="power">
-                        <th colspan="2"><span class="mdi mdi-power"></span> Power</th>
+                        <th colspan="2"><span class="mdi mdi-power"></span> {% trans "Power" %}</th>
                     </tr>
                 </table>
             </div>

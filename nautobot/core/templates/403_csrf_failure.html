@@ -1,20 +1,21 @@
 {% extends '40x.html' %}
 
-{% block title %}Invalid Form Submission{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Invalid Form Submission" %}{% endblock %}
 
 {% block icon %}<span class="mdi mdi-alert"></span>{% endblock %}
 
 {% block message %}
-    CSRF failure has occurred.<br/>
+    {% trans "CSRF failure has occurred." %}<br/>
     <p>
-        There was a problem with your request. Please contact an administrator.
+        {% trans "There was a problem with your request. Please contact an administrator." %}
     </p>
     <p>
-        The reason for failure is provided below:
+        {% trans "The reason for failure is provided below:" %}
     </p>
 <pre><strong>{{ reason }}</strong><br/>
 
-Python version: {{ python_version }}
-Nautobot version: {{ nautobot_version }}
+{% trans "Python version:" %} {{ python_version }}
+{% trans "Nautobot version:" %} {{ nautobot_version }}
 </pre>
 {% endblock %}

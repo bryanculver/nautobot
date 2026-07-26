@@ -1,9 +1,10 @@
 {% extends 'utilities/comment_form.html' %}
+{% load i18n %}
 {% load form_helpers %}
 
-{% block title %}Comment on {{ obj_type }}{% endblock %}
+{% block title %}{% blocktrans with obj_type=obj_type %}Comment on {{ obj_type }}{% endblocktrans %}{% endblock %}
 
 {% block message %}
-    <p>Making a comment on <strong>{{ obj }}</strong> for <strong> {{ object_under_review }}</strong>.</p>
+    <p>{% blocktrans %}Making a comment on <strong>{{ obj }}</strong> for <strong> {{ object_under_review }}</strong>.{% endblocktrans %}</p>
     {% block message_extra %}{% endblock %}
 {% endblock %}

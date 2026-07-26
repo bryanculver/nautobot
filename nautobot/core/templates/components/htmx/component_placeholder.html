@@ -1,3 +1,4 @@
+{% load i18n %}
 <div id="component-{{ component.component_id }}"
      hx-get=""
      hx-select="#component-{{ component.component_id }}"
@@ -6,7 +7,7 @@
 >
     <div class="htmx-indicator text-center">
         <div class="spinner-border">
-            <span class="visually-hidden">Loading...</span>
+            <span class="visually-hidden">{% trans "Loading..." %}</span>
         </div>
     </div>
 </div>

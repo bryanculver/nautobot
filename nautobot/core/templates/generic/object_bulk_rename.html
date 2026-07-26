@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load helpers %}
 {% load form_helpers %}
 
-{% block title %}Renaming {{ selected_objects|length }} {{ obj_type_plural|bettertitle }}{% if parent_name %} on {{ parent_name }}{% endif %}{% endblock %}
+{% block title %}{% if parent_name %}{% blocktrans with count=selected_objects|length obj_type_plural=obj_type_plural|bettertitle parent_name=parent_name %}Renaming {{ count }} {{ obj_type_plural }} on {{ parent_name }}{% endblocktrans %}{% else %}{% blocktrans with count=selected_objects|length obj_type_plural=obj_type_plural|bettertitle %}Renaming {{ count }} {{ obj_type_plural }}{% endblocktrans %}{% endif %}{% endblock %}
 
 {% block content %}
     <form action="" method="post" class="h-100 vstack">
@@ -14,8 +15,8 @@
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Current Name</th>
-                                    <th>New Name</th>
+                                    <th>{% trans "Current Name" %}</th>
+                                    <th>{% trans "New Name" %}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -34,7 +35,7 @@
                 {% if form.non_field_errors %}
                     <div class="card border-danger">
                         <div class="card-header bg-danger-subtle border-danger text-body">
-                            <strong>Errors</strong>
+                            <strong>{% trans "Errors" %}</strong>
                         </div>
                         <div class="card-body">
                             {{ form.non_field_errors }}
@@ -42,7 +43,7 @@
                     </div>
                 {% endif %}
                 <div class="card">
-                    <div class="card-header"><strong>Rename</strong></div>
+                    <div class="card-header"><strong>{% trans "Rename" %}</strong></div>
                     <div class="card-body">
                         {% render_form form %}
                     </div>
@@ -52,17 +53,17 @@
         <div class="nb-form-sticky-footer">
             <button type="submit" name="_preview" class="btn btn-primary">
                 <span aria-hidden="true" class="mdi mdi-eye-outline me-4"></span><!--
-                -->Preview
+                -->{% trans "Preview" %}
             </button>
             {% if '_preview' in request.POST and not form.errors %}
                 <button type="submit" name="_apply" class="btn btn-primary">
                     <span aria-hidden="true" class="mdi mdi-check me-4"></span><!--
-                    -->Apply
+                    -->{% trans "Apply" %}
                 </button>
             {% endif %}
             <a href="{{ return_url }}" class="btn btn-secondary">
                 <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-                -->Cancel
+                -->{% trans "Cancel" %}
             </a>
         </div>
     </form>

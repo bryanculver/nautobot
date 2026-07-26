@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load form_helpers %}
 {% load helpers %}
 
@@ -6,19 +7,19 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title">{{ form_name }}</h4>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}"></button>
             </div>
             <div class="modal-body">
                 <form action="{{ form_action_url }}" method="post">
                     {% csrf_token %}
                     <h3>
                         {% if obj %}
-                            <a href="{{ obj|get_docs_url }}" target="_blank" class="btn btn-link btn-sm float-end" title="Help">
+                            <a href="{{ obj|get_docs_url }}" target="_blank" class="btn btn-link btn-sm float-end" title="{% trans "Help" %}">
                                 <span aria-hidden="true" class="mdi mdi-help-circle"></span>
-                                <span class="visually-hidden">Help</span>
+                                <span class="visually-hidden">{% trans "Help" %}</span>
                             </a>
                         {% endif %}
-                        {% block title %}{% if editing %}Editing {{ obj_type }} {{ obj }}{% else %}Add a new:{% endif %}{% endblock %}
+                        {% block title %}{% if editing %}{% blocktrans with obj_type=obj_type obj=obj %}Editing {{ obj_type }} {{ obj }}{% endblocktrans %}{% else %}{% trans "Add a new:" %}{% endif %}{% endblock %}
                     </h3>
                     {% block form %}
                         {% block form_fields %}
@@ -28,11 +29,11 @@
                     <div class="gap-8 hstack justify-content-center">
                         {% block buttons %}
                             {% if editing %}
-                                <button type="submit" name="_update" class="btn btn-primary">Update</button>
+                                <button type="submit" name="_update" class="btn btn-primary">{% trans "Update" %}</button>
                             {% else %}
-                                <button type="submit" name="_create" class="btn btn-primary">Create</button>
+                                <button type="submit" name="_create" class="btn btn-primary">{% trans "Create" %}</button>
                             {% endif %}
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancel</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="{% trans "Close" %}">{% trans "Cancel" %}</button>
                         {% endblock %}
                     </div>
                 </form>

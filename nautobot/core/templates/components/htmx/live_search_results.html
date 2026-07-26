@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load render_table from django_tables2 %}
 
 {% if table %}
@@ -7,7 +8,7 @@
             <ul class="nb-search-list-group">
                 <li>
                     <a class="nb-search-list-group-item text-secondary" href="{{ href }}">
-                        More...
+                        {% trans "More..." %}
                     </a>
                 </li>
             </ul>

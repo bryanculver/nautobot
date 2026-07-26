@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load helpers %}
 {% load form_helpers %}
 {% load static %}
 
-{% block title %}Log In{% endblock title %}
+{% block title %}{% trans "Log In" %}{% endblock title %}
 
 {% block extra_styles %}
     {{ block.super }}
@@ -62,14 +63,14 @@
                             {{ field }}
                         </div>
                     {% endfor %}
-                    <button type="submit" class="btn btn-primary w-100 mt-24">Sign in</button>
+                    <button type="submit" class="btn btn-primary w-100 mt-24">{% trans "Sign in" %}</button>
                 </form>
 
                 {% if SSO_AUTH_ENABLED %}
                     <div class="position-relative text-center nb-bg-inherit">
                         <hr class="border-top m-20">
-                        <span class="px-16 position-absolute start-50 text-secondary top-0 translate-middle nb-bg-inherit">Or</span>
-                        <a href="{% url 'social:begin' backends.backends.0 %}?next={{ request.get_full_path | urlencode }}&{{ SAML_IDP }}" class="btn btn-primary w-100">Continue with SSO</a>
+                        <span class="px-16 position-absolute start-50 text-secondary top-0 translate-middle nb-bg-inherit">{% trans "Or" %}</span>
+                        <a href="{% url 'social:begin' backends.backends.0 %}?next={{ request.get_full_path | urlencode }}&{{ SAML_IDP }}" class="btn btn-primary w-100">{% trans "Continue with SSO" %}</a>
                     </div>
                 {% endif %}
             </div>
@@ -79,13 +80,13 @@
             &copy;
             {% now "Y" %} Network to Code
             &middot;
-            Powered by
+            {% trans "Powered by" %}
             <a class="text-secondary" href="{{ edition_url }}" target="_blank" rel="noopener">
                 Nautobot{% if is_commercial_edition %} {{ nautobot_edition }}{% endif %}
             </a>
             &middot;
             <a class="text-secondary" href="https://docs.nautobot.com" target="_blank" rel="noopener">
-                Docs
+                {% trans "Docs" %}
             </a>
         </div>
     </div>

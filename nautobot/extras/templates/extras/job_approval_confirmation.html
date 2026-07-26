@@ -1,6 +1,7 @@
 {% extends 'extras/approval_workflow/approve.html' %}
+{% load i18n %}
 {% load form_helpers %}
 
 {% block message_extra %}
-    <p><strong>Warning:</strong> You are approving a job that is past its scheduled date ({{ object_under_review.start_time }}). It will run immediately after approval.</p>
+    <p>{% blocktrans with start_time=object_under_review.start_time %}<strong>Warning:</strong> You are approving a job that is past its scheduled date ({{ start_time }}). It will run immediately after approval.{% endblocktrans %}</p>
 {% endblock %}

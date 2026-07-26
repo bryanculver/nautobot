@@ -1,23 +1,24 @@
 {% extends 'generic/object_retrieve.html' %}
+{% load i18n %}
 {% load helpers %}
 
-{% block title %}{{ object }} - LLDP Neighbors{% endblock %}
+{% block title %}{% blocktrans with object=object %}{{ object }} - LLDP Neighbors{% endblocktrans %}{% endblock %}
 
 {% block content %}
     {% include 'inc/ajax_loader.html' %}
     <div class="card">
         <div class="card-header">
-            <strong>LLDP Neighbors</strong>
+            <strong>{% trans "LLDP Neighbors" %}</strong>
         </div>
         <table class="table table-hover card-body">
             <thead>
                 <tr>
-                    <th>Interface</th>
-                    <th>Configured Device</th>
-                    <th>Configured Interface</th>
-                    <th>Configured MAC Address</th>
-                    <th>LLDP Device</th>
-                    <th>LLDP Interface</th>
+                    <th>{% trans "Interface" %}</th>
+                    <th>{% trans "Configured Device" %}</th>
+                    <th>{% trans "Configured Interface" %}</th>
+                    <th>{% trans "Configured MAC Address" %}</th>
+                    <th>{% trans "LLDP Device" %}</th>
+                    <th>{% trans "LLDP Interface" %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -37,12 +38,12 @@
                         {% elif iface.connected_endpoint.circuit %}
                             {% with circuit=iface.connected_endpoint.circuit %}
                                 <td colspan="3">
-                                    <span class="mdi mdi-lightning-bolt" title="Circuit"></span>
+                                    <span class="mdi mdi-lightning-bolt" title="{% trans "Circuit" %}"></span>
                                     <a href="{{ circuit.get_absolute_url }}">{{ circuit.provider }} {{ circuit }}</a>
                                 </td>
                             {% endwith %}
                         {% else %}
-                            <td colspan="3">None</td>
+                            <td colspan="3">{% trans "None" %}</td>
                         {% endif %}
                         <td class="device"></td>
                         <td class="interface"></td>

@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load i18n %}
 {% load buttons %}
 {% load approvals %}
 {% load helpers %}
@@ -12,7 +13,7 @@
                         <a href="{% url cancel_route pk=approval_workflow.pk %}?return_url={{ request.path }}{{ return_url_extra }}"
                            class="btn btn-secondary">
                             <span class="mdi mdi-cancel" aria-hidden="true"></span>
-                            Cancel Approval Workflow
+                            {% trans "Cancel Approval Workflow" %}
                         </a>
                     {% endblock buttons %}
                 </div>
@@ -21,11 +22,11 @@
         <div class="col-lg-6">
             <div class="card">
                 <div class="card-header">
-                    <strong>Approval Workflow</strong>
+                    <strong>{% trans "Approval Workflow" %}</strong>
                 </div>
                 <table class="table table-hover card-body attr-table">
                     <tr>
-                        <td>Approval Workflow Definition</td>
+                        <td>{% trans "Approval Workflow Definition" %}</td>
                         <td>{{ approval_workflow.approval_workflow_definition | hyperlinked_object }}</td>
                     </tr>
                     <tr>
@@ -33,17 +34,17 @@
                         <td>{{ approval_workflow.object_under_review | hyperlinked_object  }}</td>
                     </tr>
                     <tr>
-                        <td>Current State</td>
+                        <td>{% trans "Current State" %}</td>
                         <td>{{ approval_workflow.current_state | render_approval_workflow_state  }}</td>
                     </tr>
                 </table>
             </div>
         </div>
         <div class="col-lg-6">
-            {% include 'panel_table.html' with table=stage_table heading="Stages"%}
+            {% trans "Stages" as stages_heading %}{% include 'panel_table.html' with table=stage_table heading=stages_heading %}
         </div>
         <div class="full-width">
-            {% include 'panel_table.html' with table=response_table heading="Responses"%}
+            {% trans "Responses" as responses_heading %}{% include 'panel_table.html' with table=response_table heading=responses_heading %}
         </div>
     </div>
 {% endblock %}

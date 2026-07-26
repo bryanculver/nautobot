@@ -1,18 +1,19 @@
 {% extends 'generic/object_retrieve.html' %}
+{% load i18n %}
 {% load helpers %}
 
 {% block content_left_page %}
     <div class="card">
         <div class="card-header">
-            <strong>Static Group Association</strong>
+            <strong>{% trans "Static Group Association" %}</strong>
         </div>
         <table class="table table-hover card-body attr-table">
             <tr>
-                <td>Dynamic Group</td>
+                <td>{% trans "Dynamic Group" %}</td>
                 <td>{{ object.dynamic_group|hyperlinked_object }}</td>
             </tr>
             <tr>
-                <td>Associated Object</td>
+                <td>{% trans "Associated Object" %}</td>
                 <td>{{ object.associated_object|hyperlinked_object }}</td>
             </tr>
         </table>

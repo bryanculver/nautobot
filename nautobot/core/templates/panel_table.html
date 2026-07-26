@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load render_table from django_tables2 %}
 {% load helpers %}
 {% load static %}
@@ -16,7 +17,7 @@
             <div class="position-absolute w-100 h-100 bg-body opacity-50 nb-z-dropdown">
                 <div class="position-absolute top-50 start-50 translate-middle">
                     <div class="spinner-border">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">{% trans "Loading..." %}</span>
                     </div>
                 </div>
             </div>
@@ -27,7 +28,7 @@
         <div class="card-footer d-print-none">
             <div class="float-end">
                 <a href="{{ add_obj_url }}" class="btn btn-primary btn-sm">
-                    <span class="mdi mdi-plus-thick" aria-hidden="true"></span> Add {{ table.data.data.model|meta:"verbose_name" }}
+                    <span class="mdi mdi-plus-thick" aria-hidden="true"></span> {% with verbose_name=table.data.data.model|meta:"verbose_name" %}{% blocktrans with verbose_name=verbose_name %}Add {{ verbose_name }}{% endblocktrans %}{% endwith %}
                 </a>
             </div>
 
