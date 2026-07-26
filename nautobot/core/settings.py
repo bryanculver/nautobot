@@ -17,6 +17,7 @@ from nautobot.core.constants import (
     MAX_PAGE_SIZE_DEFAULT as _MAX_PAGE_SIZE_DEFAULT,
     PAGINATE_COUNT_DEFAULT as _PAGINATE_COUNT_DEFAULT,
 )
+from nautobot.core.formats import NAUTOBOT_FORMAT_DEFAULTS as _NAUTOBOT_FORMAT_DEFAULTS
 from nautobot.core.settings_funcs import ConstanceConfigItem, is_truthy, parse_redis_connection
 
 #
@@ -543,8 +544,8 @@ if "NAUTOBOT_CSRF_TRUSTED_ORIGINS" in os.environ and os.environ["NAUTOBOT_CSRF_T
     CSRF_TRUSTED_ORIGINS = os.getenv("NAUTOBOT_CSRF_TRUSTED_ORIGINS", "").split(_CONFIG_SETTING_SEPARATOR)
 
 CSRF_FAILURE_VIEW = "nautobot.core.views.csrf_failure"
-DATE_FORMAT = os.getenv("NAUTOBOT_DATE_FORMAT", "N j, Y")
-DATETIME_FORMAT = os.getenv("NAUTOBOT_DATETIME_FORMAT", "N j, Y g:i a")
+DATE_FORMAT = os.getenv("NAUTOBOT_DATE_FORMAT", _NAUTOBOT_FORMAT_DEFAULTS["DATE_FORMAT"])
+DATETIME_FORMAT = os.getenv("NAUTOBOT_DATETIME_FORMAT", _NAUTOBOT_FORMAT_DEFAULTS["DATETIME_FORMAT"])
 DEBUG = is_truthy(os.getenv("NAUTOBOT_DEBUG", "False"))
 INTERNAL_IPS = ["127.0.0.1", "::1"]
 FORCE_SCRIPT_NAME = None
@@ -601,9 +602,9 @@ MEDIA_ROOT = os.path.join(NAUTOBOT_ROOT, "media").rstrip("/")
 SESSION_EXPIRE_AT_BROWSER_CLOSE = is_truthy(os.getenv("NAUTOBOT_SESSION_EXPIRE_AT_BROWSER_CLOSE", "False"))
 SESSION_COOKIE_AGE = int(os.getenv("NAUTOBOT_SESSION_COOKIE_AGE", "1209600"))  # 2 weeks, in seconds
 SESSION_FILE_PATH = os.getenv("NAUTOBOT_SESSION_FILE_PATH", None)
-SHORT_DATE_FORMAT = os.getenv("NAUTOBOT_SHORT_DATE_FORMAT", "Y-m-d")
-SHORT_DATETIME_FORMAT = os.getenv("NAUTOBOT_SHORT_DATETIME_FORMAT", "Y-m-d H:i")
-TIME_FORMAT = os.getenv("NAUTOBOT_TIME_FORMAT", "g:i a")
+SHORT_DATE_FORMAT = os.getenv("NAUTOBOT_SHORT_DATE_FORMAT", _NAUTOBOT_FORMAT_DEFAULTS["SHORT_DATE_FORMAT"])
+SHORT_DATETIME_FORMAT = os.getenv("NAUTOBOT_SHORT_DATETIME_FORMAT", _NAUTOBOT_FORMAT_DEFAULTS["SHORT_DATETIME_FORMAT"])
+TIME_FORMAT = os.getenv("NAUTOBOT_TIME_FORMAT", _NAUTOBOT_FORMAT_DEFAULTS["TIME_FORMAT"])
 TIME_ZONE = os.getenv("NAUTOBOT_TIME_ZONE", "UTC")
 
 # Disable importing the WSGI module before starting the server application. This is required for
@@ -676,6 +677,7 @@ MIDDLEWARE = [
     "nautobot.core.middleware.ExternalAuthMiddleware",
     "nautobot.core.middleware.GraphQLOpenTelemetryMiddleware",
     "nautobot.core.middleware.ObjectChangeMiddleware",
+    "nautobot.core.middleware.UserDefinedLanguageMiddleware",
     "nautobot.core.middleware.UserDefinedTimeZoneMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
@@ -734,6 +736,18 @@ AUTHENTICATION_BACKENDS = [
 
 # Internationalization
 LANGUAGE_CODE = "en-us"
+# Languages that Nautobot ships translation catalogs for, and that users may therefore select in
+# their preferences. Operators may narrow this to a subset; reducing it to `[("en", "English")]`
+# is the supported way to turn the language-selection feature off entirely.
+# Language names are given in the language itself, so they are deliberately not translated.
+LANGUAGES = [
+    ("en", "English"),
+    ("de", "Deutsch"),
+    ("es", "Español"),
+    ("fr", "Français"),
+    ("zh-hans", "中文（简体）"),
+]
+LOCALE_PATHS = [os.path.join(BASE_DIR, "locale")]
 USE_I18N = True
 USE_TZ = True
 # Group numbers into thousands (e.g. 1,009,518) for filters that force grouping such as `intcomma`.

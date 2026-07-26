@@ -749,6 +749,16 @@ properties:
   DATE_FORMAT:
     default: "N j, Y"
     description: "Custom format for dates. The default results in strings like \"January 22, 2024\"."
+    details: |-
+      This setting is honored in every language, not just English: if you set it to a non-default
+      value, Nautobot uses it regardless of the user's selected language. If you leave it at the
+      default, users who select a non-English language see dates rendered in that language's own
+      conventions instead.
+
+      !!! note
+          Because Nautobot detects "the operator set this" by comparing against the default above,
+          explicitly setting this to exactly the default value is indistinguishable from leaving it
+          unset, and non-English languages will use their own conventions.
     environment_variable: "NAUTOBOT_DATE_FORMAT"
     see_also:
       "Django documentation on date/time format strings": "https://docs.djangoproject.com/en/stable/ref/templates/builtins/#date"
@@ -756,6 +766,16 @@ properties:
   DATETIME_FORMAT:
     default: "N j, Y g:i a"
     description: "Custom format for date-times. The default results in strings like \"January 22, 2024 1:22 p.m.\"."
+    details: |-
+      This setting is honored in every language, not just English: if you set it to a non-default
+      value, Nautobot uses it regardless of the user's selected language. If you leave it at the
+      default, users who select a non-English language see dates rendered in that language's own
+      conventions instead.
+
+      !!! note
+          Because Nautobot detects "the operator set this" by comparing against the default above,
+          explicitly setting this to exactly the default value is indistinguishable from leaving it
+          unset, and non-English languages will use their own conventions.
     environment_variable: "NAUTOBOT_DATETIME_FORMAT"
     see_also:
       "Django documentation on date/time format strings": "https://docs.djangoproject.com/en/stable/ref/templates/builtins/#date"
@@ -1199,6 +1219,54 @@ properties:
     details: "Intended ONLY for local development against Docker Desktop."
     environment_variable: "NAUTOBOT_KUBERNETES_VERIFY_SSL_INTERNAL"
     type: "boolean"
+    version_added: "3.2.0"
+  LANGUAGES:
+    default:
+    - - "en"
+      - "English"
+    - - "de"
+      - "Deutsch"
+    - - "es"
+      - "Español"
+    - - "fr"
+      - "Français"
+    - - "zh-hans"
+      - "中文（简体）"
+    default_literal: |-
+      ```python
+      [
+          ("en", "English"),
+          ("de", "Deutsch"),
+          ("es", "Español"),
+          ("fr", "Français"),
+          ("zh-hans", "中文（简体）"),
+      ]
+      ```
+    description: >-
+      The set of languages that users may select from in their user preferences, as a list of
+      `(language code, display name)` pairs.
+    details: |-
+      Nautobot ships translation catalogs for each of these languages. A user's selected language is
+      applied only to that user's own sessions; users who never make a selection continue to see the
+      language given by [`LANGUAGE_CODE`](https://docs.djangoproject.com/en/stable/ref/settings/#language-code)
+      (English). Nautobot never infers a language from the browser's `Accept-Language` header.
+
+      Restricting this list is the supported way to limit which languages a deployment offers; setting
+      it to `[("en", "English")]` disables language selection entirely.
+
+      !!! note
+          Translations other than English are machine-assisted and pending native-speaker review.
+          Any string without a translation falls back to English, so a partially-translated UI is
+          expected and is not an error.
+
+      !!! warning
+          If you add a language that Nautobot does not ship, note that
+          [`DATE_FORMAT`](#date_format) and its siblings will be honored for it only if a matching
+          format module exists under `nautobot.core.formats`; otherwise Django's own defaults for
+          that language apply.
+    see_also:
+      "Django documentation for `LANGUAGES`": "https://docs.djangoproject.com/en/stable/ref/settings/#languages"
+    type: "array"
     version_added: "3.2.0"
   LOCATION_LIST_DEFAULT_MAX_DEPTH:
     default: 0
@@ -2032,6 +2100,16 @@ properties:
   SHORT_DATE_FORMAT:
     default: "Y-m-d"
     description: "Custom short format for dates. The default results in strings like \"2024-01-22\"."
+    details: |-
+      This setting is honored in every language, not just English: if you set it to a non-default
+      value, Nautobot uses it regardless of the user's selected language. If you leave it at the
+      default, users who select a non-English language see dates rendered in that language's own
+      conventions instead.
+
+      !!! note
+          Because Nautobot detects "the operator set this" by comparing against the default above,
+          explicitly setting this to exactly the default value is indistinguishable from leaving it
+          unset, and non-English languages will use their own conventions.
     environment_variable: "NAUTOBOT_SHORT_DATE_FORMAT"
     see_also:
       "Django documentation on date/time format strings": "https://docs.djangoproject.com/en/stable/ref/templates/builtins/#date"
@@ -2039,6 +2117,16 @@ properties:
   SHORT_DATETIME_FORMAT:
     default: "Y-m-d H:i"
     description: "Custom short format for date-times. The default results in strings like \"2024-01-22 13:23\"."
+    details: |-
+      This setting is honored in every language, not just English: if you set it to a non-default
+      value, Nautobot uses it regardless of the user's selected language. If you leave it at the
+      default, users who select a non-English language see dates rendered in that language's own
+      conventions instead.
+
+      !!! note
+          Because Nautobot detects "the operator set this" by comparing against the default above,
+          explicitly setting this to exactly the default value is indistinguishable from leaving it
+          unset, and non-English languages will use their own conventions.
     environment_variable: "NAUTOBOT_SHORT_DATETIME_FORMAT"
     see_also:
       "Django documentation on date/time format strings": "https://docs.djangoproject.com/en/stable/ref/templates/builtins/#date"
@@ -2225,6 +2313,16 @@ properties:
   TIME_FORMAT:
     default: "g:i a"
     description: "Custom format for times. The default results in strings like \"1:23 p.m.\"."
+    details: |-
+      This setting is honored in every language, not just English: if you set it to a non-default
+      value, Nautobot uses it regardless of the user's selected language. If you leave it at the
+      default, users who select a non-English language see dates rendered in that language's own
+      conventions instead.
+
+      !!! note
+          Because Nautobot detects "the operator set this" by comparing against the default above,
+          explicitly setting this to exactly the default value is indistinguishable from leaving it
+          unset, and non-English languages will use their own conventions.
     environment_variable: "NAUTOBOT_TIME_FORMAT"
     see_also:
       "Django documentation on date/time format strings": "https://docs.djangoproject.com/en/stable/ref/templates/builtins/#date"

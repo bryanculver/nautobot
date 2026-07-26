@@ -10,7 +10,7 @@ from django.db import ProgrammingError
 from django.http import Http404
 from django.urls import resolve
 from django.urls.exceptions import Resolver404
-from django.utils import timezone
+from django.utils import timezone, translation
 from django.utils.deprecation import MiddlewareMixin
 from django_structlog.middlewares import RequestMiddleware
 from django_structlog.signals import bind_extra_request_failed_metadata
@@ -196,6 +196,38 @@ class ExceptionHandlingMiddleware:
             return server_error(request, template_name=custom_template)
 
         return None
+
+
+class UserDefinedLanguageMiddleware:
+    """
+    Activate the language that the current user selected in their preferences, for this request only.
+
+    This is deliberately *not* `django.middleware.locale.LocaleMiddleware`: that middleware negotiates
+    a language from the browser's `Accept-Language` header, which would silently change the UI language
+    for existing users the moment translation catalogs became available. Nautobot only ever activates a
+    language that the user explicitly opted into.
+
+    Only languages present in the `LANGUAGES` setting are honored, so narrowing `LANGUAGES` is
+    sufficient to disable this feature for a deployment.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        language = None
+        if request.user.is_authenticated:
+            language = request.user.get_config("language")
+            if language and language not in dict(settings.LANGUAGES):
+                language = None
+        translation.activate(language or settings.LANGUAGE_CODE)
+        request.LANGUAGE_CODE = translation.get_language()
+        try:
+            response = self.get_response(request)
+            response.headers.setdefault("Content-Language", request.LANGUAGE_CODE)
+            return response
+        finally:
+            translation.deactivate()
 
 
 class UserDefinedTimeZoneMiddleware:

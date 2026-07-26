@@ -143,6 +143,7 @@ class SettingsJSONSchemaTestCase(TestCase):
             "HOSTNAME",
             "INSTALLED_APPS",
             "LANGUAGE_CODE",
+            "LOCALE_PATHS",
             "LOG_LEVEL",
             "LOGIN_URL",
             "LOGIN_REDIRECT_URL",

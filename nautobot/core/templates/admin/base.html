@@ -4,8 +4,11 @@
 {% load plugins %}
 {% load static%}
 
+{% get_current_language as LANGUAGE_CODE %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
+
 <!DOCTYPE html>
-<html lang="en"{% if request.COOKIES|get_item:"theme" == 'dark' %} data-theme="dark"{% endif %}>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}"{% if request.COOKIES|get_item:"theme" == 'dark' %} data-theme="dark"{% endif %}>
     <head>
         <meta charset="UTF-8">
         <title>{% block title %}Admin Home{% endblock %} - Nautobot</title>

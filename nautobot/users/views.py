@@ -193,6 +193,9 @@ class UserConfigView(GenericView):
     def get(self, request):
         initial = {}
         initial["timezone"] = request.user.get_config("timezone", get_default_timezone_name())
+        # Blank rather than LANGUAGE_CODE when unset, so "no preference" stays distinguishable from
+        # "explicitly chose the default language" and keeps tracking the instance default.
+        initial["language"] = request.user.get_config("language", "")
         form = PreferenceProfileSettingsForm(initial=initial)
         preferences = request.user.all_config()
 
@@ -217,6 +220,13 @@ class UserConfigView(GenericView):
                 response = redirect("user:preferences")
                 if timezone := form.cleaned_data["timezone"]:
                     request.user.set_config("timezone", str(timezone), commit=True)
+                if language := form.cleaned_data["language"]:
+                    request.user.set_config("language", str(language), commit=True)
+                else:
+                    # Selecting the blank choice reverts to the instance default. Unlike timezone,
+                    # this has to be undoable from the form itself -- a user who cannot read the UI
+                    # they just switched to cannot be expected to find the preferences table below.
+                    request.user.clear_config("language", commit=True)
                 return response
 
             return render(

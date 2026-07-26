@@ -1,14 +1,18 @@
+{% load i18n %}
 {% load static %}
 {% load helpers %}
 {% load plugins %}
 {% load ui_framework %}
+
+{% get_current_language as LANGUAGE_CODE %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
 
 {% captureas title_block_content %}
     {% block title %}{% render_title %}{% endblock %}
 {% endcaptureas %}
 
 <!DOCTYPE html>
-<html lang="en"{% with cookie_theme=request.COOKIES|get_item:'theme' %}{% if cookie_theme == 'dark' or cookie_theme == 'light' %} data-theme="{{cookie_theme}}" data-bs-theme="{{cookie_theme}}"{% endif %}{% endwith %}>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}"{% with cookie_theme=request.COOKIES|get_item:'theme' %}{% if cookie_theme == 'dark' or cookie_theme == 'light' %} data-theme="{{cookie_theme}}" data-bs-theme="{{cookie_theme}}"{% endif %}{% endwith %}>
     <head>
         {% comment %}
         charset must be declared in the first 1024 bytes of the document so

@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import (
     AdminPasswordChangeForm as _AdminPasswordChangeForm,
     AuthenticationForm,
@@ -71,8 +72,28 @@ class AdvancedProfileSettingsForm(BootstrapMixin, forms.Form):
             )
 
 
+def _language_choices():
+    """
+    Selectable languages, with a blank choice meaning "whatever this Nautobot instance defaults to".
+
+    Evaluated per-render rather than at import so that an operator narrowing `LANGUAGES` takes effect
+    without a code change, and so tests can override the setting.
+    """
+    return [("", "Use this Nautobot instance's default language"), *settings.LANGUAGES]
+
+
 class PreferenceProfileSettingsForm(BootstrapMixin, forms.Form):
     timezone = TimeZoneFormField(required=False, help_text="Set your preferred timezone.", widget=StaticSelect2)
+    language = forms.ChoiceField(
+        required=False,
+        choices=_language_choices,
+        help_text=(
+            "Set your preferred language for the Nautobot user interface. This affects only your own sessions. "
+            "Translations other than English are machine-assisted and pending native-speaker review; anything not "
+            "yet translated is shown in English."
+        ),
+        widget=StaticSelect2,
+    )
 
 
 class NavbarFavoritesAddForm(forms.Form):
