@@ -30,6 +30,8 @@ app_name/
     - homepage.py           # Home Page Content
     - jinja_filters.py      # Jinja Filters
     - jobs.py               # Job classes
+    - locale/
+      - de/LC_MESSAGES/     # Translation catalogs
     - middleware.py         # Request/response middleware
     - migrations/
       - 0001_initial.py     # Database Models
