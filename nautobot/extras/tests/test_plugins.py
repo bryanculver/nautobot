@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest import mock, skip
 
 from django.apps import apps
@@ -7,6 +8,9 @@ from django.core.exceptions import ValidationError
 from django.template import engines
 from django.test import override_settings, tag
 from django.urls import NoReverseMatch, reverse
+from django.utils import translation
+from django.utils.translation import gettext
+from django.utils.translation.trans_real import all_locale_paths
 import django_tables2 as tables
 import netaddr
 
@@ -988,3 +992,59 @@ class PluginTemplateExtensionsTest(TestCase):
         response = self.client.get(reverse("dcim:location", kwargs={"pk": self.location.pk}))
         response_body = extract_page_body(response.content.decode(response.charset))
         self.assertIn("APP INJECTED CONTENT - FULL WIDTH", response_body, msg=response_body)
+
+
+@tag("example_app")
+class AppTranslationTestCase(TestCase):
+    """The example App ships its own catalogs; assert Nautobot serves them."""
+
+    def test_app_locale_directory_is_on_the_search_path(self):
+        """
+        An App's `locale/` directory is discovered purely by being in `INSTALLED_APPS`.
+
+        Django's `all_locale_paths()` appends `<app>/locale` for every app config that has one, and
+        Nautobot appends each `PLUGINS` entry to `INSTALLED_APPS`. Nothing registers the directory
+        with Nautobot, and there is no `NautobotAppConfig` attribute for it -- which is the point of
+        asserting it here, because the absence of any wiring makes the contract easy to break by
+        accident.
+        """
+        locale_dir = Path(apps.get_app_config("example_app").path) / "locale"
+        self.assertTrue(locale_dir.is_dir(), f"{locale_dir} is missing")
+        self.assertIn(locale_dir, {Path(entry) for entry in all_locale_paths()})
+
+    def test_app_supplied_translation_is_served(self):
+        """
+        A string the App translates, and core does not, must resolve to the App's translation.
+
+        The path assertion above would still pass if catalog merging were broken, so this checks the
+        behaviour a user actually sees.
+        """
+        with translation.override("en"):
+            self.assertEqual(gettext("Example Nautobot App"), "Example Nautobot App")
+        with translation.override("de"):
+            self.assertEqual(gettext("Example Nautobot App"), "Beispiel-Nautobot-App")
+
+    def test_app_translation_does_not_disturb_core(self):
+        """Loading an App catalog must not shadow Nautobot's own translations."""
+        with translation.override("de"):
+            self.assertEqual(gettext("Devices"), "Geräte")
+
+    def test_app_navigation_labels_are_translated(self):
+        """
+        The App's menu entries render translated while their `name` keys stay stable.
+
+        `name` is the key other Apps attach to and that tests select on; only `label` is translated.
+        Both appear in the rendered page -- the German as visible text, the English as the section
+        key -- so this asserts the German is present rather than that the English is absent.
+
+        The language comes from the user's stored preference, not from `translation.override()` or an
+        `Accept-Language` header: `UserDefinedLanguageMiddleware` deliberately re-activates the
+        user's own setting for each request and ignores header negotiation.
+        """
+        self.user.is_superuser = True
+        self.user.save()
+        self.user.set_config("language", "de", commit=True)
+        response = self.client.get(reverse("home"))
+        self.assertContains(response, "Beispiel-Nautobot-App")
+        # The stable key must survive translation -- other Apps attach to it by name.
+        self.assertContains(response, "Example Menu")

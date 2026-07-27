@@ -12,6 +12,12 @@ requires-python = ">=3.10,<3.15"
 packages = [
     {include = "example_app"}
 ]
+# Django reads `.mo`, never `.po`, so a wheel without the compiled catalogs has no translations
+# at all. Poetry's file discovery honours .gitignore, and the standard Python .gitignore lists
+# `*.mo` -- an App that ignores them must declare them here or ship an untranslated package.
+include = [
+    {path = "example_app/locale/**/*.mo", format = ["sdist", "wheel"]},
+]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
