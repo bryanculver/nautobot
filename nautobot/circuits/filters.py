@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.cloud.models import CloudNetwork
 from nautobot.core.filters import (
     BaseFilterSet,
@@ -41,11 +43,11 @@ class ProviderFilterSet(NautobotFilterSet):
     circuits = NaturalKeyOrPKMultipleChoiceFilter(
         to_field_name="cid",
         queryset=Circuit.objects.all(),
-        label="Circuit (ID or circuit ID)",
+        label=_("Circuit (ID or circuit ID)"),
     )
     has_circuits = RelatedMembershipBooleanFilter(
         field_name="circuits",
-        label="Has circuits",
+        label=_("Has circuits"),
     )
     provider_networks = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=ProviderNetwork.objects.all(),
@@ -53,14 +55,14 @@ class ProviderFilterSet(NautobotFilterSet):
     )
     has_provider_networks = RelatedMembershipBooleanFilter(
         field_name="provider_networks",
-        label="Has provider networks",
+        label=_("Has provider networks"),
     )
     location = TreeNodeMultipleChoiceFilter(
         prefers_id=True,
         field_name="circuits__circuit_terminations__location",
         queryset=Location.objects.all(),
         to_field_name="name",
-        label="Location (name or ID)",
+        label=_("Location (name or ID)"),
     )
 
     class Meta:
@@ -88,7 +90,7 @@ class ProviderNetworkFilterSet(NautobotFilterSet):
     )
     has_circuit_terminations = RelatedMembershipBooleanFilter(
         field_name="circuit_terminations",
-        label="Has circuit terminations",
+        label=_("Has circuit terminations"),
     )
     provider = NaturalKeyOrPKMultipleChoiceFilter(
         field_name="provider",
@@ -126,7 +128,7 @@ class CircuitFilterSet(NautobotFilterSet, StatusModelFilterSetMixin, TenancyMode
         field_name="circuit_terminations__provider_network",
         queryset=ProviderNetwork.objects.all(),
         to_field_name="name",
-        label="Provider Network (name or ID)",
+        label=_("Provider Network (name or ID)"),
     )
     circuit_type = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=CircuitType.objects.all(),
@@ -137,18 +139,18 @@ class CircuitFilterSet(NautobotFilterSet, StatusModelFilterSetMixin, TenancyMode
         field_name="circuit_terminations__location",
         queryset=Location.objects.all(),
         to_field_name="name",
-        label="Location (name or ID)",
+        label=_("Location (name or ID)"),
     )
     has_terminations = RelatedMembershipBooleanFilter(
         field_name="circuit_terminations",
-        label="Has terminations",
+        label=_("Has terminations"),
     )
 
     cloud_network = NaturalKeyOrPKMultipleChoiceFilter(
         field_name="circuit_terminations__cloud_network",
         queryset=CloudNetwork.objects.all(),
         to_field_name="name",
-        label="Cloud Network (name or ID)",
+        label=_("Cloud Network (name or ID)"),
     )
 
     class Meta:
@@ -184,7 +186,7 @@ class CircuitTerminationFilterSet(
     circuit = NaturalKeyOrPKMultipleChoiceFilter(
         to_field_name="cid",
         queryset=Circuit.objects.all(),
-        label="Circuit (ID or circuit ID)",
+        label=_("Circuit (ID or circuit ID)"),
     )
     provider_network = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=ProviderNetwork.objects.all(),

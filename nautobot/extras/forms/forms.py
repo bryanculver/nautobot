@@ -1,5 +1,4 @@
 from datetime import date, datetime
-import inspect
 import json
 import logging
 
@@ -13,7 +12,11 @@ from django.core.validators import MinValueValidator
 from django.db.models.fields import TextField
 from django.forms import inlineformset_factory, ModelMultipleChoiceField, MultipleHiddenInput
 from django.urls.base import reverse, reverse_lazy
+from django.utils.functional import lazy
+from django.utils.html import format_html
+from django.utils.safestring import SafeString
 from django.utils.timezone import get_current_timezone_name
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.forms import (
@@ -259,14 +262,16 @@ class ApprovalWorkflowDefinitionForm(
             "app_label", "model"
         ),
         required=True,
-        label="Model Content Type",
+        label=_("Model Content Type"),
     )
     model_constraints = JSONField(
         required=False,
-        label="Model Constraints",
-        help_text="Constraints for filtering selected model content type.<br>"
-        "Supports simple Django field lookups.<br>"
-        'Enter in <a href="https://json.org/">JSON</a> format.',
+        label=_("Model Constraints"),
+        help_text=_(
+            "Constraints for filtering selected model content type.<br>"
+            "Supports simple Django field lookups.<br>"
+            'Enter in <a href="https://json.org/">JSON</a> format.'
+        ),
     )
 
     class Meta:
@@ -287,7 +292,7 @@ class ApprovalWorkflowDefinitionBulkEditForm(TagsBulkEditFormMixin, NautobotBulk
             "app_label", "model"
         ),
         required=True,
-        label="Model Content Type",
+        label=_("Model Content Type"),
     )
 
     class Meta:
@@ -301,7 +306,7 @@ class ApprovalWorkflowDefinitionFilterForm(NautobotFilterForm):
     """Filter form for ApprovalWorkflowDefinition."""
 
     model = ApprovalWorkflowDefinition
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     name = MultiValueCharField(required=False)
     model_content_type = MultipleContentTypeField(feature="approval_workflows", choices_as_strings=True, required=False)
     tags = TagFilterField(model)
@@ -313,13 +318,13 @@ class ApprovalWorkflowStageDefinitionForm(NautobotModelForm):
     approval_workflow_definition = DynamicModelChoiceField(
         queryset=ApprovalWorkflowDefinition.objects.all(),
         required=True,
-        label="Approval Workflow Definition",
+        label=_("Approval Workflow Definition"),
     )
     approver_group = DynamicModelChoiceField(
         queryset=Group.objects.all(),
         required=True,
-        label="Approver Group",
-        help_text="User group that can approve this stage.",
+        label=_("Approver Group"),
+        help_text=_("User group that can approve this stage."),
     )
 
     class Meta:
@@ -355,9 +360,9 @@ class ApprovalWorkflowStageDefinitionBulkEditForm(TagsBulkEditFormMixin, Nautobo
     pk = forms.ModelMultipleChoiceField(
         queryset=ApprovalWorkflowStageDefinition.objects.all(), widget=forms.MultipleHiddenInput
     )
-    sequence = forms.IntegerField(required=False, label="Sequence")
-    min_approvers = forms.IntegerField(required=False, label="Minimum Approvers")
-    denial_message = forms.CharField(required=False, label="Denial Message")
+    sequence = forms.IntegerField(required=False, label=_("Sequence"))
+    min_approvers = forms.IntegerField(required=False, label=_("Minimum Approvers"))
+    denial_message = forms.CharField(required=False, label=_("Denial Message"))
 
     class Meta:
         """Meta attributes."""
@@ -370,20 +375,20 @@ class ApprovalWorkflowStageDefinitionFilterForm(NautobotFilterForm):
     """Filter form for ApprovalWorkflowStageDefinition."""
 
     model = ApprovalWorkflowStageDefinition
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     name = MultiValueCharField(required=False)
     approval_workflow_definition = DynamicModelChoiceField(
         queryset=ApprovalWorkflowDefinition.objects.all(),
         required=False,
-        label="Approval Workflow Definition",
+        label=_("Approval Workflow Definition"),
     )
-    sequence = forms.IntegerField(required=False, label="Sequence")
-    min_approvers = forms.IntegerField(required=False, label="Minimum Approvers")
+    sequence = forms.IntegerField(required=False, label=_("Sequence"))
+    min_approvers = forms.IntegerField(required=False, label=_("Minimum Approvers"))
     approver_group = DynamicModelChoiceField(
         queryset=Group.objects.all(),
         required=False,
-        label="Approver Group",
-        help_text="User group that can approve this stage.",
+        label=_("Approver Group"),
+        help_text=_("User group that can approve this stage."),
     )
 
 
@@ -391,23 +396,23 @@ class ApprovalWorkflowFilterForm(NautobotFilterForm):
     """Filter form for ApprovalWorkflow."""
 
     model = ApprovalWorkflow
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     approval_workflow_definition = DynamicModelChoiceField(
         queryset=ApprovalWorkflowDefinition.objects.all(),
         required=False,
-        label="Approval Workflow Definition",
+        label=_("Approval Workflow Definition"),
     )
     object_under_review_content_type = MultipleContentTypeField(
         feature="approval_workflows",
         choices_as_strings=True,
         required=False,
-        label="Object Under Review Content Type",
+        label=_("Object Under Review Content Type"),
     )
     current_state = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(ApprovalWorkflowStateChoices),
         widget=StaticSelect2,
-        label="Current State",
+        label=_("Current State"),
     )
 
 
@@ -415,31 +420,31 @@ class ApprovalWorkflowStageFilterForm(NautobotFilterForm):
     """Filter form for ApprovalWorkflowStage."""
 
     model = ApprovalWorkflowStage
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     approval_workflow = DynamicModelChoiceField(
         queryset=ApprovalWorkflow.objects.all(),
         required=False,
-        label="Approval Workflow",
+        label=_("Approval Workflow"),
     )
     approval_workflow_stage_definition = DynamicModelChoiceField(
         queryset=ApprovalWorkflowStageDefinition.objects.all(),
         required=False,
-        label="Approval Workflow Stage Definition",
+        label=_("Approval Workflow Stage Definition"),
     )
     state = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(ApprovalWorkflowStateChoices),
         widget=StaticSelect2,
-        label="State",
+        label=_("State"),
     )
-    decision_date_day = forms.DateField(widget=DatePicker(), required=False, label="Decision Date")
+    decision_date_day = forms.DateField(widget=DatePicker(), required=False, label=_("Decision Date"))
 
 
 class ApprovalWorkflowStageResponseFilterForm(NautobotFilterForm):
     """Filter form for ApprovalWorkflowStageResponse."""
 
     model = ApprovalWorkflowStageResponse
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
 
 
 #
@@ -449,40 +454,42 @@ class ComputedFieldBulkEditForm(BootstrapMixin, NoteModelBulkEditFormMixin):
     pk = forms.ModelMultipleChoiceField(queryset=ComputedField.objects.all(), widget=forms.MultipleHiddenInput())
 
     label = forms.CharField(
-        max_length=CHARFIELD_MAX_LENGTH, required=False, help_text="Name of the field as displayed to users."
+        max_length=CHARFIELD_MAX_LENGTH, required=False, help_text=_("Name of the field as displayed to users.")
     )
     description = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False)
     grouping = forms.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         required=False,
-        help_text="Human-readable grouping that this computed field belongs to.",
+        help_text=_("Human-readable grouping that this computed field belongs to."),
     )
     fallback_value = forms.CharField(
         max_length=500,
         required=False,
-        help_text="Fallback value (if any) to be output for the field in the case of a template rendering error.",
+        help_text=_("Fallback value (if any) to be output for the field in the case of a template rendering error."),
     )
     weight = forms.IntegerField(required=False, min_value=0)
     advanced_ui = forms.NullBooleanField(
         required=False,
-        label="Move to Advanced tab",
-        help_text="Hide this field from the object's primary information tab. It will appear in the 'Advanced' tab instead.",
+        label=_("Move to Advanced tab"),
+        help_text=_(
+            "Hide this field from the object's primary information tab. It will appear in the 'Advanced' tab instead."
+        ),
     )
     template = forms.CharField(
-        max_length=500, widget=forms.Textarea, required=False, help_text="Jinja2 template code for field value"
+        max_length=500, widget=forms.Textarea, required=False, help_text=_("Jinja2 template code for field value")
     )
     output_type = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(ComputedFieldTypeChoices.CHOICES),
         widget=StaticSelect2(),
-        label="Output Type",
-        help_text="How to display this field, markdown renders the content as Markdown",
+        label=_("Output Type"),
+        help_text=_("How to display this field, markdown renders the content as Markdown"),
     )
 
     content_type = forms.ModelChoiceField(
         queryset=ContentType.objects.filter(FeatureQuery("custom_fields").get_query()).order_by("app_label", "model"),
         required=False,
-        label="Content Type",
+        label=_("Content Type"),
     )
 
     class Meta:
@@ -494,27 +501,29 @@ class ComputedFieldForm(BootstrapMixin, forms.ModelForm):
     content_type = forms.ModelChoiceField(
         queryset=ContentType.objects.filter(FeatureQuery("custom_fields").get_query()).order_by("app_label", "model"),
         required=True,
-        label="Content Type",
+        label=_("Content Type"),
     )
     output_type = forms.ChoiceField(
         choices=ComputedFieldTypeChoices.CHOICES,
         required=True,
         initial=ComputedFieldTypeChoices.TYPE_TEXT,
         widget=StaticSelect2(),
-        label="Output Type",
-        help_text="How to display this field, markdown renders the content as Markdown",
+        label=_("Output Type"),
+        help_text=_("How to display this field, markdown renders the content as Markdown"),
     )
     key = SlugField(
-        label="Key",
+        label=_("Key"),
         max_length=CHARFIELD_MAX_LENGTH,
         slug_source="label",
-        help_text="Internal name of this field. Please use underscores rather than dashes.",
+        help_text=_("Internal name of this field. Please use underscores rather than dashes."),
     )
     template = forms.CharField(
         widget=forms.Textarea,
         help_text=(
-            "Jinja2 template code for field value.<br>"
-            "Use <code>obj</code> to refer to the object to which this computed field is attached."
+            _(
+                "Jinja2 template code for field value.<br>"
+                "Use <code>obj</code> to refer to the object to which this computed field is attached."
+            )
         ),
     )
 
@@ -542,11 +551,11 @@ class ComputedFieldForm(BootstrapMixin, forms.ModelForm):
 
 class ComputedFieldFilterForm(BootstrapMixin, forms.Form):
     model = ComputedField
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_type = CSVContentTypeField(
         queryset=ContentType.objects.filter(FeatureQuery("custom_fields").get_query()).order_by("app_label", "model"),
         required=False,
-        label="Content Type",
+        label=_("Content Type"),
     )
 
 
@@ -562,11 +571,13 @@ class ConfigContextForm(BootstrapMixin, NoteModelFormMixin, forms.ModelForm):
         query_params={"content_types": [Device._meta.label_lower, VirtualMachine._meta.label_lower]},
         required=False,
     )
-    device_types = DynamicModelMultipleChoiceField(queryset=DeviceType.objects.all(), required=False)
+    device_types = DynamicModelMultipleChoiceField(
+        queryset=DeviceType.objects.all(), required=False, label=_("Device types")
+    )
     device_families = DynamicModelMultipleChoiceField(queryset=DeviceFamily.objects.all(), required=False)
-    platforms = DynamicModelMultipleChoiceField(queryset=Platform.objects.all(), required=False)
+    platforms = DynamicModelMultipleChoiceField(queryset=Platform.objects.all(), required=False, label=_("Platforms"))
     cluster_groups = DynamicModelMultipleChoiceField(queryset=ClusterGroup.objects.all(), required=False)
-    clusters = DynamicModelMultipleChoiceField(queryset=Cluster.objects.all(), required=False)
+    clusters = DynamicModelMultipleChoiceField(queryset=Cluster.objects.all(), required=False, label=_("Clusters"))
     tenant_groups = DynamicModelMultipleChoiceField(queryset=TenantGroup.objects.all(), required=False)
     tenants = DynamicModelMultipleChoiceField(queryset=Tenant.objects.all(), required=False)
     device_redundancy_groups = DynamicModelMultipleChoiceField(
@@ -574,7 +585,7 @@ class ConfigContextForm(BootstrapMixin, NoteModelFormMixin, forms.ModelForm):
     )
     tags = DynamicModelMultipleChoiceField(queryset=Tag.objects.all(), required=False)
     dynamic_groups = DynamicModelMultipleChoiceField(
-        queryset=DynamicGroup.objects.all(), to_field_name="name", required=False
+        queryset=DynamicGroup.objects.all(), to_field_name="name", required=False, label=_("Dynamic groups")
     )
 
     # Conditional enablement of dynamic groups filtering
@@ -624,34 +635,56 @@ class ConfigContextBulkEditForm(BootstrapMixin, NoteModelBulkEditFormMixin, Bulk
 
 
 class ConfigContextFilterForm(BootstrapMixin, forms.Form):
-    q = forms.CharField(required=False, label="Search")
-    schema = DynamicModelChoiceField(queryset=ConfigContextSchema.objects.all(), to_field_name="name", required=False)
-    location = DynamicModelMultipleChoiceField(queryset=Location.objects.all(), to_field_name="name", required=False)
+    q = forms.CharField(required=False, label=_("Search"))
+    schema = DynamicModelChoiceField(
+        queryset=ConfigContextSchema.objects.all(), to_field_name="name", required=False, label=_("Schema")
+    )
+    location = DynamicModelMultipleChoiceField(
+        queryset=Location.objects.all(), to_field_name="name", required=False, label=_("Location")
+    )
     role = DynamicModelMultipleChoiceField(
-        queryset=Role.objects.get_for_models([Device, VirtualMachine]), to_field_name="name", required=False
+        queryset=Role.objects.get_for_models([Device, VirtualMachine]),
+        to_field_name="name",
+        required=False,
+        label=_("Role"),
     )
     device_type = DynamicModelMultipleChoiceField(
-        queryset=DeviceType.objects.all(), to_field_name="model", required=False
+        queryset=DeviceType.objects.all(),
+        to_field_name="model",
+        required=False,
+        label=_("Device type"),
     )
     device_family = DynamicModelMultipleChoiceField(
-        queryset=DeviceFamily.objects.all(), to_field_name="name", required=False
+        queryset=DeviceFamily.objects.all(),
+        to_field_name="name",
+        required=False,
+        label=_("Device family"),
     )
-    platform = DynamicModelMultipleChoiceField(queryset=Platform.objects.all(), to_field_name="name", required=False)
+    platform = DynamicModelMultipleChoiceField(
+        queryset=Platform.objects.all(), to_field_name="name", required=False, label=_("Platform")
+    )
     cluster_group = DynamicModelMultipleChoiceField(
-        queryset=ClusterGroup.objects.all(), to_field_name="name", required=False
+        queryset=ClusterGroup.objects.all(), to_field_name="name", required=False, label=_("Cluster group")
     )
-    cluster_id = DynamicModelMultipleChoiceField(queryset=Cluster.objects.all(), required=False, label="Cluster")
+    cluster_id = DynamicModelMultipleChoiceField(queryset=Cluster.objects.all(), required=False, label=_("Cluster"))
     tenant_group = DynamicModelMultipleChoiceField(
-        queryset=TenantGroup.objects.all(), to_field_name="name", required=False
+        queryset=TenantGroup.objects.all(), to_field_name="name", required=False, label=_("Tenant group")
     )
-    tenant = DynamicModelMultipleChoiceField(queryset=Tenant.objects.all(), to_field_name="name", required=False)
+    tenant = DynamicModelMultipleChoiceField(
+        queryset=Tenant.objects.all(), to_field_name="name", required=False, label=_("Tenant")
+    )
     device_redundancy_group = DynamicModelMultipleChoiceField(
-        queryset=DeviceRedundancyGroup.objects.all(), to_field_name="name", required=False
+        queryset=DeviceRedundancyGroup.objects.all(),
+        to_field_name="name",
+        required=False,
+        label=_("Device redundancy group"),
     )
     dynamic_groups = DynamicModelMultipleChoiceField(
-        queryset=DynamicGroup.objects.all(), to_field_name="name", required=False
+        queryset=DynamicGroup.objects.all(), to_field_name="name", required=False, label=_("Dynamic groups")
     )
-    tag = DynamicModelMultipleChoiceField(queryset=Tag.objects.all(), to_field_name="name", required=False)
+    tag = DynamicModelMultipleChoiceField(
+        queryset=Tag.objects.all(), to_field_name="name", required=False, label=_("Tag")
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -688,7 +721,7 @@ class ConfigContextSchemaBulkEditForm(NautobotBulkEditForm):
 
 
 class ConfigContextSchemaFilterForm(BootstrapMixin, forms.Form):
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
 
 
 #
@@ -712,9 +745,21 @@ CustomFieldChoiceFormSet = inlineformset_factory(
 
 
 class CustomFieldDescriptionField(CommentField):
+    def _build_default_helptext(self):
+        # `format_html` rather than concatenation so the `<br>` stays out of the translatable
+        # string, and so the parent's already-safe markup is not re-escaped.
+        return format_html(
+            "{}<br>{}",
+            _("Also used as the help text when editing models using this custom field."),
+            super().default_helptext,
+        )
+
     @property
     def default_helptext(self):
-        return "Also used as the help text when editing models using this custom field.<br>" + super().default_helptext
+        # Deferred for the same reason as `CommentField.default_helptext`, and doubly so here:
+        # `format_html` resolves both the `gettext` call above *and* the parent's lazy proxy on the
+        # spot, so building this eagerly would re-freeze the text the parent just fixed.
+        return lazy(self._build_default_helptext, SafeString)()
 
 
 class CustomFieldBulkEditForm(BootstrapMixin, NoteModelBulkEditFormMixin):
@@ -722,41 +767,43 @@ class CustomFieldBulkEditForm(BootstrapMixin, NoteModelBulkEditFormMixin):
     grouping = forms.CharField(
         required=False,
         max_length=CHARFIELD_MAX_LENGTH,
-        label="Grouping",
-        help_text="Human-readable grouping that this custom field belongs to.",
+        label=_("Grouping"),
+        help_text=_("Human-readable grouping that this custom field belongs to."),
     )
     description = forms.CharField(
         required=False,
         max_length=CHARFIELD_MAX_LENGTH,
-        label="Description",
-        help_text="A helpful description for this field.",
+        label=_("Description"),
+        help_text=_("A helpful description for this field."),
     )
     required = forms.NullBooleanField(
         required=False,
         widget=BulkEditNullBooleanSelect,
-        label="Required",
-        help_text="If true, this field is required when creating new objects or editing an existing object.",
+        label=_("Required"),
+        help_text=_("If true, this field is required when creating new objects or editing an existing object."),
     )
     filter_logic = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(CustomFieldFilterLogicChoices.CHOICES),
-        label="Filter logic",
-        help_text="Loose matches any instance of a given string; Exact matches the entire field.",
+        label=_("Filter logic"),
+        help_text=_("Loose matches any instance of a given string; Exact matches the entire field."),
     )
     weight = forms.IntegerField(
-        required=False, label="Weight", help_text="Fields with higher weights appear lower in a form."
+        required=False, label=_("Weight"), help_text=_("Fields with higher weights appear lower in a form.")
     )
     advanced_ui = forms.NullBooleanField(
         required=False,
         widget=BulkEditNullBooleanSelect,
-        label="Move to Advanced tab",
-        help_text="Hide this field from the object's primary information tab. It will appear in the 'Advanced' tab instead.",
+        label=_("Move to Advanced tab"),
+        help_text=_(
+            "Hide this field from the object's primary information tab. It will appear in the 'Advanced' tab instead."
+        ),
     )
     add_content_types = MultipleContentTypeField(
-        limit_choices_to=FeatureQuery("custom_fields"), required=False, label="Add Content Types"
+        limit_choices_to=FeatureQuery("custom_fields"), required=False, label=_("Add Content Types")
     )
     remove_content_types = MultipleContentTypeField(
-        limit_choices_to=FeatureQuery("custom_fields"), required=False, label="Remove Content Types"
+        limit_choices_to=FeatureQuery("custom_fields"), required=False, label=_("Remove Content Types")
     )
 
     class Meta:
@@ -779,21 +826,21 @@ class CustomFieldBulkEditForm(BootstrapMixin, NoteModelBulkEditFormMixin):
 
 class CustomFieldForm(BootstrapMixin, forms.ModelForm):
     label = forms.CharField(
-        required=True, max_length=CHARFIELD_MAX_LENGTH, help_text="Name of the field as displayed to users."
+        required=True, max_length=CHARFIELD_MAX_LENGTH, help_text=_("Name of the field as displayed to users.")
     )
     key = SlugField(
-        label="Key",
+        label=_("Key"),
         max_length=CHARFIELD_MAX_LENGTH,
         slug_source="label",
-        help_text="Internal name of this field. Please use underscores rather than dashes.",
+        help_text=_("Internal name of this field. Please use underscores rather than dashes."),
     )
     description = CustomFieldDescriptionField(
-        label="Description",
+        label=_("Description"),
         required=False,
     )
     content_types = MultipleContentTypeField(
         feature="custom_fields",
-        help_text="The object(s) to which this field applies.",
+        help_text=_("The object(s) to which this field applies."),
         widget=StaticSelect2Multiple(
             attrs={
                 "hx-trigger": "change",
@@ -804,6 +851,7 @@ class CustomFieldForm(BootstrapMixin, forms.ModelForm):
                 "hx-include": "[name='required']",
             }
         ),
+        label=_("Content types"),
     )
 
     class Meta:
@@ -845,20 +893,21 @@ class CustomFieldForm(BootstrapMixin, forms.ModelForm):
 
 class CustomFieldFilterForm(NautobotFilterForm):
     model = CustomField
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_types = MultipleContentTypeField(
         queryset=ContentType.objects.filter(FeatureQuery("custom_fields").get_query()),
         choices_as_strings=True,
         required=False,
-        label="Content Type(s)",
+        label=_("Content Type(s)"),
     )
 
 
 class CustomFieldContentTypesForm(BootstrapMixin, forms.ModelForm):
     content_types = MultipleContentTypeField(
         feature="custom_fields",
-        help_text="The object(s) to which this field applies.",
+        help_text=_("The object(s) to which this field applies."),
         required=False,
+        label=_("Content types"),
     )
 
     class Meta:
@@ -932,7 +981,7 @@ class CustomLinkBulkEditForm(BootstrapMixin, NoteModelBulkEditFormMixin):
     content_type = forms.ModelChoiceField(
         queryset=ContentType.objects.filter(FeatureQuery("custom_links").get_query()).order_by("app_label", "model"),
         required=False,
-        label="Content Type",
+        label=_("Content Type"),
     )
 
     class Meta:
@@ -943,7 +992,7 @@ class CustomLinkBulkEditForm(BootstrapMixin, NoteModelBulkEditFormMixin):
 class CustomLinkForm(BootstrapMixin, forms.ModelForm):
     content_type = forms.ModelChoiceField(
         queryset=ContentType.objects.filter(FeatureQuery("custom_links").get_query()).order_by("app_label", "model"),
-        label="Content Type",
+        label=_("Content Type"),
     )
 
     class Meta:
@@ -962,11 +1011,11 @@ class CustomLinkForm(BootstrapMixin, forms.ModelForm):
 
 class CustomLinkFilterForm(BootstrapMixin, forms.Form):
     model = CustomLink
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_type = CSVContentTypeField(
         queryset=ContentType.objects.filter(FeatureQuery("custom_links").get_query()).order_by("app_label", "model"),
         required=False,
-        label="Content Type",
+        label=_("Content Type"),
     )
 
 
@@ -976,10 +1025,7 @@ class CustomLinkFilterForm(BootstrapMixin, forms.Form):
 class DynamicGroupBulkEditForm(NautobotBulkEditForm):
     pk = forms.ModelMultipleChoiceField(queryset=DynamicGroup.objects.all(), widget=forms.MultipleHiddenInput())
     description = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False)
-    tenant = DynamicModelChoiceField(
-        queryset=Tenant.objects.all(),
-        required=False,
-    )
+    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False, label=_("Tenant"))
 
     class Meta:
         model = DynamicGroup
@@ -994,7 +1040,7 @@ class DynamicGroupForm(TenancyForm, NautobotModelForm):
 
     content_type = CSVContentTypeField(
         queryset=ContentType.objects.filter(FeatureQuery("dynamic_groups").get_query()).order_by("app_label", "model"),
-        label="Content Type",
+        label=_("Content Type"),
     )
     group_type = forms.ChoiceField(choices=DynamicGroupTypeChoices, widget=StaticSelect2())
 
@@ -1021,6 +1067,7 @@ class DynamicGroupMembershipFormSetForm(forms.ModelForm):
             "content_type": "$content_type",
             "group_type": [DynamicGroupTypeChoices.TYPE_DYNAMIC_FILTER, DynamicGroupTypeChoices.TYPE_DYNAMIC_SET],
         },
+        label=_("Group"),
     )
 
     class Meta:
@@ -1054,9 +1101,9 @@ class DynamicGroupFilterForm(TenancyFilterForm, NautobotFilterForm):
     """DynamicGroup filter form."""
 
     model = DynamicGroup
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_type = MultipleContentTypeField(
-        feature="dynamic_groups", choices_as_strings=True, required=False, label="Content Type"
+        feature="dynamic_groups", choices_as_strings=True, required=False, label=_("Content Type")
     )
     group_type = forms.MultipleChoiceField(
         choices=DynamicGroupTypeChoices, required=False, widget=StaticSelect2Multiple()
@@ -1071,8 +1118,8 @@ class DynamicGroupBulkAssignForm(BootstrapMixin, BulkEditForm):
     )
     create_and_assign_to_new_group_name = forms.CharField(
         required=False,
-        label="Create a new group",
-        help_text="Create a new group with this name and assign the selected objects to it.",
+        label=_("Create a new group"),
+        help_text=_("Create a new group with this name and assign the selected objects to it."),
     )
 
     def __init__(self, model, *args, **kwargs):
@@ -1090,7 +1137,7 @@ class DynamicGroupBulkAssignForm(BootstrapMixin, BulkEditForm):
                 "group_type": "static",
                 "content_type": model._meta.label_lower,
             },
-            label="Add to existing group(s)",
+            label=_("Add to existing group(s)"),
         )
         self.fields["remove_from_groups"] = DynamicModelMultipleChoiceField(
             queryset=DynamicGroup.objects.filter(group_type=DynamicGroupTypeChoices.TYPE_STATIC),
@@ -1099,7 +1146,7 @@ class DynamicGroupBulkAssignForm(BootstrapMixin, BulkEditForm):
                 "group_type": "static",
                 "content_type": model._meta.label_lower,
             },
-            label="Remove from group(s)",
+            label=_("Remove from group(s)"),
         )
 
     class Meta:
@@ -1110,7 +1157,7 @@ class DynamicGroupBulkAssignForm(BootstrapMixin, BulkEditForm):
 
         if "add_to_groups" in data and "remove_from_groups" in data:
             if data["add_to_groups"].filter(pk__in=data["remove_from_groups"].values_list("pk", flat=True)).exists():
-                raise ValidationError("Same group specified for both addition and removal")
+                raise ValidationError(_("Same group specified for both addition and removal"))
 
         return data
 
@@ -1122,16 +1169,18 @@ class DynamicGroupBulkAssignForm(BootstrapMixin, BulkEditForm):
 
 class SavedViewForm(BootstrapMixin, forms.ModelForm):
     is_global_default = forms.BooleanField(
-        label="Is global default",
+        label=_("Is global default"),
         required=False,
-        help_text="If checked, this saved view will be used globally as the default saved view for this particular view",
+        help_text=_(
+            "If checked, this saved view will be used globally as the default saved view for this particular view"
+        ),
     )
     is_shared = forms.BooleanField(
-        label="Is shared",
+        label=_("Is shared"),
         required=False,
-        help_text="If checked, all users will be able to see this saved view",
+        help_text=_("If checked, all users will be able to see this saved view"),
     )
-    config = JSONField(widget=forms.Textarea, required=False, help_text="Read-only config data", disabled=True)
+    config = JSONField(widget=forms.Textarea, required=False, help_text=_("Read-only config data"), disabled=True)
 
     class Meta:
         model = SavedView
@@ -1140,9 +1189,9 @@ class SavedViewForm(BootstrapMixin, forms.ModelForm):
 
 class SavedViewModalForm(BootstrapMixin, forms.ModelForm):
     is_shared = forms.BooleanField(
-        label="Is shared",
+        label=_("Is shared"),
         required=False,
-        help_text="If checked, all users will be able to see this saved view",
+        help_text=_("If checked, all users will be able to see this saved view"),
     )
 
     class Meta:
@@ -1152,7 +1201,7 @@ class SavedViewModalForm(BootstrapMixin, forms.ModelForm):
 
 class StaticGroupAssociationFilterForm(NautobotFilterForm):
     model = StaticGroupAssociation
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     dynamic_group = DynamicModelMultipleChoiceField(queryset=DynamicGroup.objects.all(), required=False)
     associated_object_type = MultipleContentTypeField(feature="dynamic_groups", choices_as_strings=True, required=False)
 
@@ -1167,11 +1216,11 @@ class ExportTemplateBulkEditForm(NautobotBulkEditForm):
     mime_type = forms.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         required=False,
-        label="MIME type",
-        help_text="Defaults to <code>text/plain</code>",
+        label=_("MIME type"),
+        help_text=_("Defaults to <code>text/plain</code>"),
     )
     file_extension = forms.CharField(
-        max_length=CHARFIELD_MAX_LENGTH, required=False, help_text="Extension to append to the rendered filename"
+        max_length=CHARFIELD_MAX_LENGTH, required=False, help_text=_("Extension to append to the rendered filename")
     )
 
     content_type = forms.ModelChoiceField(
@@ -1179,7 +1228,7 @@ class ExportTemplateBulkEditForm(NautobotBulkEditForm):
             "app_label", "model"
         ),
         required=False,
-        label="Content Type",
+        label=_("Content Type"),
     )
 
     class Meta:
@@ -1192,7 +1241,7 @@ class ExportTemplateForm(BootstrapMixin, forms.ModelForm):
         queryset=ContentType.objects.filter(FeatureQuery("export_templates").get_query()).order_by(
             "app_label", "model"
         ),
-        label="Content Type",
+        label=_("Content Type"),
     )
 
     class Meta:
@@ -1209,13 +1258,13 @@ class ExportTemplateForm(BootstrapMixin, forms.ModelForm):
 
 class ExportTemplateFilterForm(BootstrapMixin, forms.Form):
     model = ExportTemplate
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_type = CSVContentTypeField(
         queryset=ContentType.objects.filter(FeatureQuery("export_templates").get_query()).order_by(
             "app_label", "model"
         ),
         required=False,
-        label="Content Type",
+        label=_("Content Type"),
     )
 
 
@@ -1229,26 +1278,26 @@ class ExternalIntegrationForm(NautobotModelForm):
         model = ExternalIntegration
         fields = "__all__"
 
-        HEADERS_HELP_TEXT = """
-            Optional user-defined <a href="https://json.org/">JSON</a> data for this integration. Example:
-            <pre><code class="language-json">{
-                "Accept": "application/json",
-                "Content-Type": "application/json"
-            }</code></pre>
-        """
-        EXTRA_CONFIG_HELP_TEXT = """
-            Optional user-defined <a href="https://json.org/">JSON</a> data for this integration. Example:
-            <pre><code class="language-json">{
-                "key": "value",
-                "key2": [
-                    "value1",
-                    "value2"
-                ]
-            }</code></pre>
-        """
+        HEADERS_HELP_TEXT = _(
+            'Optional user-defined <a href="https://json.org/">JSON</a> data for this integration. Example:\n'
+            '<pre><code class="language-json">{\n'
+            '    "Accept": "application/json",\n'
+            '    "Content-Type": "application/json"\n'
+            "}</code></pre>"
+        )
+        EXTRA_CONFIG_HELP_TEXT = _(
+            'Optional user-defined <a href="https://json.org/">JSON</a> data for this integration. Example:\n'
+            '<pre><code class="language-json">{\n'
+            '    "key": "value",\n'
+            '    "key2": [\n'
+            '        "value1",\n'
+            '        "value2"\n'
+            "    ]\n"
+            "}</code></pre>"
+        )
         help_texts = {
-            "headers": inspect.cleandoc(HEADERS_HELP_TEXT),
-            "extra_config": inspect.cleandoc(EXTRA_CONFIG_HELP_TEXT),
+            "headers": HEADERS_HELP_TEXT,
+            "extra_config": EXTRA_CONFIG_HELP_TEXT,
         }
 
 
@@ -1257,17 +1306,17 @@ class ExternalIntegrationBulkEditForm(NautobotBulkEditForm):
         queryset=ExternalIntegration.objects.all(),
         widget=forms.MultipleHiddenInput(),
     )
-    remote_url = forms.CharField(required=False, label="Remote URL")
+    remote_url = forms.CharField(required=False, label=_("Remote URL"))
     secrets_group = DynamicModelChoiceField(required=False, queryset=SecretsGroup.objects.all())
-    verify_ssl = forms.NullBooleanField(required=False, label="Verify SSL", widget=BulkEditNullBooleanSelect)
+    verify_ssl = forms.NullBooleanField(required=False, label=_("Verify SSL"), widget=BulkEditNullBooleanSelect)
     timeout = forms.IntegerField(required=False, min_value=0)
-    extra_config = JSONField(required=False, widget=forms.Textarea, help_text="JSON data")
+    extra_config = JSONField(required=False, widget=forms.Textarea, help_text=_("JSON data"))
     http_method = forms.ChoiceField(
         required=False,
-        label="HTTP Method",
+        label=_("HTTP Method"),
         choices=add_blank_choice(WebhookHttpMethodChoices),
     )
-    headers = JSONField(required=False, widget=forms.Textarea, help_text="Headers for the HTTP request")
+    headers = JSONField(required=False, widget=forms.Textarea, help_text=_("Headers for the HTTP request"))
 
     class Meta:
         model = ExternalIntegration
@@ -1276,7 +1325,7 @@ class ExternalIntegrationBulkEditForm(NautobotBulkEditForm):
 
 class ExternalIntegrationFilterForm(NautobotFilterForm):
     model = ExternalIntegration
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     secrets_group = DynamicModelMultipleChoiceField(
         queryset=SecretsGroup.objects.all(), to_field_name="name", required=False
     )
@@ -1307,19 +1356,19 @@ class PasswordInputWithPlaceholder(forms.PasswordInput):
 
 
 class GitRepositoryForm(NautobotModelForm):
-    slug = SlugField(help_text="Filesystem-friendly unique shorthand")
+    slug = SlugField(help_text=_("Filesystem-friendly unique shorthand"))
 
     remote_url = LaxURLField(
         required=True,
-        label="Remote URL",
-        help_text="Only http:// and https:// URLs are presently supported",
+        label=_("Remote URL"),
+        help_text=_("Only http:// and https:// URLs are presently supported"),
     )
 
     secrets_group = DynamicModelChoiceField(required=False, queryset=SecretsGroup.objects.all())
 
     provided_contents = forms.MultipleChoiceField(
         required=False,
-        label="Provides",
+        label=_("Provides"),
         choices=get_git_datasource_content_choices,
     )
 
@@ -1361,7 +1410,7 @@ class GitRepositoryBulkEditForm(NautobotBulkEditForm):
         widget=forms.MultipleHiddenInput(),
     )
     remote_url = LaxURLField(
-        label="Remote URL",
+        label=_("Remote URL"),
         required=False,
     )
     branch = forms.CharField(
@@ -1376,12 +1425,12 @@ class GitRepositoryBulkEditForm(NautobotBulkEditForm):
 
 class GitRepositoryFilterForm(BootstrapMixin, forms.Form):
     model = GitRepository
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     name = forms.CharField(required=False)
     branch = forms.CharField(required=False)
     provided_contents = forms.ChoiceField(
         required=False,
-        label="Provides",
+        label=_("Provides"),
         choices=add_blank_choice(get_git_datasource_content_choices()),
     )
 
@@ -1407,7 +1456,7 @@ class GraphQLQueryForm(BootstrapMixin, forms.ModelForm):
 
 class GraphQLQueryFilterForm(BootstrapMixin, forms.Form):
     model = GraphQLQuery
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
 
 
 #
@@ -1443,13 +1492,13 @@ class JobForm(BootstrapMixin, forms.Form):
 
 class JobEditForm(NautobotModelForm):
     job_queues = DynamicModelMultipleChoiceField(
-        label="Job Queues",
+        label=_("Job Queues"),
         queryset=JobQueue.objects.all(),
     )
     default_job_queue = DynamicModelChoiceField(
-        label="Default Job Queue",
+        label=_("Default Job Queue"),
         queryset=JobQueue.objects.all(),
-        help_text="The default job queue to route this job to",
+        help_text=_("The default job queue to route this job to"),
         required=False,
     )
 
@@ -1528,109 +1577,131 @@ class JobBulkEditForm(NautobotBulkEditForm):
     )
     grouping = forms.CharField(
         required=False,
-        help_text="Human-readable grouping that this job belongs to",
+        help_text=_("Human-readable grouping that this job belongs to"),
     )
     description = forms.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         required=False,
-        help_text="Markdown formatting and a limited subset of HTML are supported",
+        help_text=_("Markdown formatting and a limited subset of HTML are supported"),
     )
     enabled = forms.NullBooleanField(
-        required=False, widget=BulkEditNullBooleanSelect, help_text="Whether this job can be executed by users"
+        required=False, widget=BulkEditNullBooleanSelect, help_text=_("Whether this job can be executed by users")
     )
     has_sensitive_variables = forms.NullBooleanField(
-        required=False, widget=BulkEditNullBooleanSelect, help_text="Whether this job contains sensitive variables"
+        required=False, widget=BulkEditNullBooleanSelect, help_text=_("Whether this job contains sensitive variables")
     )
     console_log_default = forms.NullBooleanField(
         required=False,
         widget=BulkEditNullBooleanSelect,
-        help_text="Whether the job defaults to running with console log argument set to true",
+        help_text=_("Whether the job defaults to running with console log argument set to true"),
     )
     hidden = forms.NullBooleanField(
         required=False,
         widget=BulkEditNullBooleanSelect,
-        help_text="Whether the job defaults to not being shown in the UI",
+        help_text=_("Whether the job defaults to not being shown in the UI"),
     )
     dryrun_default = forms.NullBooleanField(
         required=False,
         widget=BulkEditNullBooleanSelect,
-        help_text="Whether the job defaults to running with dryrun argument set to true",
+        help_text=_("Whether the job defaults to running with dryrun argument set to true"),
     )
     soft_time_limit = forms.FloatField(
         required=False,
         validators=[MinValueValidator(0)],
-        help_text="Maximum runtime in seconds before the job will receive a <code>SoftTimeLimitExceeded</code> "
-        "exception.<br>Set to 0 to use Nautobot system default",
+        help_text=_(
+            "Maximum runtime in seconds before the job will receive a <code>SoftTimeLimitExceeded</code> "
+            "exception.<br>Set to 0 to use Nautobot system default"
+        ),
     )
     time_limit = forms.FloatField(
         required=False,
         validators=[MinValueValidator(0)],
-        help_text="Maximum runtime in seconds before the job will be forcibly terminated."
-        "<br>Set to 0 to use Nautobot system default",
+        help_text=_(
+            "Maximum runtime in seconds before the job will be forcibly terminated."
+            "<br>Set to 0 to use Nautobot system default"
+        ),
     )
     job_queues = DynamicModelMultipleChoiceField(
-        label="Job Queues",
+        label=_("Job Queues"),
         queryset=JobQueue.objects.all(),
         required=False,
-        help_text="Job Queue instances that this job can run on",
+        help_text=_("Job Queue instances that this job can run on"),
     )
     default_job_queue = DynamicModelChoiceField(
-        label="Default Job Queue",
+        label=_("Default Job Queue"),
         queryset=JobQueue.objects.all(),
         required=False,
-        help_text="Default Job Queue the job runs on if no Job Queue is specified",
+        help_text=_("Default Job Queue the job runs on if no Job Queue is specified"),
     )
     is_singleton = forms.NullBooleanField(
         required=False,
         widget=BulkEditNullBooleanSelect,
-        help_text="Whether this job should fail to run if another instance of this job is already running",
+        help_text=_("Whether this job should fail to run if another instance of this job is already running"),
     )
     # Flags to indicate whether the above properties are inherited from the source code or overridden by the database
     # Text field overrides
     clear_grouping_override = forms.BooleanField(
         required=False,
-        help_text="If checked, groupings will be reverted to the default values defined in each Job's source code",
+        help_text=_("If checked, groupings will be reverted to the default values defined in each Job's source code"),
     )
     clear_description_override = forms.BooleanField(
         required=False,
-        help_text="If checked, descriptions will be reverted to the default values defined in each Job's source code",
+        help_text=_(
+            "If checked, descriptions will be reverted to the default values defined in each Job's source code"
+        ),
     )
     clear_soft_time_limit_override = forms.BooleanField(
         required=False,
-        help_text="If checked, soft time limits will be reverted to the default values defined in each Job's source code",
+        help_text=_(
+            "If checked, soft time limits will be reverted to the default values defined in each Job's source code"
+        ),
     )
     clear_time_limit_override = forms.BooleanField(
         required=False,
-        help_text="If checked, time limits will be reverted to the default values defined in each Job's source code",
+        help_text=_("If checked, time limits will be reverted to the default values defined in each Job's source code"),
     )
     clear_job_queues_override = forms.BooleanField(
         required=False,
-        help_text="If checked, the selected job queues will be reverted to the default values defined in each Job's source code",
+        help_text=_(
+            "If checked, the selected job queues will be reverted to the default values defined in each Job's source code"
+        ),
     )
     clear_default_job_queue_override = forms.BooleanField(
         required=False,
-        help_text="If checked, the default job queue will be reverted to the first value of task_queues defined in each Job's source code",
+        help_text=_(
+            "If checked, the default job queue will be reverted to the first value of task_queues defined in each Job's source code"
+        ),
     )
     # Boolean overrides
     clear_console_log_default_override = forms.BooleanField(
         required=False,
-        help_text="If checked, the values of console log will be reverted to the default values defined in each Job's source code",
+        help_text=_(
+            "If checked, the values of console log will be reverted to the default values defined in each Job's source code"
+        ),
     )
     clear_dryrun_default_override = forms.BooleanField(
         required=False,
-        help_text="If checked, the values of dryrun default will be reverted to the default values defined in each Job's source code",
+        help_text=_(
+            "If checked, the values of dryrun default will be reverted to the default values defined in each Job's source code"
+        ),
     )
     clear_hidden_override = forms.BooleanField(
         required=False,
-        help_text="If checked, the values of hidden will be reverted to the default values defined in each Job's source code",
+        help_text=_(
+            "If checked, the values of hidden will be reverted to the default values defined in each Job's source code"
+        ),
     )
     clear_has_sensitive_variables_override = forms.BooleanField(
         required=False,
-        help_text="If checked, the values of has sensitive variables will be reverted to the default values defined in each Job's source code",
+        help_text=_(
+            "If checked, the values of has sensitive variables will be reverted to the default values defined in each Job's source code"
+        ),
     )
     is_singleton_override = forms.BooleanField(
         required=False,
-        help_text="If checked, the values of is singleton will be reverted to the default values defined in each Job's source code",
+        help_text=_(
+            "If checked, the values of is singleton will be reverted to the default values defined in each Job's source code"
+        ),
     )
 
     class Meta:
@@ -1687,7 +1758,7 @@ class JobBulkEditForm(NautobotBulkEditForm):
 
 class JobFilterForm(BootstrapMixin, forms.Form):
     model = Job
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     installed = forms.NullBooleanField(
         initial=True,
         required=False,
@@ -1695,22 +1766,35 @@ class JobFilterForm(BootstrapMixin, forms.Form):
     )
     enabled = forms.NullBooleanField(required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES))
     has_sensitive_variables = forms.NullBooleanField(
-        required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES)
+        required=False,
+        label=_("Has sensitive variables"),
+        widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES),
     )
     console_log_default = forms.NullBooleanField(
         required=False,
+        label=_("Console log default"),
         widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES),
     )
-    dryrun_default = forms.NullBooleanField(required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES))
+    dryrun_default = forms.NullBooleanField(
+        required=False,
+        label=_("Dryrun default"),
+        widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES),
+    )
     hidden = forms.NullBooleanField(
         initial=False,
         required=False,
+        label=_("Hidden"),
         widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES),
     )
-    read_only = forms.NullBooleanField(required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES))
+    read_only = forms.NullBooleanField(
+        required=False,
+        label=_("Read only"),
+        widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES),
+    )
     is_job_hook_receiver = forms.NullBooleanField(
         initial=False,
         required=False,
+        label=_("Is job hook receiver"),
         widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES),
     )
     is_job_button_receiver = forms.NullBooleanField(
@@ -1727,7 +1811,7 @@ class JobHookBulkEditForm(NautobotBulkEditForm):
         queryset=Job.objects.all(),
         query_params={"is_job_hook_receiver": True},
         required=False,
-        label="Job",
+        label=_("Job"),
     )
     enabled = forms.NullBooleanField(required=False, widget=BulkEditNullBooleanSelect)
     type_create = forms.NullBooleanField(required=False, widget=BulkEditNullBooleanSelect)
@@ -1736,13 +1820,13 @@ class JobHookBulkEditForm(NautobotBulkEditForm):
     add_content_types = MultipleContentTypeField(
         queryset=ChangeLoggedModelsQuery().as_queryset(),
         required=False,
-        label="Add Content Type(s)",
+        label=_("Add Content Type(s)"),
     )
 
     remove_content_types = MultipleContentTypeField(
         queryset=ChangeLoggedModelsQuery().as_queryset(),
         required=False,
-        label="Remove Content Type(s)",
+        label=_("Remove Content Type(s)"),
     )
 
     class Meta:
@@ -1760,7 +1844,7 @@ class JobHookBulkEditForm(NautobotBulkEditForm):
 
 class JobHookForm(BootstrapMixin, forms.ModelForm):
     content_types = MultipleContentTypeField(
-        queryset=ChangeLoggedModelsQuery().as_queryset(), required=True, label="Content Type(s)"
+        queryset=ChangeLoggedModelsQuery().as_queryset(), required=True, label=_("Content Type(s)")
     )
     job = DynamicModelChoiceField(
         queryset=Job.objects.filter(is_job_hook_receiver=True),
@@ -1799,16 +1883,16 @@ class JobHookForm(BootstrapMixin, forms.ModelForm):
 
 class JobHookFilterForm(BootstrapMixin, forms.Form):
     model = JobHook
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_types = MultipleContentTypeField(
         queryset=ChangeLoggedModelsQuery().as_queryset(),
         choices_as_strings=True,
         required=False,
-        label="Content Type(s)",
+        label=_("Content Type(s)"),
     )
     enabled = forms.NullBooleanField(required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES))
     job = DynamicModelMultipleChoiceField(
-        label="Job",
+        label=_("Job"),
         queryset=Job.objects.all(),
         required=False,
         to_field_name="name",
@@ -1826,14 +1910,11 @@ class JobQueueBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
     )
     queue_type = forms.ChoiceField(
         choices=JobQueueTypeChoices,
-        help_text="The job can either run immediately, once in the future, or on a recurring schedule.",
-        label="Type",
+        help_text=_("The job can either run immediately, once in the future, or on a recurring schedule."),
+        label=_("Type"),
         required=False,
     )
-    tenant = DynamicModelChoiceField(
-        queryset=Tenant.objects.all(),
-        required=False,
-    )
+    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False, label=_("Tenant"))
     description = forms.CharField(required=False, max_length=CHARFIELD_MAX_LENGTH)
 
     class Meta:
@@ -1846,15 +1927,17 @@ class JobQueueBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
 
 class JobQueueFilterForm(NautobotFilterForm):
     model = JobQueue
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     name = forms.CharField(required=False)
-    jobs = DynamicModelMultipleChoiceField(queryset=Job.objects.all(), required=False)
+    jobs = DynamicModelMultipleChoiceField(queryset=Job.objects.all(), required=False, label=_("Jobs"))
     queue_type = forms.MultipleChoiceField(
         choices=JobQueueTypeChoices,
         required=False,
         widget=StaticSelect2Multiple(),
     )
-    tenant = DynamicModelMultipleChoiceField(queryset=Tenant.objects.all(), to_field_name="name", required=False)
+    tenant = DynamicModelMultipleChoiceField(
+        queryset=Tenant.objects.all(), to_field_name="name", required=False, label=_("Tenant")
+    )
     tags = TagFilterField(model)
 
 
@@ -1862,12 +1945,9 @@ class JobQueueForm(NautobotModelForm):
     name = forms.CharField(required=True, max_length=CHARFIELD_MAX_LENGTH)
     queue_type = forms.ChoiceField(
         choices=JobQueueTypeChoices,
-        label="Queue Type",
+        label=_("Queue Type"),
     )
-    tenant = DynamicModelChoiceField(
-        queryset=Tenant.objects.all(),
-        required=False,
-    )
+    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False, label=_("Tenant"))
     description = forms.CharField(required=False, max_length=CHARFIELD_MAX_LENGTH)
     tags = DynamicModelMultipleChoiceField(queryset=Tag.objects.all(), required=False)
 
@@ -1886,23 +1966,23 @@ class JobScheduleForm(BootstrapMixin, forms.Form):
 
     _schedule_type = forms.ChoiceField(
         choices=JobExecutionType,
-        help_text="The job can either run immediately, once in the future, or on a recurring schedule.",
-        label="Type",
+        help_text=_("The job can either run immediately, once in the future, or on a recurring schedule."),
+        label=_("Type"),
     )
     _schedule_name = forms.CharField(
         required=False,
-        label="Schedule name",
-        help_text="Name for the job schedule.",
+        label=_("Schedule name"),
+        help_text=_("Name for the job schedule."),
     )
     _schedule_start_time = forms.DateTimeField(
         required=False,
-        label="Starting date and time",
+        label=_("Starting date and time"),
         widget=DateTimePicker(),
     )
     _recurrence_custom_time = forms.CharField(
         required=False,
-        label="Crontab",
-        help_text="Custom crontab syntax (* * * * *)",
+        label=_("Crontab"),
+        help_text=_("Custom crontab syntax (* * * * *)"),
     )
 
     def clean(self):
@@ -1913,7 +1993,7 @@ class JobScheduleForm(BootstrapMixin, forms.Form):
 
         if "_schedule_type" in cleaned_data and cleaned_data.get("_schedule_type") != JobExecutionType.TYPE_IMMEDIATELY:
             if not cleaned_data.get("_schedule_name"):
-                raise ValidationError({"_schedule_name": "Please provide a name for the job schedule."})
+                raise ValidationError({"_schedule_name": _("Please provide a name for the job schedule.")})
 
             if (
                 not cleaned_data.get("_schedule_start_time")
@@ -1924,7 +2004,9 @@ class JobScheduleForm(BootstrapMixin, forms.Form):
             ):
                 raise ValidationError(
                     {
-                        "_schedule_start_time": "Please enter a valid date and time greater than or equal to the current date and time."
+                        "_schedule_start_time": _(
+                            "Please enter a valid date and time greater than or equal to the current date and time."
+                        )
                     }
                 )
 
@@ -1947,9 +2029,9 @@ class JobScheduleForm(BootstrapMixin, forms.Form):
 
 class JobResultFilterForm(BootstrapMixin, forms.Form):
     model = JobResult
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     job_model = DynamicModelMultipleChoiceField(
-        label="Job",
+        label=_("Job"),
         queryset=Job.objects.all(),
         required=False,
         to_field_name="name",
@@ -1960,7 +2042,7 @@ class JobResultFilterForm(BootstrapMixin, forms.Form):
     user = DynamicModelMultipleChoiceField(
         queryset=get_user_model().objects.all(),
         required=False,
-        label="User",
+        label=_("User"),
         widget=APISelectMultiple(
             api_url="/api/users/users/",
         ),
@@ -1971,36 +2053,36 @@ class JobResultFilterForm(BootstrapMixin, forms.Form):
         widget=StaticSelect2Multiple(),
     )
     scheduled_job = DynamicModelMultipleChoiceField(
-        label="Scheduled Job",
+        label=_("Scheduled Job"),
         queryset=ScheduledJob.objects.all(),
         required=False,
         to_field_name="name",
     )
     has_job_console_entries = forms.NullBooleanField(
         required=False,
-        label="Has Job Console Entries",
+        label=_("Has Job Console Entries"),
         widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES),
     )
     cancel_type = forms.MultipleChoiceField(
         choices=JobCancelTypeChoices,
         required=False,
-        label="Cancel Type",
+        label=_("Cancel Type"),
         widget=StaticSelect2Multiple(),
     )
 
 
 class ScheduledJobFilterForm(BootstrapMixin, forms.Form):
     model = ScheduledJob
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     name = forms.CharField(required=False)
     job_model = DynamicModelMultipleChoiceField(
-        label="Job",
+        label=_("Job"),
         queryset=Job.objects.all(),
         required=False,
         to_field_name="name",
         widget=APISelectMultiple(api_url="/api/extras/job-models/"),
     )
-    total_run_count = forms.IntegerField(required=False)
+    total_run_count = forms.IntegerField(required=False, label=_("Total run count"))
     state = forms.MultipleChoiceField(
         choices=ScheduledJobStateChoices,
         required=False,
@@ -2016,7 +2098,7 @@ class ScheduledJobFilterForm(BootstrapMixin, forms.Form):
 class JobButtonForm(BootstrapMixin, forms.ModelForm):
     content_types = DynamicModelMultipleChoiceField(
         queryset=ContentType.objects.all(),
-        label="Object Types",
+        label=_("Object Types"),
         widget=APISelectMultiple(
             api_url="/api/extras/content-types/",
         ),
@@ -2047,14 +2129,14 @@ class JobButtonBulkEditForm(BootstrapMixin, BulkEditForm):
     pk = forms.ModelMultipleChoiceField(queryset=JobButton.objects.all(), widget=forms.MultipleHiddenInput)
     content_types = DynamicModelMultipleChoiceField(
         queryset=ContentType.objects.all(),
-        label="Object Types",
+        label=_("Object Types"),
         widget=APISelectMultiple(
             api_url="/api/extras/content-types/",
         ),
         required=False,
     )
     enabled = forms.NullBooleanField(
-        required=False, widget=BulkEditNullBooleanSelect, help_text="Whether this job button appears in the UI"
+        required=False, widget=BulkEditNullBooleanSelect, help_text=_("Whether this job button appears in the UI")
     )
     weight = forms.IntegerField(required=False)
     group_name = forms.CharField(required=False)
@@ -2065,11 +2147,11 @@ class JobButtonBulkEditForm(BootstrapMixin, BulkEditForm):
 
 class JobButtonFilterForm(BootstrapMixin, forms.Form):
     model = JobButton
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_types = CSVContentTypeField(
         queryset=ContentType.objects.all(),
         required=False,
-        label="Object Types",
+        label=_("Object Types"),
     )
 
 
@@ -2097,7 +2179,9 @@ class MetadataTypeForm(NautobotModelForm):
     name = forms.CharField(required=True, max_length=CHARFIELD_MAX_LENGTH)
     description = forms.CharField(required=False, max_length=CHARFIELD_MAX_LENGTH)
     content_types = MultipleContentTypeField(
-        feature="metadata", help_text="The object(s) to which Metadata of this type can be applied."
+        feature="metadata",
+        help_text=_("The object(s) to which Metadata of this type can be applied."),
+        label=_("Content types"),
     )
 
     class Meta:
@@ -2119,12 +2203,12 @@ class MetadataTypeForm(NautobotModelForm):
 
 class MetadataTypeFilterForm(NautobotFilterForm):
     model = MetadataType
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_types = MultipleContentTypeField(
         queryset=ContentType.objects.filter(FeatureQuery("metadata").get_query()),
         choices_as_strings=True,
         required=False,
-        label="Content Type(s)",
+        label=_("Content Type(s)"),
     )
     tags = TagFilterField(model)
 
@@ -2155,8 +2239,10 @@ class ObjectMetadataForm(BootstrapMixin, forms.ModelForm):
         # when the user changes assigned_object_type on the create form.
         widget=StaticSelect2Multiple(),
         help_text=(
-            "Direct fields on the assigned object's model that this metadata applies to. "
-            "Leave empty to apply to all fields."
+            _(
+                "Direct fields on the assigned object's model that this metadata applies to. "
+                "Leave empty to apply to all fields."
+            )
         ),
     )
     contact = DynamicModelChoiceField(
@@ -2170,8 +2256,9 @@ class ObjectMetadataForm(BootstrapMixin, forms.ModelForm):
     value = forms.JSONField(
         required=False,
         help_text=(
-            'Format depends on the selected metadata type (JSON-encoded value; e.g. "text", 42, true, ["a", "b"]).'
+            _('Format depends on the selected metadata type (JSON-encoded value; e.g. "text", 42, true, ["a", "b"]).')
         ),
+        label=_("Value"),
     )
 
     class Meta:
@@ -2328,7 +2415,7 @@ class ObjectMetadataCreateForm(ObjectMetadataForm):
                 # input so the ModelForm save still receives the UUID.
                 self.fields["assigned_object_id"].widget = forms.HiddenInput()
                 display_field = forms.CharField(
-                    label="Assigned object",
+                    label=_("Assigned object"),
                     required=False,
                     initial=str(obj),
                     disabled=True,
@@ -2347,7 +2434,7 @@ class ObjectMetadataCreateForm(ObjectMetadataForm):
 
 class ObjectMetadataFilterForm(BootstrapMixin, forms.Form):
     model = ObjectMetadata
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     contact = DynamicModelMultipleChoiceField(
         queryset=Contact.objects.all(),
         required=False,
@@ -2360,7 +2447,7 @@ class ObjectMetadataFilterForm(BootstrapMixin, forms.Form):
         queryset=ContentType.objects.filter(FeatureQuery("metadata").get_query()),
         choices_as_strings=True,
         required=False,
-        label="Content Type(s)",
+        label=_("Content Type(s)"),
     )
     metadata_type = DynamicModelMultipleChoiceField(
         queryset=MetadataType.objects.all(),
@@ -2387,12 +2474,12 @@ class NoteForm(BootstrapMixin, forms.ModelForm):
 
 class NoteFilterForm(BootstrapMixin, forms.Form):
     model = Note
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
 
     assigned_object_type_id = DynamicModelMultipleChoiceField(
         queryset=ContentType.objects.all(),
         required=False,
-        label="Object Type",
+        label=_("Object Type"),
         widget=APISelectMultiple(
             api_url="/api/extras/content-types/",
         ),
@@ -2408,11 +2495,14 @@ class LocalContextFilterForm(forms.Form):
     # TODO: 4.0 change to has_*
     local_config_context_data = forms.NullBooleanField(
         required=False,
-        label="Has local config context data",
+        label=_("Has local config context data"),
         widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES),
     )
     local_config_context_schema = DynamicModelMultipleChoiceField(
-        queryset=ConfigContextSchema.objects.all(), to_field_name="name", required=False
+        queryset=ConfigContextSchema.objects.all(),
+        to_field_name="name",
+        required=False,
+        label=_("Local config context schema"),
     )
 
 
@@ -2422,12 +2512,16 @@ class LocalContextFilterForm(forms.Form):
 
 
 class LocalContextModelForm(forms.ModelForm):
-    local_config_context_schema = DynamicModelChoiceField(queryset=ConfigContextSchema.objects.all(), required=False)
+    local_config_context_schema = DynamicModelChoiceField(
+        queryset=ConfigContextSchema.objects.all(), required=False, label=_("Local config context schema")
+    )
     local_config_context_data = JSONField(required=False, label="")
 
 
 class LocalContextModelBulkEditForm(BulkEditForm):
-    local_config_context_schema = DynamicModelChoiceField(queryset=ConfigContextSchema.objects.all(), required=False)
+    local_config_context_schema = DynamicModelChoiceField(
+        queryset=ConfigContextSchema.objects.all(), required=False, label=_("Local config context schema")
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -2443,9 +2537,9 @@ class LocalContextModelBulkEditForm(BulkEditForm):
 
 class ObjectChangeFilterForm(BootstrapMixin, forms.Form):
     model = ObjectChange
-    q = forms.CharField(required=False, label="Search")
-    time__gte = forms.DateTimeField(label="After", required=False, widget=DateTimePicker())
-    time__lte = forms.DateTimeField(label="Before", required=False, widget=DateTimePicker())
+    q = forms.CharField(required=False, label=_("Search"))
+    time__gte = forms.DateTimeField(label=_("After"), required=False, widget=DateTimePicker())
+    time__lte = forms.DateTimeField(label=_("Before"), required=False, widget=DateTimePicker())
     action = forms.ChoiceField(
         choices=add_blank_choice(ObjectChangeActionChoices),
         required=False,
@@ -2454,7 +2548,7 @@ class ObjectChangeFilterForm(BootstrapMixin, forms.Form):
     user_id = DynamicModelMultipleChoiceField(
         queryset=get_user_model().objects.all(),
         required=False,
-        label="User",
+        label=_("User"),
         widget=APISelectMultiple(
             api_url="/api/users/users/",
         ),
@@ -2462,13 +2556,16 @@ class ObjectChangeFilterForm(BootstrapMixin, forms.Form):
     changed_object_type_id = DynamicModelMultipleChoiceField(
         queryset=ContentType.objects.all(),
         required=False,
-        label="Object Type",
+        label=_("Object Type"),
         widget=APISelectMultiple(
             api_url="/api/extras/content-types/",
         ),
     )
     change_context = forms.MultipleChoiceField(
-        required=False, label="Change Context", choices=ObjectChangeEventContextChoices, widget=StaticSelect2Multiple()
+        required=False,
+        label=_("Change Context"),
+        choices=ObjectChangeEventContextChoices,
+        widget=StaticSelect2Multiple(),
     )
 
 
@@ -2482,18 +2579,22 @@ class RelationshipBulkEditForm(BootstrapMixin, CustomFieldModelBulkEditFormMixin
     description = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False)
     type = forms.ChoiceField(
         required=False,
-        label="type",
+        label=_("type"),
         choices=add_blank_choice(RelationshipTypeChoices),
     )
     source_hidden = forms.NullBooleanField(required=False, widget=BulkEditNullBooleanSelect)
     destination_hidden = forms.NullBooleanField(required=False, widget=BulkEditNullBooleanSelect)
-    source_filter = JSONField(required=False, widget=forms.Textarea, help_text="Filter for the source")
-    destination_filter = JSONField(required=False, widget=forms.Textarea, help_text="Filter for the destination")
+    source_filter = JSONField(required=False, widget=forms.Textarea, help_text=_("Filter for the source"))
+    destination_filter = JSONField(required=False, widget=forms.Textarea, help_text=_("Filter for the destination"))
     source_type = CSVContentTypeField(
-        queryset=ContentType.objects.filter(FeatureQuery("relationships").get_query()), required=False
+        queryset=ContentType.objects.filter(FeatureQuery("relationships").get_query()),
+        required=False,
+        label=_("Source type"),
     )
     destination_type = CSVContentTypeField(
-        queryset=ContentType.objects.filter(FeatureQuery("relationships").get_query()), required=False
+        queryset=ContentType.objects.filter(FeatureQuery("relationships").get_query()),
+        required=False,
+        label=_("Destination type"),
     )
     source_label = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False)
     destination_label = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False)
@@ -2518,34 +2619,40 @@ class RelationshipBulkEditForm(BootstrapMixin, CustomFieldModelBulkEditFormMixin
 
 class RelationshipForm(BootstrapMixin, forms.ModelForm):
     key = SlugField(
-        help_text="Internal name of this relationship. Please use underscores rather than dashes.",
-        label="Key",
+        help_text=_("Internal name of this relationship. Please use underscores rather than dashes."),
+        label=_("Key"),
         max_length=CHARFIELD_MAX_LENGTH,
         slug_source="label",
     )
     description = forms.CharField(
-        label="Description",
+        label=_("Description"),
         max_length=CHARFIELD_MAX_LENGTH,
         required=False,
-        help_text="Markdown formatting and a limited subset of HTML are supported",
+        help_text=_("Markdown formatting and a limited subset of HTML are supported"),
     )
     source_type = forms.ModelChoiceField(
         queryset=ContentType.objects.filter(FeatureQuery("relationships").get_query()).order_by("app_label", "model"),
-        help_text="The source object type to which this relationship applies.",
+        help_text=_("The source object type to which this relationship applies."),
+        label=_("Source type"),
     )
     source_filter = JSONField(
         required=False,
-        help_text="Filterset filter matching the applicable source objects of the selected type.<br>"
-        'Enter in <a href="https://json.org/">JSON</a> format.',
+        help_text=_(
+            "Filterset filter matching the applicable source objects of the selected type.<br>"
+            'Enter in <a href="https://json.org/">JSON</a> format.'
+        ),
     )
     destination_type = forms.ModelChoiceField(
         queryset=ContentType.objects.filter(FeatureQuery("relationships").get_query()).order_by("app_label", "model"),
-        help_text="The destination object type to which this relationship applies.",
+        help_text=_("The destination object type to which this relationship applies."),
+        label=_("Destination type"),
     )
     destination_filter = JSONField(
         required=False,
-        help_text="Filterset filter matching the applicable destination objects of the selected type.<br>"
-        'Enter in <a href="https://json.org/">JSON</a> format.',
+        help_text=_(
+            "Filterset filter matching the applicable destination objects of the selected type.<br>"
+            'Enter in <a href="https://json.org/">JSON</a> format.'
+        ),
     )
 
     class Meta:
@@ -2583,14 +2690,16 @@ class RelationshipForm(BootstrapMixin, forms.ModelForm):
 class RelationshipFilterForm(BootstrapMixin, forms.Form):
     model = Relationship
 
-    type = forms.MultipleChoiceField(choices=RelationshipTypeChoices, required=False, widget=StaticSelect2Multiple())
+    type = forms.MultipleChoiceField(
+        choices=RelationshipTypeChoices, required=False, widget=StaticSelect2Multiple(), label=_("Type")
+    )
 
     source_type = MultipleContentTypeField(
-        feature="relationships", choices_as_strings=True, required=False, label="Source Type"
+        feature="relationships", choices_as_strings=True, required=False, label=_("Source Type")
     )
 
     destination_type = MultipleContentTypeField(
-        feature="relationships", choices_as_strings=True, required=False, label="Destination Type"
+        feature="relationships", choices_as_strings=True, required=False, label=_("Destination Type")
     )
 
 
@@ -2604,11 +2713,11 @@ class RelationshipAssociationFilterForm(BootstrapMixin, forms.Form):
     )
 
     source_type = MultipleContentTypeField(
-        feature="relationships", choices_as_strings=True, required=False, label="Source Type"
+        feature="relationships", choices_as_strings=True, required=False, label=_("Source Type")
     )
 
     destination_type = MultipleContentTypeField(
-        feature="relationships", choices_as_strings=True, required=False, label="Destination Type"
+        feature="relationships", choices_as_strings=True, required=False, label=_("Destination Type")
     )
 
 
@@ -2622,7 +2731,7 @@ class RoleForm(NautobotModelForm):
 
     content_types = MultipleContentTypeField(
         required=False,
-        label="Content Type(s)",
+        label=_("Content Type(s)"),
         queryset=RoleModelsQuery().as_queryset(),
     )
 
@@ -2640,10 +2749,10 @@ class RoleBulkEditForm(NautobotBulkEditForm):
     description = forms.CharField(max_length=CHARFIELD_MAX_LENGTH, required=False)
     weight = forms.IntegerField(required=False)
     add_content_types = MultipleContentTypeField(
-        queryset=RoleModelsQuery().as_queryset(), required=False, label="Add Content Type(s)"
+        queryset=RoleModelsQuery().as_queryset(), required=False, label=_("Add Content Type(s)")
     )
     remove_content_types = MultipleContentTypeField(
-        queryset=RoleModelsQuery().as_queryset(), required=False, label="Remove Content Type(s)"
+        queryset=RoleModelsQuery().as_queryset(), required=False, label=_("Remove Content Type(s)")
     )
 
     class Meta:
@@ -2652,12 +2761,12 @@ class RoleBulkEditForm(NautobotBulkEditForm):
 
 class RoleFilterForm(NautobotFilterForm):
     model = Role
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_types = MultipleContentTypeField(
         queryset=RoleModelsQuery().as_queryset(),
         required=False,
         choices_as_strings=True,
-        label="Content Type(s)",
+        label=_("Content Type(s)"),
     )
 
 
@@ -2683,7 +2792,7 @@ class SecretForm(NautobotModelForm):
 
     provider = forms.ChoiceField(choices=provider_choices, widget=StaticSelect2())
 
-    parameters = JSONField(help_text='Enter parameters in <a href="https://json.org/">JSON</a> format.')
+    parameters = JSONField(help_text=_('Enter parameters in <a href="https://json.org/">JSON</a> format.'))
 
     class Meta:
         model = Secret
@@ -2702,7 +2811,7 @@ def provider_choices_with_blank():
 
 class SecretFilterForm(NautobotFilterForm):
     model = Secret
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     provider = forms.MultipleChoiceField(
         choices=provider_choices_with_blank, widget=StaticSelect2Multiple(), required=False
     )
@@ -2736,7 +2845,7 @@ class SecretsGroupForm(NautobotModelForm):
 
 class SecretsGroupFilterForm(NautobotFilterForm):
     model = SecretsGroup
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
 
 
 #
@@ -2747,7 +2856,7 @@ class SecretsGroupFilterForm(NautobotFilterForm):
 class StatusForm(NautobotModelForm):
     """Generic create/update form for `Status` objects."""
 
-    content_types = MultipleContentTypeField(feature="statuses", label="Content Type(s)")
+    content_types = MultipleContentTypeField(feature="statuses", label=_("Content Type(s)"))
 
     class Meta:
         model = Status
@@ -2759,9 +2868,9 @@ class StatusFilterForm(NautobotFilterForm):
     """Filtering/search form for `Status` objects."""
 
     model = Status
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_types = MultipleContentTypeField(
-        feature="statuses", choices_as_strings=True, required=False, label="Content Type(s)"
+        feature="statuses", choices_as_strings=True, required=False, label=_("Content Type(s)")
     )
     color = forms.CharField(max_length=6, required=False, widget=ColorSelect())
 
@@ -2771,8 +2880,10 @@ class StatusBulkEditForm(NautobotBulkEditForm):
 
     pk = forms.ModelMultipleChoiceField(queryset=Status.objects.all(), widget=forms.MultipleHiddenInput)
     color = forms.CharField(max_length=6, required=False, widget=ColorSelect())
-    add_content_types = MultipleContentTypeField(feature="statuses", required=False, label="Add Content Type(s)")
-    remove_content_types = MultipleContentTypeField(feature="statuses", required=False, label="Remove Content Type(s)")
+    add_content_types = MultipleContentTypeField(feature="statuses", required=False, label=_("Add Content Type(s)"))
+    remove_content_types = MultipleContentTypeField(
+        feature="statuses", required=False, label=_("Remove Content Type(s)")
+    )
 
     class Meta:
         nullable_fields = []
@@ -2785,7 +2896,7 @@ class StatusBulkEditForm(NautobotBulkEditForm):
 
 class TagForm(NautobotModelForm):
     content_types = ModelMultipleChoiceField(
-        label="Content Type(s)",
+        label=_("Content Type(s)"),
         queryset=TaggableClassesQuery().as_queryset(),
     )
 
@@ -2809,11 +2920,11 @@ class TagForm(NautobotModelForm):
 
 class TagFilterForm(NautobotFilterForm):
     model = Tag
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_types = MultipleContentTypeField(
         choices_as_strings=True,
         required=False,
-        label="Content Type(s)",
+        label=_("Content Type(s)"),
         queryset=TaggableClassesQuery().as_queryset(),
     )
 
@@ -2857,10 +2968,10 @@ class WebhookBulkEditForm(BootstrapMixin, NoteModelBulkEditFormMixin):
     )
 
     add_content_types = MultipleContentTypeField(
-        limit_choices_to=FeatureQuery("webhooks"), required=False, label="Add Content Type(s)"
+        limit_choices_to=FeatureQuery("webhooks"), required=False, label=_("Add Content Type(s)")
     )
     remove_content_types = MultipleContentTypeField(
-        limit_choices_to=FeatureQuery("webhooks"), required=False, label="Remove Content Type(s)"
+        limit_choices_to=FeatureQuery("webhooks"), required=False, label=_("Remove Content Type(s)")
     )
 
     class Meta:
@@ -2885,7 +2996,7 @@ class WebhookBulkEditForm(BootstrapMixin, NoteModelBulkEditFormMixin):
 
 
 class WebhookForm(BootstrapMixin, forms.ModelForm):
-    content_types = MultipleContentTypeField(feature="webhooks", required=False, label="Content Type(s)")
+    content_types = MultipleContentTypeField(feature="webhooks", required=False, label=_("Content Type(s)"))
 
     class Meta:
         model = Webhook
@@ -2926,9 +3037,9 @@ class WebhookForm(BootstrapMixin, forms.ModelForm):
 
 class WebhookFilterForm(BootstrapMixin, forms.Form):
     model = Webhook
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     content_types = MultipleContentTypeField(
-        feature="webhooks", choices_as_strings=True, required=False, label="Content Type(s)"
+        feature="webhooks", choices_as_strings=True, required=False, label=_("Content Type(s)")
     )
     type_create = forms.NullBooleanField(required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES))
     type_update = forms.NullBooleanField(required=False, widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES))

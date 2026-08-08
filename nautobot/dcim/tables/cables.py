@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import django_tables2 as tables
 from django_tables2.utils import Accessor
 
@@ -34,7 +35,7 @@ class CableTypeTable(BaseTable):
     cable_count = LinkedCountColumn(
         viewname="dcim:cable_list",
         url_params={"cable_type": "pk"},
-        verbose_name="Cables",
+        verbose_name=_("Cables"),
     )
     tags = TagColumn(url_name="dcim:cabletype_list")
     actions = ButtonsColumn(CableType)
@@ -76,43 +77,43 @@ class CableTypeTable(BaseTable):
 
 class CableTable(StatusTableMixin, BaseTable):
     pk = ToggleColumn()
-    id = tables.Column(linkify=True, verbose_name="ID")
-    cable_type = tables.Column(linkify=True, verbose_name="Cable Type")
+    id = tables.Column(linkify=True, verbose_name=_("ID"))
+    cable_type = tables.Column(linkify=True, verbose_name=_("Cable Type"))
     termination_a_parent = tables.Column(
         linkify=True,
         accessor=Accessor("termination_a__parent"),
         orderable=False,
-        verbose_name="Termination A Parent",
+        verbose_name=_("Termination A Parent"),
     )
     termination_a = tables.Column(
         linkify=True,
         accessor=Accessor("termination_a"),
         orderable=False,
-        verbose_name="Termination A",
+        verbose_name=_("Termination A"),
     )
     terminations_a = tables.TemplateColumn(
         template_code=CABLE_TERMINATIONS_MULTI,
         accessor=Accessor("get_connections_a"),
         orderable=False,
-        verbose_name="A-Side Terminations",
+        verbose_name=_("A-Side Terminations"),
     )
     termination_b_parent = tables.Column(
         linkify=True,
         accessor=Accessor("termination_b__parent"),
         orderable=False,
-        verbose_name="Termination B Parent",
+        verbose_name=_("Termination B Parent"),
     )
     termination_b = tables.Column(
         linkify=True,
         accessor=Accessor("termination_b"),
         orderable=False,
-        verbose_name="Termination B",
+        verbose_name=_("Termination B"),
     )
     terminations_b = tables.TemplateColumn(
         template_code=CABLE_TERMINATIONS_MULTI,
         accessor=Accessor("get_connections_b"),
         orderable=False,
-        verbose_name="B-Side Terminations",
+        verbose_name=_("B-Side Terminations"),
     )
     length = tables.TemplateColumn(template_code=CABLE_LENGTH, order_by="_abs_length")
     color = ColorColumn()

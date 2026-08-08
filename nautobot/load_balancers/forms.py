@@ -1,6 +1,7 @@
 """Forms for nautobot_load_balancer_models."""
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.cloud.models import CloudService
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
@@ -30,40 +31,42 @@ from nautobot.tenancy.models import Tenant
 class VirtualServerForm(NautobotModelForm, TenancyForm):  # pylint: disable=too-many-ancestors
     """VirtualServer creation/edit form."""
 
-    vip = DynamicModelChoiceField(queryset=IPAddress.objects.all(), label="VIP")
+    vip = DynamicModelChoiceField(queryset=IPAddress.objects.all(), label=_("VIP"))
     load_balancer_type = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(choices.LoadBalancerTypeChoices),
         widget=StaticSelect2,
-        label="Load Balancer Type",
+        label=_("Load Balancer Type"),
     )
     protocol = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(choices.ProtocolChoices),
         widget=StaticSelect2,
-        label="Protocol",
+        label=_("Protocol"),
     )
     load_balancer_pool = DynamicModelChoiceField(
-        queryset=models.LoadBalancerPool.objects.all(), required=False, label="Load Balancer Pool"
+        queryset=models.LoadBalancerPool.objects.all(), required=False, label=_("Load Balancer Pool")
     )
-    source_nat_pool = DynamicModelChoiceField(queryset=Prefix.objects.all(), required=False, label="Source NAT Pool")
+    source_nat_pool = DynamicModelChoiceField(queryset=Prefix.objects.all(), required=False, label=_("Source NAT Pool"))
     source_nat_type = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(choices.SourceNATTypeChoices),
         widget=StaticSelect2,
-        label="Source NAT Type",
+        label=_("Source NAT Type"),
     )
     health_check_monitor = DynamicModelChoiceField(
-        queryset=models.HealthCheckMonitor.objects.all(), required=False, label="Health Check Monitor"
+        queryset=models.HealthCheckMonitor.objects.all(), required=False, label=_("Health Check Monitor")
     )
-    device = DynamicModelChoiceField(queryset=Device.objects.all(), required=False)
-    device_redundancy_group = DynamicModelChoiceField(queryset=DeviceRedundancyGroup.objects.all(), required=False)
+    device = DynamicModelChoiceField(queryset=Device.objects.all(), required=False, label=_("Device"))
+    device_redundancy_group = DynamicModelChoiceField(
+        queryset=DeviceRedundancyGroup.objects.all(), required=False, label=_("Device redundancy group")
+    )
     cloud_service = DynamicModelChoiceField(queryset=CloudService.objects.all(), required=False)
     virtual_chassis = DynamicModelChoiceField(queryset=VirtualChassis.objects.all(), required=False)
     certificate_profiles = DynamicModelMultipleChoiceField(
         queryset=models.CertificateProfile.objects.all(),
         required=False,
-        label="Certificate Profile(s)",
+        label=_("Certificate Profile(s)"),
     )
 
     field_order = [
@@ -104,31 +107,33 @@ class VirtualServerBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):  #
         required=False,
         choices=add_blank_choice(choices.ProtocolChoices),
         widget=StaticSelect2,
-        label="Protocol",
+        label=_("Protocol"),
     )
     load_balancer_pool = DynamicModelChoiceField(
-        queryset=models.LoadBalancerPool.objects.all(), required=False, label="Load Balancer Pool"
+        queryset=models.LoadBalancerPool.objects.all(), required=False, label=_("Load Balancer Pool")
     )
     load_balancer_type = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(choices.LoadBalancerTypeChoices),
         widget=StaticSelect2,
-        label="Load Balancer Type",
+        label=_("Load Balancer Type"),
     )
-    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False)
-    source_nat_pool = DynamicModelChoiceField(queryset=Prefix.objects.all(), required=False, label="Source NAT Pool")
+    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False, label=_("Tenant"))
+    source_nat_pool = DynamicModelChoiceField(queryset=Prefix.objects.all(), required=False, label=_("Source NAT Pool"))
     source_nat_type = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(choices.SourceNATTypeChoices),
         widget=StaticSelect2,
-        label="Source NAT Type",
+        label=_("Source NAT Type"),
     )
-    device = DynamicModelChoiceField(queryset=Device.objects.all(), required=False)
-    device_redundancy_group = DynamicModelChoiceField(queryset=DeviceRedundancyGroup.objects.all(), required=False)
+    device = DynamicModelChoiceField(queryset=Device.objects.all(), required=False, label=_("Device"))
+    device_redundancy_group = DynamicModelChoiceField(
+        queryset=DeviceRedundancyGroup.objects.all(), required=False, label=_("Device redundancy group")
+    )
     cloud_service = DynamicModelChoiceField(queryset=CloudService.objects.all(), required=False)
     virtual_chassis = DynamicModelChoiceField(queryset=VirtualChassis.objects.all(), required=False)
     health_check_monitor = DynamicModelChoiceField(queryset=models.HealthCheckMonitor.objects.all(), required=False)
-    ssl_offload = forms.NullBooleanField(required=False, widget=BulkEditNullBooleanSelect, label="SSL Offload")
+    ssl_offload = forms.NullBooleanField(required=False, widget=BulkEditNullBooleanSelect, label=_("SSL Offload"))
     add_certificate_profiles = DynamicModelMultipleChoiceField(
         queryset=models.CertificateProfile.objects.all(),
         required=False,
@@ -162,48 +167,48 @@ class VirtualServerFilterForm(NautobotFilterForm, TenancyFilterForm):  # pylint:
 
     model = models.VirtualServer
     field_order = ["name"]
-    q = forms.CharField(required=False, label="Search")
-    name = forms.CharField(required=False, label="Name")
+    q = forms.CharField(required=False, label=_("Search"))
+    name = forms.CharField(required=False, label=_("Name"))
     source_nat_pool = DynamicModelMultipleChoiceField(
         queryset=Prefix.objects.all(),
         required=False,
-        label="Prefix",
+        label=_("Prefix"),
     )
     load_balancer_pool = DynamicModelMultipleChoiceField(
         queryset=models.LoadBalancerPool.objects.all(),
         to_field_name="name",
         required=False,
-        label="Load Balancer Pool",
+        label=_("Load Balancer Pool"),
     )
     device = DynamicModelMultipleChoiceField(
         queryset=Device.objects.all(),
         to_field_name="name",
         required=False,
-        label="Device",
+        label=_("Device"),
     )
     device_redundancy_group = DynamicModelMultipleChoiceField(
         queryset=DeviceRedundancyGroup.objects.all(),
         to_field_name="name",
         required=False,
-        label="Device Redundancy Group",
+        label=_("Device Redundancy Group"),
     )
     cloud_service = DynamicModelMultipleChoiceField(
         queryset=CloudService.objects.all(),
         to_field_name="name",
         required=False,
-        label="Cloud Service",
+        label=_("Cloud Service"),
     )
     virtual_chassis = DynamicModelMultipleChoiceField(
         queryset=VirtualChassis.objects.all(),
         to_field_name="name",
         required=False,
-        label="Virtual Chassis",
+        label=_("Virtual Chassis"),
     )
     health_check_monitor = DynamicModelMultipleChoiceField(
         queryset=models.HealthCheckMonitor.objects.all(),
         to_field_name="name",
         required=False,
-        label="Health Check Monitor",
+        label=_("Health Check Monitor"),
     )
     tags = TagFilterField(model)
 
@@ -214,13 +219,13 @@ class LoadBalancerPoolForm(NautobotModelForm, TenancyForm):  # pylint: disable=t
     health_check_monitor = DynamicModelChoiceField(
         queryset=models.HealthCheckMonitor.objects.all(),
         required=False,
-        label="Health Check Monitor",
+        label=_("Health Check Monitor"),
     )
     load_balancing_algorithm = forms.ChoiceField(
         required=True,
         choices=add_blank_choice(choices.LoadBalancingAlgorithmChoices),
         widget=StaticSelect2,
-        label="Load Balancing Algorithm",
+        label=_("Load Balancing Algorithm"),
     )
 
     field_order = [
@@ -244,19 +249,19 @@ class LoadBalancerPoolBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
     pk = forms.ModelMultipleChoiceField(
         queryset=models.LoadBalancerPool.objects.all(), widget=forms.MultipleHiddenInput
     )
-    name = forms.CharField(required=False, label="Name")
+    name = forms.CharField(required=False, label=_("Name"))
     load_balancing_algorithm = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(choices.LoadBalancingAlgorithmChoices),
         widget=StaticSelect2,
-        label="Load Balancing Algorithm",
+        label=_("Load Balancing Algorithm"),
     )
     health_check_monitor = DynamicModelChoiceField(
         queryset=models.HealthCheckMonitor.objects.all(),
         required=False,
-        label="Health Check Monitor",
+        label=_("Health Check Monitor"),
     )
-    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False)
+    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False, label=_("Tenant"))
 
     class Meta:
         """Meta attributes."""
@@ -273,14 +278,14 @@ class LoadBalancerPoolFilterForm(NautobotFilterForm, TenancyFilterForm):  # pyli
 
     model = models.LoadBalancerPool
     field_order = ["name"]
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     health_check_monitor = DynamicModelMultipleChoiceField(
         queryset=models.HealthCheckMonitor.objects.all(),
         to_field_name="name",
         required=False,
-        label="Health Check Monitor",
+        label=_("Health Check Monitor"),
     )
-    name = forms.CharField(required=False, label="Name")
+    name = forms.CharField(required=False, label=_("Name"))
     tags = TagFilterField(model)
 
 
@@ -290,22 +295,22 @@ class LoadBalancerPoolMemberForm(NautobotModelForm, TenancyForm):  # pylint: dis
     ip_address = DynamicModelChoiceField(
         queryset=IPAddress.objects.all(),
         required=True,
-        label="IP Address",
+        label=_("IP Address"),
     )
     load_balancer_pool = DynamicModelChoiceField(
         queryset=models.LoadBalancerPool.objects.all(),
         required=True,
-        label="Load Balancer Pool",
+        label=_("Load Balancer Pool"),
     )
     health_check_monitor = DynamicModelChoiceField(
         queryset=models.HealthCheckMonitor.objects.all(),
         required=False,
-        label="Health Check Monitor",
+        label=_("Health Check Monitor"),
     )
     certificate_profiles = DynamicModelMultipleChoiceField(
         queryset=models.CertificateProfile.objects.all(),
         required=False,
-        label="Certificate Profile",
+        label=_("Certificate Profile"),
     )
 
     field_order = [
@@ -338,19 +343,19 @@ class LoadBalancerPoolMemberBulkEditForm(StatusModelBulkEditFormMixin, TagsBulkE
     ip_address = DynamicModelChoiceField(
         queryset=IPAddress.objects.all(),
         required=False,
-        label="IP Address",
+        label=_("IP Address"),
     )
     load_balancer_pool = DynamicModelChoiceField(
         queryset=models.LoadBalancerPool.objects.all(),
         required=False,
-        label="Load Balancer Pool",
+        label=_("Load Balancer Pool"),
     )
-    port = forms.IntegerField(required=False, label="Port")
-    ssl_offload = forms.NullBooleanField(required=False, widget=BulkEditNullBooleanSelect, label="SSL Offload")
+    port = forms.IntegerField(required=False, label=_("Port"))
+    ssl_offload = forms.NullBooleanField(required=False, widget=BulkEditNullBooleanSelect, label=_("SSL Offload"))
     health_check_monitor = DynamicModelChoiceField(
         queryset=models.HealthCheckMonitor.objects.all(),
         required=False,
-        label="Health Check Monitor",
+        label=_("Health Check Monitor"),
     )
     add_certificate_profiles = DynamicModelMultipleChoiceField(
         queryset=models.CertificateProfile.objects.all(),
@@ -360,7 +365,7 @@ class LoadBalancerPoolMemberBulkEditForm(StatusModelBulkEditFormMixin, TagsBulkE
         queryset=models.CertificateProfile.objects.all(),
         required=False,
     )
-    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False)
+    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False, label=_("Tenant"))
 
     class Meta:
         """Meta attributes."""
@@ -377,24 +382,24 @@ class LoadBalancerPoolMemberFilterForm(NautobotFilterForm, TenancyFilterForm):  
     """Filter form for LoadBalancerPoolMember."""
 
     model = models.LoadBalancerPoolMember
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     load_balancer_pool = DynamicModelMultipleChoiceField(
         queryset=models.LoadBalancerPool.objects.all(),
         to_field_name="name",
         required=False,
-        label="Load Balancer Pool",
+        label=_("Load Balancer Pool"),
     )
     health_check_monitor = DynamicModelMultipleChoiceField(
         queryset=models.HealthCheckMonitor.objects.all(),
         to_field_name="name",
         required=False,
-        label="Health Check Monitor",
+        label=_("Health Check Monitor"),
     )
     certificate_profiles = DynamicModelMultipleChoiceField(
         queryset=models.CertificateProfile.objects.all(),
         to_field_name="name",
         required=False,
-        label="Certificate Profile(s)",
+        label=_("Certificate Profile(s)"),
     )
     tags = TagFilterField(model)
 
@@ -426,18 +431,18 @@ class HealthCheckMonitorBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm
     pk = forms.ModelMultipleChoiceField(
         queryset=models.HealthCheckMonitor.objects.all(), widget=forms.MultipleHiddenInput
     )
-    name = forms.CharField(required=False, label="Name")
-    interval = forms.IntegerField(required=False, label="Interval")
-    retry = forms.IntegerField(required=False, label="Retry")
-    timeout = forms.IntegerField(required=False, label="Timeout")
-    port = forms.IntegerField(required=False, label="Port")
+    name = forms.CharField(required=False, label=_("Name"))
+    interval = forms.IntegerField(required=False, label=_("Interval"))
+    retry = forms.IntegerField(required=False, label=_("Retry"))
+    timeout = forms.IntegerField(required=False, label=_("Timeout"))
+    port = forms.IntegerField(required=False, label=_("Port"))
     health_check_type = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(choices.HealthCheckTypeChoices),
         widget=StaticSelect2,
-        label="Health Check Type",
+        label=_("Health Check Type"),
     )
-    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False)
+    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False, label=_("Tenant"))
 
     class Meta:
         """Meta attributes."""
@@ -457,7 +462,7 @@ class HealthCheckMonitorFilterForm(NautobotFilterForm, TenancyFilterForm):  # py
     """Filter form for HealthCheckMonitor."""
 
     model = models.HealthCheckMonitor
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     tags = TagFilterField(models.HealthCheckMonitor)
 
 
@@ -492,21 +497,21 @@ class CertificateProfileBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm
     pk = forms.ModelMultipleChoiceField(
         queryset=models.CertificateProfile.objects.all(), widget=forms.MultipleHiddenInput
     )
-    name = forms.CharField(required=False, label="Name")
+    name = forms.CharField(required=False, label=_("Name"))
     certificate_type = forms.ChoiceField(
         required=False,
         choices=add_blank_choice(choices.CertificateTypeChoices),
         widget=StaticSelect2,
-        label="Certificate Type",
+        label=_("Certificate Type"),
     )
     certificate_file_path = forms.CharField(
-        required=False, max_length=CHARFIELD_MAX_LENGTH, label="Certificate File Path"
+        required=False, max_length=CHARFIELD_MAX_LENGTH, label=_("Certificate File Path")
     )
-    chain_file_path = forms.CharField(required=False, max_length=CHARFIELD_MAX_LENGTH, label="Chain File Path")
-    key_file_path = forms.CharField(required=False, max_length=CHARFIELD_MAX_LENGTH, label="Key File Path")
-    expiration_date = forms.DateTimeField(required=False, label="Expiration Date", widget=DateTimePicker)
-    cipher = forms.CharField(required=False, label="Cipher")
-    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False)
+    chain_file_path = forms.CharField(required=False, max_length=CHARFIELD_MAX_LENGTH, label=_("Chain File Path"))
+    key_file_path = forms.CharField(required=False, max_length=CHARFIELD_MAX_LENGTH, label=_("Key File Path"))
+    expiration_date = forms.DateTimeField(required=False, label=_("Expiration Date"), widget=DateTimePicker)
+    cipher = forms.CharField(required=False, label=_("Cipher"))
+    tenant = DynamicModelChoiceField(queryset=Tenant.objects.all(), required=False, label=_("Tenant"))
 
     class Meta:
         """Meta attributes."""
@@ -527,5 +532,5 @@ class CertificateProfileFilterForm(NautobotFilterForm, TenancyFilterForm):  # py
     """Filter form for CertificateProfile."""
 
     model = models.CertificateProfile
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     tags = TagFilterField(model)

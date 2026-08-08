@@ -7,6 +7,7 @@ from django.core.exceptions import (
     ObjectDoesNotExist,
 )
 from django.db.models import AutoField, Model
+from django.utils.translation import gettext
 from rest_framework.exceptions import ValidationError
 
 from nautobot.core.api.utils import dict_to_filter_params
@@ -80,8 +81,10 @@ class WritableSerializerMixin:
             pk = int(data) if isinstance(queryset.model._meta.pk, AutoField) else uuid.UUID(str(data))
         except (TypeError, ValueError) as e:
             raise ValidationError(
-                "Related objects must be referenced by ID or by dictionary of attributes. Received an "
-                f"unrecognized value: {data}"
+                gettext(
+                    "Related objects must be referenced by ID or by dictionary of attributes. Received an unrecognized value: %(data)s"
+                )
+                % {"data": data}
             ) from e
         return {"pk": pk}
 
@@ -93,9 +96,15 @@ class WritableSerializerMixin:
         try:
             return queryset.get(**filter_params)
         except ObjectDoesNotExist as e:
-            raise ValidationError(f"Related object not found using the provided attributes: {filter_params}") from e
+            raise ValidationError(
+                gettext("Related object not found using the provided attributes: %(filter_params)s")
+                % {"filter_params": filter_params}
+            ) from e
         except MultipleObjectsReturned as e:
-            raise ValidationError(f"Multiple objects match the provided attributes: {filter_params}") from e
+            raise ValidationError(
+                gettext("Multiple objects match the provided attributes: %(filter_params)s")
+                % {"filter_params": filter_params}
+            ) from e
         except FieldError as e:
             raise ValidationError(e) from e
 

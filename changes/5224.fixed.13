@@ -1,0 +1,1 @@
+Replaced Django's `title` filter with Nautobot's language-aware `bettertitle` where it was applied to translatable object type names, which had applied English title case and lower-cased the remainder of each word.

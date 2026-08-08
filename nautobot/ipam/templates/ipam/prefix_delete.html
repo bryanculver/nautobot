@@ -1,5 +1,6 @@
 {% extends 'generic/object_destroy.html' %}
 
+{% load i18n %}
 {% block message_extra %}
-    <p>Note: This will <strong>not</strong> delete any child prefixes or IP addresses.</p>
+    <p>{% blocktrans %}Note: This will <strong>not</strong> delete any child prefixes or IP addresses.{% endblocktrans %}</p>
 {% endblock %}

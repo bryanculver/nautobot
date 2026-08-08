@@ -1,15 +1,16 @@
 {% extends 'utilities/confirmation_form.html' %}
+{% load i18n %}
 {% load form_helpers %}
 {% load helpers %}
 
-{% block title %}Cancel Workflow ?{% endblock %}
+{% block title %}{% trans "Cancel Workflow ?" %}{% endblock %}
 
 {% block message %}
-    <p>Are you sure you want to cancel</p>
+    <p>{% trans "Are you sure you want to cancel" %}</p>
     <ul>
-        <li>Workflow <strong>{{ obj.approval_workflow_definition.name }}</strong></li>
+        <li>{% trans "Workflow" %} <strong>{{ obj.approval_workflow_definition.name }}</strong></li>
         <li>for {{ object_under_review|meta:"verbose_name"|bettertitle }} <strong>{{ object_under_review|hyperlinked_object}}</strong>?</li>
     </ul>
-    <p>You can leave optional comments here.</p>
+    <p>{% trans "You can leave optional comments here." %}</p>
     {% render_field form.comments %}
 {% endblock %}

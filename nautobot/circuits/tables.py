@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import django_tables2 as tables
 from django_tables2.utils import Accessor
 
@@ -55,7 +56,7 @@ class ProviderTable(BaseTable):
     circuit_count = LinkedCountColumn(
         viewname="circuits:circuit_list",
         url_params={"provider": "pk"},
-        verbose_name="Circuits",
+        verbose_name=_("Circuits"),
     )
     tags = TagColumn(url_name="circuits:provider_list")
 
@@ -86,7 +87,7 @@ class CircuitTypeTable(BaseTable):
     circuit_count = LinkedCountColumn(
         viewname="circuits:circuit_list",
         url_params={"circuit_type": "pk"},
-        verbose_name="Circuits",
+        verbose_name=_("Circuits"),
     )
     actions = ButtonsColumn(CircuitType)
 
@@ -109,7 +110,7 @@ class CircuitTypeTable(BaseTable):
 
 class CircuitTable(StatusTableMixin, BaseTable):
     pk = ToggleColumn()
-    cid = tables.LinkColumn(verbose_name="ID")
+    cid = tables.LinkColumn(verbose_name=_("ID"))
     provider = tables.Column(linkify=True)
     circuit_type = tables.Column(linkify=True)
     tenant = TenantColumn()
@@ -119,13 +120,13 @@ class CircuitTable(StatusTableMixin, BaseTable):
         template_code=CIRCUIT_TERMINATION_PARENT,
         accessor=Accessor("circuit_termination_a"),
         orderable=False,
-        verbose_name="Side A",
+        verbose_name=_("Side A"),
     )
     circuit_termination_z = tables.TemplateColumn(
         template_code=CIRCUIT_TERMINATION_PARENT,
         accessor=Accessor("circuit_termination_z"),
         orderable=False,
-        verbose_name="Side Z",
+        verbose_name=_("Side Z"),
     )
     actions = ButtonsColumn(Circuit)
 

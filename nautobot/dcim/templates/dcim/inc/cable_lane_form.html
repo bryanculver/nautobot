@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load form_helpers %}
 {% comment %}
     Cable connection form — A always left, B always right, using HTML table for real rowspan.
@@ -7,16 +8,16 @@
     {% if conns %}
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <strong>Connections</strong>
-                <button type="button" id="cable-swap-sides" class="btn btn-secondary btn-sm" title="Swap A and B side termination values">
-                    <span aria-hidden="true" class="mdi mdi-swap-horizontal me-4"></span>Swap A / B
+                <strong>{% trans "Connections" %}</strong>
+                <button type="button" id="cable-swap-sides" class="btn btn-secondary btn-sm" title="{% trans "Swap A and B side termination values" %}">
+                    <span aria-hidden="true" class="mdi mdi-swap-horizontal me-4"></span>{% trans "Swap A / B" %}
                 </button>
             </div>
             <table class="table mb-0">
                 <thead>
                     <tr>
-                        <th class="w-50">Side A</th>
-                        <th class="w-50">Side B</th>
+                        <th class="w-50">{% trans "Side A" %}</th>
+                        <th class="w-50">{% trans "Side B" %}</th>
                     </tr>
                 </thead>
                 <tbody>

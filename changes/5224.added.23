@@ -1,0 +1,1 @@
+Marked the prose in CSV import format hints as translatable, leaving the literal input formats (`UUID`, `app_label.model`, `YYYY-MM-DD`) untranslated.

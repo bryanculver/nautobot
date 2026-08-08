@@ -1,3 +1,4 @@
+from django.utils.translation import gettext
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -94,8 +95,10 @@ class VMInterfaceSerializer(
             if vlan.location not in [virtual_machine.location, None]:
                 raise serializers.ValidationError(
                     {
-                        "tagged_vlans": f"VLAN {vlan} must belong to the same location as the interface's parent virtual "
-                        f"machine, or it must be global."
+                        "tagged_vlans": gettext(
+                            "VLAN %(vlan)s must belong to the same location as the interface's parent virtual machine, or it must be global."
+                        )
+                        % {"vlan": vlan}
                     }
                 )
 

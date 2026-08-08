@@ -1,9 +1,10 @@
 {% extends 'utilities/confirmation_form.html' %}
+{% load i18n %}
 {% load form_helpers %}
 
-{% block title %}Delete {{ obj_type }}?{% endblock %}
+{% block title %}{% blocktrans %}Delete {{ obj_type }}?{% endblocktrans %}{% endblock %}
 
 {% block message %}
-    <p>Are you sure you want to delete {{ obj_type }} <strong>{{ obj }}</strong>?</p>
+    <p>{% blocktrans %}Are you sure you want to delete {{ obj_type }} <strong>{{ obj }}</strong>?{% endblocktrans %}</p>
     {% block message_extra %}{% endblock %}
 {% endblock %}

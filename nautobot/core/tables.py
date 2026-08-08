@@ -12,7 +12,8 @@ from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
-from django.utils.text import Truncator
+from django.utils.text import format_lazy, Truncator
+from django.utils.translation import gettext, gettext_lazy as _
 import django_tables2
 from django_tables2.data import TableData, TableQuerysetData
 from django_tables2.rows import BoundRows
@@ -94,7 +95,7 @@ class BaseTable(django_tables2.Table):
             self.base_columns["dynamic_group_count"] = LinkedCountColumn(
                 viewname="extras:dynamicgroup_list",
                 url_params={"member_id": "pk"},
-                verbose_name="Dynamic Groups",
+                verbose_name=_("Dynamic Groups"),
                 reverse_lookup="static_group_associations__associated_object_id",
             )
 
@@ -156,9 +157,13 @@ class BaseTable(django_tables2.Table):
                 *[column.name for column in self.columns if isinstance(column.column, LinkedCountColumn)],
             ]
 
-        # Set default empty_text if none was provided
+        # Set default empty_text if none was provided.
+        # Parameterized rather than concatenated: the model name's position within the sentence
+        # differs between languages, so a translator has to be able to move it.
         if self.empty_text is None:
-            self.empty_text = f"No {self._meta.model._meta.verbose_name_plural} found"
+            self.empty_text = gettext("No %(model_name_plural)s found") % {
+                "model_name_plural": self._meta.model._meta.verbose_name_plural
+            }
 
         # Hide non-default columns
         default_columns = list(getattr(self.Meta, "default_columns", []))
@@ -241,7 +246,7 @@ class BaseTable(django_tables2.Table):
                         lookup = column.column.lookup or get_related_field_for_models(model, column_model).name
                         # `lookup` may be a nested lookup like `"interfaces__device"`; only the first segment is a
                         # field on `model`. The remainder is followed on the related model via select_related below.
-                        first_relation, _, remainder = lookup.partition("__")
+                        first_relation, _sep, remainder = lookup.partition("__")
                         # For some reason get_related_field_for_models(Tag, DynamicGroup) gives a M2M with the name
                         # `dynamicgroup`, which isn't actually a field on Tag. May be a django-taggit issue?
                         # Workaround for now: make sure the field actually exists on the model under this name:
@@ -472,7 +477,7 @@ class ButtonsColumn(django_tables2.TemplateColumn):
     <div class="dropdown">
         <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
             <span class="mdi mdi-dots-vertical" aria-hidden="true"></span>
-            <span class="visually-hidden">Toggle Dropdown</span>
+            <span class="visually-hidden">{{{{ toggle_dropdown_label }}}}</span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
             {prepend_template}
@@ -480,14 +485,14 @@ class ButtonsColumn(django_tables2.TemplateColumn):
                 <li>
                     <a href="{{% url '{detail_route}' {pk_field}=record.{pk_field} %}}" class="dropdown-item">
                         <span class="mdi mdi-information-outline" aria-hidden="true"></span>
-                        View {verbose_name} details
+                        {{{{ view_details_label }}}}
                     </a>
                 </li>
             {{% endif %}}
             {{% if "changelog" in buttons %}}
                 <li>
                     <a href="{{% url '{changelog_route}' {pk_field}=record.{pk_field} %}}" class="dropdown-item">
-                        <span class="mdi mdi-history me-4" aria-hidden="true"></span>View {verbose_name} change log
+                        <span class="mdi mdi-history me-4" aria-hidden="true"></span>{{{{ view_changelog_label }}}}
                     </a>
                 </li>
             {{% endif %}}
@@ -495,14 +500,14 @@ class ButtonsColumn(django_tables2.TemplateColumn):
                 {{% if "edit" in buttons and perms.{app_label}.change_{model_name} %}}
                     <li>
                         <a href="{{% url '{edit_route}' {pk_field}=record.{pk_field} %}}?return_url={{{{ return_url|default:request_path }}}}{{{{ return_url_extra }}}}" class="dropdown-item text-warning">
-                            <span class="mdi mdi-pencil me-4" aria-hidden="true"></span>Edit {verbose_name}
+                            <span class="mdi mdi-pencil me-4" aria-hidden="true"></span>{{{{ edit_label }}}}
                         </a>
                     </li>
                 {{% endif %}}
                 {{% if "delete" in buttons and perms.{app_label}.delete_{model_name} %}}
                     <li>
                         <a href="{{% url '{delete_route}' {pk_field}=record.{pk_field} %}}?return_url={{{{ return_url|default:request_path }}}}{{{{ return_url_extra }}}}" class="dropdown-item text-danger">
-                            <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span>Delete {verbose_name}
+                            <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span>{{{{ delete_label }}}}
                         </a>
                     </li>
                 {{% endif %}}
@@ -545,10 +550,20 @@ class ButtonsColumn(django_tables2.TemplateColumn):
 
         super().__init__(template_code=template_code, *args, **kwargs)
 
+        # Button labels are resolved in the template context rather than baked into `template_code`
+        # above, because `template_code` is `.format()`ed once when the table class is defined -- at
+        # import time, before any request has established a language. `format_lazy` keeps both the
+        # message and the interpolated model name unresolved until the row is actually rendered.
+        verbose_name = model._meta.verbose_name
         self.extra_context.update(
             {
                 "buttons": buttons,
                 "return_url_extra": return_url_extra,
+                "toggle_dropdown_label": _("Toggle Dropdown"),
+                "view_details_label": format_lazy(_("View {verbose_name} details"), verbose_name=verbose_name),
+                "view_changelog_label": format_lazy(_("View {verbose_name} change log"), verbose_name=verbose_name),
+                "edit_label": format_lazy(_("Edit {verbose_name}"), verbose_name=verbose_name),
+                "delete_label": format_lazy(_("Delete {verbose_name}"), verbose_name=verbose_name),
             }
         )
 
@@ -749,7 +764,7 @@ class LinkedCountColumn(django_tables2.Column):
                 # For a nested lookup like `"interfaces__device"`, walk the trailing chain (`device`) on the
                 # prefetched record. select_related (see BaseTable) makes this free; a None mid-chain falls
                 # through to the count badge below rather than raising.
-                _, _, remainder = lookup.partition("__")
+                _first, _sep, remainder = lookup.partition("__")
                 for part in filter(None, remainder.split("__")):
                     related_record = getattr(related_record, part, None)
                     if related_record is None:
@@ -782,8 +797,11 @@ class TagColumn(django_tables2.TemplateColumn):
     {% endfor %}
     """
 
-    def __init__(self, url_name=None):
-        super().__init__(template_code=self.template_code, extra_context={"url_name": url_name})
+    def __init__(self, url_name=None, **kwargs):
+        # Forward the remaining column arguments so callers can set `verbose_name` and the rest;
+        # without this the header can only ever be derived from the attribute name, which is not
+        # translatable.
+        super().__init__(template_code=self.template_code, extra_context={"url_name": url_name}, **kwargs)
 
 
 class ContentTypesColumn(django_tables2.ManyToManyColumn):

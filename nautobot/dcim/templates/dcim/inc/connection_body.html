@@ -13,6 +13,7 @@ omitted for them. This fragment does NOT render its own `card`/`card-body` wrapp
 cleanly inside both the old detail-view card (`dcim/inc/connection.html`) and the UI component
 framework panel body wrapper.
 {% endcomment %}
+{% load i18n %}
 {% load helpers %}
 {% load cables %}
 {% if object.cable %}
@@ -20,23 +21,23 @@ framework panel body wrapper.
     {# Value columns span everything to the right of the label: +1 for the Connector column on breakout cables. #}
         <table class="table table-hover attr-table">
             <tr>
-                <td>Cable</td>
+                <td>{% trans "Cable" %}</td>
                 <td colspan="{% if is_breakout %}4{% else %}3{% endif %}">
                     {{ object.cable|hyperlinked_object }}
                     {% include 'dcim/inc/cable_actions.html' with trace_url_name=trace_url_name %}
                 </td>
             </tr>
             <tr>
-                <td>Cable Status</td>
+                <td>{% trans "Cable Status" %}</td>
                 <td colspan="{% if is_breakout %}4{% else %}3{% endif %}">{{ object.cable.status|hyperlinked_object_with_color }}</td>
             </tr>
             {% with peers=object.get_cable_peers paths=object.cable_paths.all trunk_children=object.get_breakout_trunk_child_interfaces %}
                 {% for peer in peers %}
                     <tr>
                         {% if forloop.first %}
-                            <td rowspan="{{ peers|length }}" class="align-top"{% if not paths %} style="border-bottom: none;"{% endif %}>Cable Peer{{ peers|length|pluralize }}</td>
+                            <td rowspan="{{ peers|length }}" class="align-top"{% if not paths %} style="border-bottom: none;"{% endif %}>{% blocktrans count count=peers|length %}Cable Peer{% plural %}Cable Peers{% endblocktrans %}</td>
                         {% endif %}
-                        {% if is_breakout %}<td title="Cable connector" style="width: 1%; white-space: nowrap;">{{ peer.cable_termination.connector }}</td>{% endif %}
+                        {% if is_breakout %}<td title="{% trans "Cable connector" %}" style="width: 1%; white-space: nowrap;">{{ peer.cable_termination.connector }}</td>{% endif %}
                         <td>{{ peer.parent|hyperlinked_object }}</td>
                         <td colspan="2">
                             <span class="mdi {{ peer|termination_type_icon }}" title="{{ peer|meta:'verbose_name'|capfirst }}" aria-hidden="true"></span>
@@ -47,16 +48,16 @@ framework panel body wrapper.
                     </tr>
                 {% empty %}
                     <tr>
-                        <td>Cable Peer</td>
+                        <td>{% trans "Cable Peer" %}</td>
                         <td colspan="{% if is_breakout %}4{% else %}3{% endif %}">{{ ""|placeholder }}</td>
                     </tr>
                 {% endfor %}
                 {% for path in paths %}
                     <tr>
                         {% if forloop.first %}
-                            <td rowspan="{{ paths|length }}" class="align-top" style="border-bottom: none;">Endpoint{{ paths|length|pluralize }}</td>
+                            <td rowspan="{{ paths|length }}" class="align-top" style="border-bottom: none;">{% blocktrans count count=paths|length %}Endpoint{% plural %}Endpoints{% endblocktrans %}</td>
                         {% endif %}
-                        {% if is_breakout %}<td title="Cable connector" style="width: 1%; white-space: nowrap;">{{ path.peer_connector }}</td>{% endif %}
+                        {% if is_breakout %}<td title="{% trans "Cable connector" %}" style="width: 1%; white-space: nowrap;">{{ path.peer_connector }}</td>{% endif %}
                         {% if path.destination %}
                             <td>{{ path.destination.parent|hyperlinked_object }}</td>
                             <td>
@@ -67,9 +68,9 @@ framework panel body wrapper.
                             </td>
                             <td>
                                 {% if path.is_active %}
-                                    <span class="badge bg-success">Reachable</span>
+                                    <span class="badge bg-success">{% trans "Reachable" %}</span>
                                 {% else %}
-                                    <span class="badge bg-danger">Not Reachable</span>
+                                    <span class="badge bg-danger">{% trans "Not Reachable" %}</span>
                                 {% endif %}
                             </td>
                         {% else %}
@@ -84,7 +85,7 @@ framework panel body wrapper.
     {% endwith %}
 {% else %}
     <span class="text-secondary">
-        Not connected
+        {% trans "Not connected" %}
         {% if perms.dcim.add_cable %}
             {% include 'dcim/inc/cable_add_button.html' with termination=object %}
         {% endif %}

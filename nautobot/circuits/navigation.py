@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.core.apps import (
     NavMenuAddButton,
     NavMenuGroup,
@@ -9,16 +11,19 @@ from nautobot.core.ui.choices import NavigationIconChoices, NavigationWeightChoi
 menu_items = (
     NavMenuTab(
         name="Circuits",
+        label=_("Circuits"),
         icon=NavigationIconChoices.CIRCUITS,
         weight=NavigationWeightChoices.CIRCUITS,
         groups=(
             NavMenuGroup(
                 name="Circuits",
+                label=_("Circuits"),
                 weight=100,
                 items=(
                     NavMenuItem(
                         link="circuits:circuit_list",
                         name="Circuits",
+                        label=_("Circuits"),
                         weight=100,
                         permissions=[
                             "circuits.view_circuit",
@@ -35,6 +40,7 @@ menu_items = (
                     NavMenuItem(
                         link="circuits:circuittermination_list",
                         name="Circuit Terminations",
+                        label=_("Circuit Terminations"),
                         weight=200,
                         permissions=[
                             "circuits.view_circuittermination",
@@ -43,6 +49,7 @@ menu_items = (
                     NavMenuItem(
                         link="circuits:circuittype_list",
                         name="Circuit Types",
+                        label=_("Circuit Types"),
                         weight=300,
                         permissions=[
                             "circuits.view_circuittype",
@@ -60,11 +67,13 @@ menu_items = (
             ),
             NavMenuGroup(
                 name="Providers",
+                label=_("Providers"),
                 weight=200,
                 items=(
                     NavMenuItem(
                         link="circuits:provider_list",
                         name="Providers",
+                        label=_("Providers"),
                         weight=100,
                         permissions=[
                             "circuits.view_provider",
@@ -81,6 +90,7 @@ menu_items = (
                     NavMenuItem(
                         link="circuits:providernetwork_list",
                         name="Provider Networks",
+                        label=_("Provider Networks"),
                         weight=200,
                         permissions=[
                             "circuits.view_providernetwork",

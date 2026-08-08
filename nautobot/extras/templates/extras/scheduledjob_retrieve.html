@@ -1,4 +1,5 @@
 {% extends 'generic/object_retrieve.html' %}
+{% load i18n %}
 {% load buttons %}
 {% load custom_links %}
 {% load helpers %}
@@ -10,15 +11,15 @@
     {% if not job_class_found %}
         <div class="alert alert-danger">
             <span class="mdi mdi-alert"></span>
-            This job source for this scheduled job is no longer installed.
-            This scheduled job will fail to run unless reinstalled at the original location.
+            {% trans "This job source for this scheduled job is no longer installed.
+            This scheduled job will fail to run unless reinstalled at the original location." %}
         </div>
     {% endif %}
     {% if not object.user %}
         <div class="alert alert-danger">
             <span class="mdi mdi-alert"></span>
-            The user that scheduled this job has been removed.
-            The job will not run until ownership is reassigned.
+            {% trans "The user that scheduled this job has been removed.
+            The job will not run until ownership is reassigned." %}
         </div>
     {% endif %}
     {{ block.super }}
@@ -28,7 +29,7 @@
     {% if perms.extras.view_approvalworkflow and object.associated_approval_workflows.exists %}
         {% if active_tab != 'approval_workflow' and object.get_approval_workflow_url or active_tab == 'approval_workflow' %}
             <li class="nav-item" role="presentation">
-                <a href="{{ object.get_approval_workflow_url }}" class="nav-link{% if active_tab == 'approval_workflow' %} active{% endif %}">Approval Workflow</a>
+                <a href="{{ object.get_approval_workflow_url }}" class="nav-link{% if active_tab == 'approval_workflow' %} active{% endif %}">{% trans "Approval Workflow" %}</a>
             </li>
         {% endif %}
     {% endif %}

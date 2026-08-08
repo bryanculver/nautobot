@@ -2,6 +2,7 @@ from django.db import NotSupportedError
 from django.db.models import Aggregate, Func, JSONField, Value
 from django.db.models.fields.json import compile_json_path
 from django.db.models.functions import Cast
+from django.utils.translation import gettext_lazy as _
 
 
 class CollateAsChar(Func):
@@ -181,7 +182,7 @@ class JSONBAgg(Aggregate):
     """
 
     function = None
-    output_field = JSONField()
+    output_field = JSONField(verbose_name=_("output field"))
     # TODO(Glenn): Django's JSONBAgg has `allow_distinct=True`, we might want to think about adding that at some point?
 
     # Borrowed from `django.contrib.postgres.aggregates.JSONBagg`.

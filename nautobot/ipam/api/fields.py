@@ -1,3 +1,4 @@
+from django.utils.translation import gettext
 import netaddr
 from rest_framework import serializers
 
@@ -12,7 +13,7 @@ class IPFieldSerializer(serializers.CharField):
         try:
             return netaddr.IPNetwork(data)
         except (netaddr.AddrFormatError, TypeError, ValueError):
-            raise serializers.ValidationError(f"Invalid IP address: {data}")
+            raise serializers.ValidationError(gettext("Invalid IP address: %(data)s") % {"data": data})
 
 
 class IPAddressFieldSerializer(serializers.CharField):
@@ -27,4 +28,4 @@ class IPAddressFieldSerializer(serializers.CharField):
         try:
             return netaddr.IPAddress(data)
         except (netaddr.AddrFormatError, TypeError, ValueError):
-            raise serializers.ValidationError(f"Invalid IP address: {data}")
+            raise serializers.ValidationError(gettext("Invalid IP address: %(data)s") % {"data": data})

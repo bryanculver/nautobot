@@ -7,6 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.models import BaseManager, BaseModel
@@ -26,7 +27,7 @@ def validate_regex(value):
     try:
         re.compile(value)
     except re.error as e:
-        raise ValidationError(f"{value} is not a valid regular expression.") from e
+        raise ValidationError(gettext("%(value)s is not a valid regular expression.") % {"value": value}) from e
 
 
 class ValidationRuleManager(BaseManager.from_queryset(RestrictedQuerySet)):
@@ -68,19 +69,21 @@ class ValidationRuleManager(BaseManager.from_queryset(RestrictedQuerySet)):
 class ValidationRuleModelMixin(models.Model):
     """Base model for all validation engine rule models."""
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    field = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH,
-    )
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    field = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("field"))
     content_type = models.ForeignKey(
-        to=ContentType, on_delete=models.CASCADE, limit_choices_to=FeatureQuery("custom_validators")
+        to=ContentType,
+        on_delete=models.CASCADE,
+        limit_choices_to=FeatureQuery("custom_validators"),
+        verbose_name=_("content type"),
     )
-    enabled = models.BooleanField(default=True)
+    enabled = models.BooleanField(default=True, verbose_name=_("enabled"))
     error_message = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
         default="",
-        help_text="Optional error message to display when validation fails.",
+        help_text=_("Optional error message to display when validation fails."),
+        verbose_name=_("error message"),
     )
 
     objects = ValidationRuleManager()
@@ -109,10 +112,13 @@ class ValidationRuleModelMixin(models.Model):
 class RegularExpressionValidationRule(ValidationRuleModelMixin, PrimaryModel):
     """A type of validation rule that applies a regular expression to a given model field."""
 
-    regular_expression = models.TextField()
+    regular_expression = models.TextField(verbose_name=_("regular expression"))
     context_processing = models.BooleanField(
         default=False,
-        help_text="When enabled, the regular expression value is first processed as a Jinja2 template with access to the object being validated in a variable named <code>obj</code>.",
+        help_text=_(
+            "When enabled, the regular expression value is first processed as a Jinja2 template with access to the object being validated in a variable named <code>obj</code>."
+        ),
+        verbose_name=_("context processing"),
     )
 
     clone_fields = ["enabled", "content_type", "regular_expression", "error_message"]
@@ -134,7 +140,8 @@ class RegularExpressionValidationRule(ValidationRuleModelMixin, PrimaryModel):
         if self.field not in [f.name for f in self.content_type.model_class()._meta.get_fields()]:
             raise ValidationError(
                 {
-                    "field": f"Not a valid field for content type {self.content_type.app_label}.{self.content_type.model}."
+                    "field": gettext("Not a valid field for content type %(app_label)s.%(content_type)s.")
+                    % {"app_label": self.content_type.app_label, "content_type": self.content_type.model}
                 }
             )
 
@@ -159,7 +166,7 @@ class RegularExpressionValidationRule(ValidationRuleModelMixin, PrimaryModel):
         model_field = self.content_type.model_class()._meta.get_field(self.field)
 
         if self.field.startswith("_") or not model_field.editable or isinstance(model_field, blacklisted_field_types):
-            raise ValidationError({"field": "This field's type does not support regular expression validation."})
+            raise ValidationError({"field": _("This field's type does not support regular expression validation.")})
 
 
 @extras_features(
@@ -174,10 +181,16 @@ class MinMaxValidationRule(ValidationRuleModelMixin, PrimaryModel):
     """A type of validation rule that applies min/max constraints to a given numeric model field."""
 
     min = models.FloatField(
-        null=True, blank=True, help_text="When set, apply a minimum value contraint to the value of the model field."
+        null=True,
+        blank=True,
+        help_text=_("When set, apply a minimum value contraint to the value of the model field."),
+        verbose_name=_("min"),
     )
     max = models.FloatField(
-        null=True, blank=True, help_text="When set, apply a maximum value contraint to the value of the model field."
+        null=True,
+        blank=True,
+        help_text=_("When set, apply a maximum value contraint to the value of the model field."),
+        verbose_name=_("max"),
     )
 
     clone_fields = ["enabled", "content_type", "min", "max", "error_message"]
@@ -194,7 +207,8 @@ class MinMaxValidationRule(ValidationRuleModelMixin, PrimaryModel):
         if self.field not in [f.name for f in self.content_type.model_class()._meta.get_fields()]:
             raise ValidationError(
                 {
-                    "field": f"Not a valid field for content type {self.content_type.app_label}.{self.content_type.model}."
+                    "field": gettext("Not a valid field for content type %(app_label)s.%(content_type)s.")
+                    % {"app_label": self.content_type.app_label, "content_type": self.content_type.model}
                 }
             )
 
@@ -214,16 +228,16 @@ class MinMaxValidationRule(ValidationRuleModelMixin, PrimaryModel):
         if not isinstance(model_field, allowed_field_types) or (
             self.field.startswith("_") or not model_field.editable or isinstance(model_field, excluded_field_types)
         ):
-            raise ValidationError({"field": "This field's type does not support min/max validation."})
+            raise ValidationError({"field": _("This field's type does not support min/max validation.")})
 
         if self.min is None and self.max is None:
-            raise ValidationError("At least a minimum or maximum value must be specified.")
+            raise ValidationError(_("At least a minimum or maximum value must be specified."))
 
         if self.min is not None and self.max is not None and self.min > self.max:
             raise ValidationError(
                 {
-                    "min": "Minimum value cannot be more than the maximum value.",
-                    "max": "Maximum value cannot be less than the minimum value.",
+                    "min": _("Minimum value cannot be more than the maximum value."),
+                    "max": _("Maximum value cannot be less than the minimum value."),
                 }
             )
 
@@ -253,7 +267,8 @@ class RequiredValidationRule(ValidationRuleModelMixin, PrimaryModel):
         if self.field not in [f.name for f in self.content_type.model_class()._meta.get_fields()]:
             raise ValidationError(
                 {
-                    "field": f"Not a valid field for content type {self.content_type.app_label}.{self.content_type.model}."
+                    "field": gettext("Not a valid field for content type %(app_label)s.%(content_type)s.")
+                    % {"app_label": self.content_type.app_label, "content_type": self.content_type.model}
                 }
             )
 
@@ -267,13 +282,13 @@ class RequiredValidationRule(ValidationRuleModelMixin, PrimaryModel):
         model_field = self.content_type.model_class()._meta.get_field(self.field)
 
         if self.field.startswith("_") or not model_field.editable or isinstance(model_field, blacklisted_field_types):
-            raise ValidationError({"field": "This field's type does not support required validation."})
+            raise ValidationError({"field": _("This field's type does not support required validation.")})
 
         # Generally, only Field(null=True) is considered except for the case of Field(null=False, blank=True)
         # which is commonly seen on CharFields and results in a default of empty string which is unacceptable
         # if the field is to be marked as required.
         if model_field.null is False and not (model_field.null is False and model_field.blank is True):
-            raise ValidationError({"field": "This field is already required by default."})
+            raise ValidationError({"field": _("This field is already required by default.")})
 
 
 @extras_features(
@@ -291,7 +306,9 @@ class UniqueValidationRule(ValidationRuleModelMixin, PrimaryModel):
     Optionally specify the max number of similar values for the field accross all model instances. Default of 1.
     """
 
-    max_instances = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    max_instances = models.PositiveIntegerField(
+        default=1, validators=[MinValueValidator(1)], verbose_name=_("max instances")
+    )
 
     clone_fields = ["enabled", "content_type", "max_instances", "error_message"]
 
@@ -307,7 +324,8 @@ class UniqueValidationRule(ValidationRuleModelMixin, PrimaryModel):
         if self.field not in [f.name for f in self.content_type.model_class()._meta.get_fields()]:
             raise ValidationError(
                 {
-                    "field": f"Not a valid field for content type {self.content_type.app_label}.{self.content_type.model}."
+                    "field": gettext("Not a valid field for content type %(app_label)s.%(content_type)s.")
+                    % {"app_label": self.content_type.app_label, "content_type": self.content_type.model}
                 }
             )
 
@@ -320,10 +338,10 @@ class UniqueValidationRule(ValidationRuleModelMixin, PrimaryModel):
         model_field = self.content_type.model_class()._meta.get_field(self.field)
 
         if self.field.startswith("_") or not model_field.editable or isinstance(model_field, blacklisted_field_types):
-            raise ValidationError({"field": "This field's type does not support uniqueness validation."})
+            raise ValidationError({"field": _("This field's type does not support uniqueness validation.")})
 
         if getattr(model_field, "unique", False):
-            raise ValidationError({"field": "This field is already unique by default."})
+            raise ValidationError({"field": _("This field is already unique by default.")})
 
 
 @extras_features(
@@ -333,23 +351,35 @@ class UniqueValidationRule(ValidationRuleModelMixin, PrimaryModel):
 class DataCompliance(DynamicGroupsModelMixin, NotesMixin, SavedViewMixin, BaseModel):
     """Model to represent the results of an audit method."""
 
-    compliance_class_name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=False, null=False)
-    last_validation_date = models.DateTimeField(blank=False, null=False, auto_now=True)
-    content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT, blank=False, null=False)
-    object_id = models.UUIDField(blank=False, null=False)
+    compliance_class_name = models.CharField(
+        max_length=CHARFIELD_MAX_LENGTH, blank=False, null=False, verbose_name=_("compliance class name")
+    )
+    last_validation_date = models.DateTimeField(
+        blank=False, null=False, auto_now=True, verbose_name=_("last validation date")
+    )
+    content_type = models.ForeignKey(
+        ContentType, on_delete=models.PROTECT, blank=False, null=False, verbose_name=_("content type")
+    )
+    object_id = models.UUIDField(blank=False, null=False, verbose_name=_("object id"))
     validated_object = GenericForeignKey(ct_field="content_type", fk_field="object_id")
-    validated_object_str = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, default="")
-    validated_attribute = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, default="")
-    validated_attribute_value = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, default="")
-    valid = models.BooleanField(blank=False, null=False)
-    message = models.TextField(blank=True, default="")
+    validated_object_str = models.CharField(
+        max_length=CHARFIELD_MAX_LENGTH, blank=True, default="", verbose_name=_("validated object str")
+    )
+    validated_attribute = models.CharField(
+        max_length=CHARFIELD_MAX_LENGTH, blank=True, default="", verbose_name=_("validated attribute")
+    )
+    validated_attribute_value = models.CharField(
+        max_length=CHARFIELD_MAX_LENGTH, blank=True, default="", verbose_name=_("validated attribute value")
+    )
+    valid = models.BooleanField(blank=False, null=False, verbose_name=_("valid"))
+    message = models.TextField(blank=True, default="", verbose_name=_("message"))
 
     is_data_compliance_model = False
 
     class Meta:
         """Meta class for Audit model."""
 
-        verbose_name_plural = "Data Compliance"
+        verbose_name_plural = _("Data Compliance")
 
         unique_together = (
             "compliance_class_name",

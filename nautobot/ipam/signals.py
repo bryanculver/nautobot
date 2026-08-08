@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.db.models.signals import m2m_changed, pre_delete, pre_save
 from django.dispatch import receiver
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.dcim.models import Device, VirtualDeviceContext
 from nautobot.ipam.models import (
@@ -40,7 +41,7 @@ def vrf_prefix_associated(sender, instance, action, reverse, model, pk_set, **kw
     if action == "pre_add":
         prefixes = model.objects.filter(pk__in=pk_set).exclude(namespace=instance.namespace)
         if prefixes.exists():
-            raise ValidationError({"prefixes": "Prefix must match namespace of VRF"})
+            raise ValidationError({"prefixes": _("Prefix must match namespace of VRF")})
 
 
 def _validate_vrf_device_assignments(sender, instance, pk_set, device_field):
@@ -126,9 +127,10 @@ def vrf_device_disassociated(sender, instance, action, reverse, model, pk_set, *
         interfaces = interfaces_assigned_to_vrf(vrf, parent)
         if interfaces.exists():
             raise ValidationError(
-                f"Cannot remove VRF {vrf} from {parent} because it is still assigned to the following "
-                f"interface(s): {', '.join(str(interface) for interface in interfaces)}. "
-                "Remove the VRF from those interfaces first."
+                gettext(
+                    "Cannot remove VRF %(vrf)s from %(parent)s because it is still assigned to the following interface(s): %(interfaces)s. Remove the VRF from those interfaces first."
+                )
+                % {"vrf": vrf, "parent": parent, "interfaces": ", ".join(str(interface) for interface in interfaces)}
             )
 
 
@@ -199,7 +201,12 @@ def assert_locations_content_types(sender, instance, action, reverse, model, pk_
             invalid_location_types = {location.location_type.name for location in invalid_locations}
             label = "Prefixes" if isinstance(instance, Prefix) else "VLANs"
             raise ValidationError(
-                {"locations": f"{label} may not associate to Locations of types {list(invalid_location_types)}."}
+                {
+                    "locations": gettext(
+                        "%(label)s may not associate to Locations of types %(invalid_location_types)s."
+                    )
+                    % {"label": label, "invalid_location_types": list(invalid_location_types)}
+                }
             )
     else:
         # Adding a Prefix or a VLAN to a Location
@@ -210,7 +217,10 @@ def assert_locations_content_types(sender, instance, action, reverse, model, pk_
         label = "Prefixes" if model is Prefix else "VLANs"
         if model_ct not in instance.location_type.content_types.all():
             raise ValidationError(
-                {key: f"{instance} is a {instance.location_type} and may not have {label} associated to it."}
+                {
+                    key: gettext("%(instance)s is a %(location_type)s and may not have %(label)s associated to it.")
+                    % {"instance": instance, "location_type": instance.location_type, "label": label}
+                }
             )
 
 

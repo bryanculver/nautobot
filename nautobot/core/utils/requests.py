@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.http import QueryDict
+from django.utils.translation import gettext, gettext_lazy as _
 import django_filters
 
 from nautobot.core import exceptions
@@ -87,16 +88,20 @@ def ensure_content_type_and_field_name_in_query_params(query_params):
     Return the 'ContentTypes' model and 'field_name' if validation was successful.
     """
     if "content_type" not in query_params or "field_name" not in query_params:
-        raise ValidationError("content_type and field_name are required parameters", code=400)
+        raise ValidationError(_("content_type and field_name are required parameters"), code=400)
     contenttype = query_params.get("content_type")
     app_label, model_name = contenttype.split(".")
     try:
         model_contenttype = ContentType.objects.get(app_label=app_label, model=model_name)
         model = model_contenttype.model_class()
         if model is None:
-            raise ValidationError(f"model for content_type: <{model_contenttype}> not found", code=500)
+            raise ValidationError(
+                gettext("model for content_type: <%(model_contenttype)s> not found")
+                % {"model_contenttype": model_contenttype},
+                code=500,
+            )
     except ContentType.DoesNotExist:
-        raise ValidationError("content_type not found", code=404)
+        raise ValidationError(_("content_type not found"), code=404)
     field_name = query_params.get("field_name")
 
     return field_name, model

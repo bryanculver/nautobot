@@ -11,6 +11,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models.signals import pre_delete
 from django.utils.functional import cached_property
+from django.utils.translation import gettext, gettext_lazy as _
 import django_filters
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
@@ -41,16 +42,19 @@ logger = logging.getLogger(__name__)
 class DynamicGroup(PrimaryModel):
     """A group of related objects sharing a common content-type."""
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     group_type = models.CharField(
-        choices=DynamicGroupTypeChoices.CHOICES, max_length=16, default=DynamicGroupTypeChoices.TYPE_DYNAMIC_FILTER
+        choices=DynamicGroupTypeChoices.CHOICES,
+        max_length=16,
+        default=DynamicGroupTypeChoices.TYPE_DYNAMIC_FILTER,
+        verbose_name=_("group type"),
     )
     content_type = models.ForeignKey(
         to=ContentType,
         on_delete=models.CASCADE,
-        verbose_name="Object Type",
-        help_text="The type of object contained in this group.",
+        verbose_name=_("Object Type"),
+        help_text=_("The type of object contained in this group."),
         related_name="dynamic_groups",
         limit_choices_to=FeatureQuery("dynamic_groups"),
     )
@@ -60,19 +64,21 @@ class DynamicGroup(PrimaryModel):
         related_name="managed_dynamic_groups",  # "dynamic_groups" clash with Tenant.dynamic_groups property
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
     filter = models.JSONField(
         encoder=DjangoJSONEncoder,
         editable=False,
         default=dict,
-        help_text="A JSON-encoded dictionary of filter parameters defining membership of this group",
+        help_text=_("A JSON-encoded dictionary of filter parameters defining membership of this group"),
     )
     children = models.ManyToManyField(
         "extras.DynamicGroup",
-        help_text='"Child" groups that are combined together to define membership of this group',
+        help_text=_('"Child" groups that are combined together to define membership of this group'),
         through="extras.DynamicGroupMembership",
         through_fields=("parent_group", "group"),
         related_name="parents",
+        verbose_name=_("children"),
     )
 
     objects = BaseManager.from_queryset(DynamicGroupQuerySet)()
@@ -315,7 +321,8 @@ class DynamicGroup(PrimaryModel):
         """Set the member objects (QuerySet or list of records) for this staticly defined group."""
         if self.group_type != DynamicGroupTypeChoices.TYPE_STATIC:
             raise ValidationError(
-                f"Group {self} is not staticly defined, setting its members directly is not permitted."
+                gettext("Group %(value)s is not staticly defined, setting its members directly is not permitted.")
+                % {"value": self}
             )
         return self._set_members(value)
 
@@ -345,7 +352,10 @@ class DynamicGroup(PrimaryModel):
     def add_members(self, objects_to_add):
         """Add the given list or QuerySet of objects to this staticly defined group."""
         if self.group_type != DynamicGroupTypeChoices.TYPE_STATIC:
-            raise ValidationError(f"Group {self} is not staticly defined, adding members directly is not permitted.")
+            raise ValidationError(
+                gettext("Group %(value)s is not staticly defined, adding members directly is not permitted.")
+                % {"value": self}
+            )
         if isinstance(objects_to_add, models.QuerySet):
             if objects_to_add.model != self.model:
                 raise TypeError(f"QuerySet does not contain {self.model._meta.label_lower} objects")
@@ -388,7 +398,10 @@ class DynamicGroup(PrimaryModel):
     def remove_members(self, objects_to_remove):
         """Remove the given list or QuerySet of objects from this staticly defined group."""
         if self.group_type != DynamicGroupTypeChoices.TYPE_STATIC:
-            raise ValidationError(f"Group {self} is not staticly defined, removing members directly is not permitted.")
+            raise ValidationError(
+                gettext("Group %(value)s is not staticly defined, removing members directly is not permitted.")
+                % {"value": self}
+            )
         if isinstance(objects_to_remove, models.QuerySet):
             if objects_to_remove.model != self.model:
                 raise TypeError(f"QuerySet does not contain {self.model._meta.label_lower} objects")
@@ -510,7 +523,10 @@ class DynamicGroup(PrimaryModel):
             form_data (dict): Dict of filter parameters, generally from a filter form's `cleaned_data`
         """
         if self.group_type != DynamicGroupTypeChoices.TYPE_DYNAMIC_FILTER:
-            raise ValidationError(f"Group {self} is not a filter-defined group (instead, group_type {self.group_type})")
+            raise ValidationError(
+                gettext("Group %(value)s is not a filter-defined group (instead, group_type %(group_type)s)")
+                % {"value": self, "group_type": self.group_type}
+            )
 
         # Get the authoritative source of filter fields we want to keep.
         filter_fields = self.get_filter_fields()
@@ -576,17 +592,17 @@ class DynamicGroup(PrimaryModel):
     def clean_filter(self):
         """Clean for `self.filter` that uses the filterset_class to validate."""
         if not isinstance(self.filter, dict):
-            raise ValidationError({"filter": "Filter must be a dict"})
+            raise ValidationError({"filter": _("Filter must be a dict")})
 
         # Accessing `self.model` will determine if the `content_type` is not correctly set, blocking validation.
         if self.model is None:
-            raise ValidationError({"filter": "Filter requires a `content_type` to be set"})
+            raise ValidationError({"filter": _("Filter requires a `content_type` to be set")})
         if self.filterset_class is None:
-            raise ValidationError({"filter": "Unable to locate the FilterSet class for this model."})
+            raise ValidationError({"filter": _("Unable to locate the FilterSet class for this model.")})
 
         if self.group_type != DynamicGroupTypeChoices.TYPE_DYNAMIC_FILTER:
             if self.filter:
-                raise ValidationError({"filter": "Filter can only be set for groups of type `dynamic-filter`."})
+                raise ValidationError({"filter": _("Filter can only be set for groups of type `dynamic-filter`.")})
         else:
             # Validate against the filterset's internal form validation.
             filterset = self.filterset_class(self.filter)  # pylint: disable=not-callable
@@ -623,7 +639,7 @@ class DynamicGroup(PrimaryModel):
             database_object = self.__class__.objects.get(pk=self.pk)
 
             if self.content_type != database_object.content_type:
-                raise ValidationError({"content_type": "ContentType cannot be changed once created"})
+                raise ValidationError({"content_type": _("ContentType cannot be changed once created")})
 
             # TODO limit most changes to self.group_type as well.
 
@@ -873,7 +889,7 @@ class DynamicGroup(PrimaryModel):
         """
         if self.group_type != DynamicGroupTypeChoices.TYPE_DYNAMIC_SET:
             if self.filter or self.group_type != DynamicGroupTypeChoices.TYPE_DYNAMIC_FILTER:
-                raise ValidationError(f"{self} is not a dynamic-set group.")
+                raise ValidationError(gettext("%(value)s is not a dynamic-set group.") % {"value": self})
             else:
                 # For backwards compatibility
                 self.group_type = DynamicGroupTypeChoices.TYPE_DYNAMIC_SET
@@ -893,7 +909,7 @@ class DynamicGroup(PrimaryModel):
             child (DynamicGroup): child group to remove
         """
         if self.group_type != DynamicGroupTypeChoices.TYPE_DYNAMIC_SET:
-            raise ValidationError(f"{self} is not a dynamic-set group.")
+            raise ValidationError(gettext("%(value)s is not a dynamic-set group.") % {"value": self})
 
         instance = self.children.through.objects.get(parent_group=self, group=child)
         return instance.delete()
@@ -1129,12 +1145,17 @@ class DynamicGroup(PrimaryModel):
 class DynamicGroupMembership(BaseModel):
     """Intermediate model for associating filters to groups."""
 
-    group = models.ForeignKey("extras.DynamicGroup", on_delete=models.CASCADE, related_name="+")
-    parent_group = models.ForeignKey(
-        "extras.DynamicGroup", on_delete=models.CASCADE, related_name="dynamic_group_memberships"
+    group = models.ForeignKey(
+        "extras.DynamicGroup", on_delete=models.CASCADE, related_name="+", verbose_name=_("group")
     )
-    operator = models.CharField(choices=DynamicGroupOperatorChoices.CHOICES, max_length=12)
-    weight = models.PositiveSmallIntegerField()
+    parent_group = models.ForeignKey(
+        "extras.DynamicGroup",
+        on_delete=models.CASCADE,
+        related_name="dynamic_group_memberships",
+        verbose_name=_("parent group"),
+    )
+    operator = models.CharField(choices=DynamicGroupOperatorChoices.CHOICES, max_length=12, verbose_name=_("operator"))
+    weight = models.PositiveSmallIntegerField(verbose_name=_("weight"))
 
     objects = BaseManager.from_queryset(DynamicGroupMembershipQuerySet)()
 
@@ -1200,21 +1221,23 @@ class DynamicGroupMembership(BaseModel):
 
         # Enforce group types
         if self.parent_group.group_type != DynamicGroupTypeChoices.TYPE_DYNAMIC_SET and self.parent_group.filter:
-            raise ValidationError({"parent_group": 'A parent group must be of `group_type` `"dynamic-set"`.'})
+            raise ValidationError({"parent_group": _('A parent group must be of `group_type` `"dynamic-set"`.')})
 
         if self.group.group_type == DynamicGroupTypeChoices.TYPE_STATIC:
-            raise ValidationError({"group": 'Groups of `group_type` `"static"` may not be child groups at this time.'})
+            raise ValidationError(
+                {"group": _('Groups of `group_type` `"static"` may not be child groups at this time.')}
+            )
 
         # Enforce matching content_type
         if self.parent_group.content_type != self.group.content_type:
-            raise ValidationError({"group": "ContentType for group and parent_group must match"})
+            raise ValidationError({"group": _("ContentType for group and parent_group must match")})
 
         # Assert that loops cannot be created (such as adding root parent as a nested child).
         if self.parent_group == self.group:
-            raise ValidationError({"group": "Cannot add group as a child of itself"})
+            raise ValidationError({"group": _("Cannot add group as a child of itself")})
 
         if self.group in self.parent_group.get_ancestors():
-            raise ValidationError({"group": "Cannot add ancestor as a child"})
+            raise ValidationError({"group": _("Cannot add ancestor as a child")})
 
     def save(self, *args, update_cached_members=True, **kwargs):
         """
@@ -1259,15 +1282,19 @@ class StaticGroupAssociation(OrganizationalModel):
     """Intermediary model for associating an object statically to a DynamicGroup of group_type `static`."""
 
     dynamic_group = models.ForeignKey(
-        to=DynamicGroup, on_delete=models.CASCADE, related_name="static_group_associations"
+        to=DynamicGroup,
+        on_delete=models.CASCADE,
+        related_name="static_group_associations",
+        verbose_name=_("dynamic group"),
     )
     associated_object_type = models.ForeignKey(
         to=ContentType,
         on_delete=models.CASCADE,
         related_name="static_group_associations",
         limit_choices_to=FeatureQuery("dynamic_groups"),
+        verbose_name=_("associated object type"),
     )
-    associated_object_id = models.UUIDField(db_index=True)
+    associated_object_id = models.UUIDField(db_index=True, verbose_name=_("associated object id"))
     associated_object = GenericForeignKey(ct_field="associated_object_type", fk_field="associated_object_id")
 
     objects = StaticGroupAssociationDefaultManager()
@@ -1299,7 +1326,7 @@ class StaticGroupAssociation(OrganizationalModel):
         super().clean()
 
         if self.associated_object_type != self.dynamic_group.content_type:
-            raise ValidationError({"associated_object_type": "Must match the dynamic_group.content_type"})
+            raise ValidationError({"associated_object_type": _("Must match the dynamic_group.content_type")})
 
     def to_objectchange(self, *args, **kwargs):
         """Change log StaticGroupAssociations belonging to a "static" group; all others are an implementation detail."""

@@ -7,6 +7,7 @@ import os
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.forms import BootstrapMixin
 from nautobot.extras.secrets import SecretsProvider
@@ -20,7 +21,7 @@ class EnvironmentVariableSecretsProvider(SecretsProvider):
     name = "Environment Variable"
 
     class ParametersForm(BootstrapMixin, forms.Form):
-        variable = forms.CharField(required=True, help_text="Environment variable name")
+        variable = forms.CharField(required=True, help_text=_("Environment variable name"))
 
     @classmethod
     def get_value_for_secret(cls, secret, obj=None, **kwargs):
@@ -43,7 +44,7 @@ class TextFileSecretsProvider(SecretsProvider):
     name = "Text File"
 
     class ParametersForm(BootstrapMixin, forms.Form):
-        path = forms.CharField(required=True, help_text="Absolute filesystem path to the file")
+        path = forms.CharField(required=True, help_text=_("Absolute filesystem path to the file"))
 
         def clean(self):
             """Prevent some path-related trickery."""
@@ -51,9 +52,9 @@ class TextFileSecretsProvider(SecretsProvider):
 
             path = self.cleaned_data.get("path", "")
             if not path.startswith("/"):
-                raise ValidationError("Path must be an absolute path, not a relative one")
+                raise ValidationError(_("Path must be an absolute path, not a relative one"))
             if ".." in path:
-                raise ValidationError("Illegal character sequence in path")
+                raise ValidationError(_("Illegal character sequence in path"))
 
             return self.cleaned_data
 

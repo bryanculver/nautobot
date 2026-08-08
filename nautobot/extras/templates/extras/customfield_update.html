@@ -1,11 +1,12 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load static %}
 {% load helpers %}
 {% load form_helpers %}
 
 {% block form %}
     <div class="card">
-        <div class="card-header"><strong>Custom Field</strong></div>
+        <div class="card-header"><strong>{% trans "Custom Field" %}</strong></div>
         <div class="card-body">
             {% render_field form.label %}
             {% render_field form.grouping %}
@@ -20,16 +21,16 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Assignment</strong></div>
+        <div class="card-header"><strong>{% trans "Assignment" %}</strong></div>
         <div class="card-body">
             {% render_field form.content_types %}
         </div>
     </div>
     <div class="card" id="nb-scope-filter-form-container" hx-on::after-settle="initializeScopeFilter(event)">
-        <div class="card-header"><strong>Scope filter</strong></div>
+        <div class="card-header"><strong>{% trans "Scope filter" %}</strong></div>
         {% if required_checked or object.required %}
             <div class="card-body text-center text-secondary p-20">
-                Scope filter can be set only for non-required custom fields.
+                {% trans "Scope filter can be set only for non-required custom fields." %}
             </div>
         {% elif content_type_selected %}
             <div class="card-body">
@@ -37,14 +38,14 @@
                     {% if filter_form %}
                         <li role="presentation" class="nav-item">
                             <a class="nav-link{% if filter_form %} active{% endif %}"  href="#default-filter" role="tab" data-bs-toggle="tab">
-                                Basic
+                                {% trans "Basic" %}
                             </a>
                         </li>
                     {% endif %}
                     {% if dynamic_filter_form %}
                         <li role="presentation" class="nav-item">
                             <a class="nav-link position-relative{% if not filter_form %} active{% endif %}" href="#advanced-filter" role="tab" data-bs-toggle="tab">
-                                Advanced
+                                {% trans "Advanced" %}
                             </a>
                         </li>
                     {% endif %}
@@ -79,7 +80,7 @@
                                 </div>
                                 <button class="nb-dynamic-filter-add btn btn-primary d-block ms-auto my-20" type="button">
                                     <span aria-hidden="true" class="mdi mdi-plus me-4"></span><!--
-                                -->Add Filter
+                                -->{% trans "Add Filter" %}
                                 </button>
                                 <hr class="border-top my-20">
                                 {% include "inc/dynamic_filter_items.html" %}
@@ -90,12 +91,12 @@
             </div>
         {% else %}
             <div class="card-body text-center text-secondary p-20">
-                Please select content types first to load scope filter available fields.
+                {% trans "Please select content types first to load scope filter available fields." %}
             </div>
         {% endif %}
     </div>
     <div class="card" id="nb-validation-rules-card">
-        <div class="card-header"><strong>Validation Rules</strong></div>
+        <div class="card-header"><strong>{% trans "Validation Rules" %}</strong></div>
         <div class="card-body">
             <div id="nb-validation-minimum-field">
                 {% render_field form.validation_minimum %}
@@ -109,11 +110,11 @@
         </div>
     </div>
     <div class="card" id="nb-custom-field-choices-card">
-        <div class="card-header"><strong>Custom Field Choices</strong></div>
+        <div class="card-header"><strong>{% trans "Custom Field Choices" %}</strong></div>
         <div class="card-body overflow-auto">
             {% if choices.errors %}
                 <div class="text-danger">
-                    Please correct the error(s) below:
+                    {% trans "Please correct the error(s) below:" %}
 
                     {% for choice in choices.forms %}
                         {% if choice.errors %}

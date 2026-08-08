@@ -1,5 +1,7 @@
 """Custom choices for the vpn models."""
 
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.apps.choices import ChoiceSet
 
 
@@ -9,9 +11,9 @@ class VPNTunnelStatusChoices(ChoiceSet):
     STATUS_DEPRECATED = "deprecated"
 
     CHOICES = (
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_DOWN, "Down"),
-        (STATUS_DEPRECATED, "Deprecated"),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_DOWN, _("Down")),
+        (STATUS_DEPRECATED, _("Deprecated")),
     )
 
 
@@ -21,9 +23,9 @@ class VPNTunnelEndpointRoleChoices(ChoiceSet):
     ROLE_SPOKE = "spoke"
 
     CHOICES = (
-        (ROLE_PEER, "Peer"),
-        (ROLE_HUB, "Hub"),
-        (ROLE_SPOKE, "Spoke"),
+        (ROLE_PEER, _("Peer")),
+        (ROLE_HUB, _("Hub")),
+        (ROLE_SPOKE, _("Spoke")),
     )
 
 

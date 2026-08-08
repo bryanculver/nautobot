@@ -1,4 +1,5 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load static %}
 {% load form_helpers %}
 {% load helpers %}
@@ -11,7 +12,7 @@
 
 {% block form %}
     <div class="card">
-        <div class="card-header"><strong>IP Address</strong></div>
+        <div class="card-header"><strong>{% trans "IP Address" %}</strong></div>
         <div class="card-body">
             {% render_field form.address %}
             {% render_field form.namespace %}
@@ -24,12 +25,12 @@
     </div>
     {% include 'inc/tenancy_form_panel.html' %}
     <div class="card">
-        <div class="card-header"><strong>NAT IP (Inside)</strong></div>
+        <div class="card-header"><strong>{% trans "NAT IP (Inside)" %}</strong></div>
         <div class="card-body">
             <ul class="nav nav-tabs" role="tablist">
-                <li role="presentation" class="nav-item"><a class="nav-link active" href="#by_device" aria-controls="home" role="tab" data-bs-toggle="tab">By Device</a></li>
-                <li class="nav-item" role="presentation"><a class="nav-link" href="#by_vm" aria-controls="search" role="tab" data-bs-toggle="tab">By VM</a></li>
-                <li class="nav-item" role="presentation"><a class="nav-link" href="#by_vrf" aria-controls="search" role="tab" data-bs-toggle="tab">By IP</a></li>
+                <li role="presentation" class="nav-item"><a class="nav-link active" href="#by_device" aria-controls="home" role="tab" data-bs-toggle="tab">{% trans "By Device" %}</a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="#by_vm" aria-controls="search" role="tab" data-bs-toggle="tab">{% trans "By VM" %}</a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="#by_vrf" aria-controls="search" role="tab" data-bs-toggle="tab">{% trans "By IP" %}</a></li>
             </ul>
             <div class="tab-content">
                 <div class="tab-pane active" id="by_device">

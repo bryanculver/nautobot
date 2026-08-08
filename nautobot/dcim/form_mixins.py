@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.forms import DynamicModelChoiceField, DynamicModelMultipleChoiceField
 from nautobot.dcim.models import Location
@@ -62,4 +63,5 @@ class LocatableModelFilterFormMixin(forms.Form):
         to_field_name="name",
         required=False,
         null_option="None",
+        label=_("Location"),
     )

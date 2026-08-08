@@ -14,7 +14,11 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
 from django.utils.choices import CallableChoiceIterator
+from django.utils.functional import lazy
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe, SafeString
+from django.utils.text import format_lazy
+from django.utils.translation import gettext, gettext_lazy as _
 import django_filters
 from netaddr import EUI
 from netaddr.core import AddrFormatError
@@ -160,14 +164,20 @@ class CSVModelChoiceField(django_forms.ModelChoiceField):
     """
 
     default_error_messages = {
-        "invalid_choice": "Object not found.",
+        "invalid_choice": _("Object not found."),
     }
 
     def to_python(self, value):
         try:
             return super().to_python(value)
         except MultipleObjectsReturned:
-            raise ValidationError(f'"{value}" is not a unique value for this field; multiple objects were found')
+            # `%`-format rather than an f-string: `xgettext` cannot see inside an f-string, so the
+            # message would render correctly in English and never reach the catalog. `gettext`
+            # rather than `gettext_lazy` because this runs per request, when the language is set.
+            raise ValidationError(
+                gettext('"%(value)s" is not a unique value for this field; multiple objects were found')
+                % {"value": value}
+            )
 
 
 class CSVContentTypeField(CSVModelChoiceField):
@@ -205,11 +215,11 @@ class CSVContentTypeField(CSVModelChoiceField):
         try:
             app_label, model = value.split(".")
         except ValueError:
-            raise ValidationError('Object type must be specified as "<app_label>.<model>"')
+            raise ValidationError(_('Object type must be specified as "<app_label>.<model>"'))
         try:
             return self.queryset.get(app_label=app_label, model=model)
         except ObjectDoesNotExist:
-            raise ValidationError("Invalid object type")
+            raise ValidationError(_("Invalid object type"))
 
 
 class MultipleContentTypeField(django_forms.ModelMultipleChoiceField):
@@ -368,7 +378,7 @@ class ExpandableIPAddressField(django_forms.CharField):
     def to_python(self, value):
         # Ensure that a subnet mask has been specified. This prevents IPs from defaulting to a /32 or /128.
         if len(value.split("/")) != 2:
-            raise ValidationError("CIDR mask (e.g. /24) is required.")
+            raise ValidationError(_("CIDR mask (e.g. /24) is required."))
 
         # Hackish address version detection but it's all we have to work with
         if "." in value and re.search(forms.IP4_EXPANSION_PATTERN, value):
@@ -377,6 +387,29 @@ class ExpandableIPAddressField(django_forms.CharField):
             return list(forms.expand_ipaddress_pattern(value, 6))
 
         return [value]
+
+
+def _build_markdown_helptext():
+    """Build the "Markdown is supported" note shown beneath comment and note fields."""
+    # TODO: Port Markdown cheat sheet to internal documentation
+    return format_html(
+        '<i class="mdi mdi-information-outline"></i> '
+        + _("{markdown_link} syntax is supported, as well as {html_link}."),
+        markdown_link=format_html(
+            '<a href="https://www.markdownguide.org/cheat-sheet/#basic-syntax" rel="noopener noreferrer">{}</a>',
+            _("Markdown"),
+        ),
+        html_link=format_html(
+            '<a href="{}#render_markdown">{}</a>',
+            static("docs/user-guide/platform-functionality/template-filters.html"),
+            _("a limited subset of HTML"),
+        ),
+    )
+
+
+# `SafeString` as the result class keeps `__html__` on the proxy, so the markup is still recognised
+# as safe at render time and is not escaped into visible tags.
+_markdown_helptext = lazy(_build_markdown_helptext, SafeString)
 
 
 class CommentField(django_forms.CharField):
@@ -389,13 +422,12 @@ class CommentField(django_forms.CharField):
 
     @property
     def default_helptext(self):
-        # TODO: Port Markdown cheat sheet to internal documentation
-        return format_html(
-            '<i class="mdi mdi-information-outline"></i> '
-            '<a href="https://www.markdownguide.org/cheat-sheet/#basic-syntax" rel="noopener noreferrer">Markdown</a> '
-            'syntax is supported, as well as <a href="{}#render_markdown">a limited subset of HTML</a>.',
-            static("docs/user-guide/platform-functionality/template-filters.html"),
-        )
+        # Deferred rather than built here: `format_html` resolves a `gettext_lazy` argument on the
+        # spot, and `__init__` below reads this property when the field is *constructed* -- which,
+        # for a field declared in a form class body, is import time. Building it eagerly froze the
+        # text in whatever language happened to be active at startup, so every user saw English no
+        # matter what they had selected. `lazy()` defers the whole call to render time instead.
+        return _markdown_helptext()
 
     def __init__(self, *args, **kwargs):
         required = kwargs.pop("required", False)
@@ -407,7 +439,7 @@ class CommentField(django_forms.CharField):
 class MACAddressField(django_forms.Field):
     widget = django_forms.CharField
     default_error_messages = {
-        "invalid": "MAC address must be in EUI-48 format",
+        "invalid": _("MAC address must be in EUI-48 format"),
     }
 
     def to_python(self, value):
@@ -446,7 +478,7 @@ class SlugField(django_forms.SlugField):
         Args:
             slug_source (str, tuple): Name of the field (or a list of field names) that will be used to suggest a slug.
         """
-        kwargs.setdefault("label", "Slug")
+        kwargs.setdefault("label", _("Slug"))
         kwargs.setdefault("help_text", "URL-friendly unique shorthand")
         kwargs.setdefault("widget", forms.SlugWidget)
         super().__init__(*args, **kwargs)
@@ -479,8 +511,8 @@ class AutoPositionPatternField(ExpandableNameField):
         Args:
             source (str, tuple): Name pattern of the field (or a list of field names) that will be used to suggest a position pattern.
         """
-        kwargs.setdefault("label", "Position")
-        kwargs.setdefault("widget", forms.AutoPopulateWidget(attrs={"title": "Regenerate position"}))
+        kwargs.setdefault("label", _("Position"))
+        kwargs.setdefault("widget", forms.AutoPopulateWidget(attrs={"title": _("Regenerate position")}))
         super().__init__(*args, **kwargs)
         if isinstance(source, (tuple, list)):
             source = " ".join(source)
@@ -671,7 +703,11 @@ class JSONField(_JSONField):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.help_text:
-            self.help_text = 'Enter context data in <a href="https://json.org/">JSON</a> format.'
+            self.help_text = format_lazy(
+                # The link is a placeholder so a translator can move it within the sentence.
+                _("Enter context data in {json_link} format."),
+                json_link=mark_safe('<a href="https://json.org/">JSON</a>'),
+            )
             self.widget.attrs["placeholder"] = ""
 
     def prepare_value(self, value):
@@ -783,7 +819,7 @@ class JSONArrayFormField(django_forms.JSONField):
             except ValidationError as error:
                 errors.append(error)
             if self.has_choices and not self.valid_value(item):
-                errors.append(ValidationError(f"{item} is not a valid choice"))
+                errors.append(ValidationError(gettext("%(item)s is not a valid choice") % {"item": item}))
         if errors:
             raise ValidationError(errors)
 
@@ -918,7 +954,7 @@ class TagFilterField(DynamicModelMultipleChoiceField):
         query_params = query_params or {}
         query_params.update({"content_types": model._meta.label_lower})
         super().__init__(
-            label="Tags",
+            label=_("Tags"),
             query_params=query_params,
             queryset=queryset,
             required=False,

@@ -16,6 +16,7 @@ from django.utils.decorators import method_decorator
 from django.utils.encoding import iri_to_uri
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.timezone import get_default_timezone_name
+from django.utils.translation import gettext, gettext_lazy as _
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import View
 
@@ -96,7 +97,7 @@ class LoginView(View):
             # Authenticate user
             user = form.get_user()
             auth_login(request, form.get_user())
-            messages.info(request, f"Logged in as {request.user}.")
+            messages.info(request, gettext("Logged in as %(user)s.") % {"user": request.user})
             payload = serialize_user_without_config_and_views(user)
             publish_event(topic="nautobot.users.user.login", payload=payload)
 
@@ -151,7 +152,7 @@ class LogoutView(View):
             payload = serialize_user_without_config_and_views(request.user)
             publish_event(topic="nautobot.users.user.logout", payload=payload)
         auth_logout(request)
-        messages.info(request, "You have logged out.")
+        messages.info(request, gettext("You have logged out."))
 
         # Delete session key cookie (if set) upon logout
         response = HttpResponseRedirect(reverse("home"))
@@ -171,7 +172,7 @@ def is_django_auth_user(request):
 
 class ProfileView(GenericView):
     template_name = "users/profile.html"
-    view_titles = Titles(titles={"*": "User Profile"})
+    view_titles = Titles(titles={"*": _("User Profile")})
 
     def get(self, request):
         return render(
@@ -188,11 +189,14 @@ class ProfileView(GenericView):
 
 class UserConfigView(GenericView):
     template_name = "users/preferences.html"
-    view_titles = Titles(titles={"*": "User Preferences"})
+    view_titles = Titles(titles={"*": _("User Preferences")})
 
     def get(self, request):
         initial = {}
         initial["timezone"] = request.user.get_config("timezone", get_default_timezone_name())
+        # Blank rather than LANGUAGE_CODE when unset, so "no preference" stays distinguishable from
+        # "explicitly chose the default language" and keeps tracking the instance default.
+        initial["language"] = request.user.get_config("language", "")
         form = PreferenceProfileSettingsForm(initial=initial)
         preferences = request.user.all_config()
 
@@ -217,6 +221,13 @@ class UserConfigView(GenericView):
                 response = redirect("user:preferences")
                 if timezone := form.cleaned_data["timezone"]:
                     request.user.set_config("timezone", str(timezone), commit=True)
+                if language := form.cleaned_data["language"]:
+                    request.user.set_config("language", str(language), commit=True)
+                else:
+                    # Selecting the blank choice reverts to the instance default. Unlike timezone,
+                    # this has to be undoable from the form itself -- a user who cannot read the UI
+                    # they just switched to cannot be expected to find the preferences table below.
+                    request.user.clear_config("language", commit=True)
                 return response
 
             return render(
@@ -239,7 +250,7 @@ class UserConfigView(GenericView):
                 if key in data:
                     user.clear_config(key)
             user.save()
-            messages.success(request, "Your preferences have been updated.")
+            messages.success(request, gettext("Your preferences have been updated."))
 
             return redirect("user:preferences")
 
@@ -283,7 +294,7 @@ class UserNavbarFavoritesDeleteView(GetReturnURLMixin, GenericView):
 
 class ChangePasswordView(GenericView):
     template_name = "users/change_password.html"
-    view_titles = Titles(titles={"*": "Change Password"})
+    view_titles = Titles(titles={"*": _("Change Password")})
 
     RESTRICTED_NOTICE = "Remotely authenticated user credentials cannot be changed within Nautobot."
 
@@ -323,7 +334,7 @@ class ChangePasswordView(GenericView):
         if form.is_valid():
             form.save()
             update_session_auth_hash(request, form.user)
-            messages.success(request, "Your password has been changed successfully.")
+            messages.success(request, gettext("Your password has been changed successfully."))
             payload = serialize_user_without_config_and_views(request.user)
             publish_event(topic="nautobot.users.user.change_password", payload=payload)
             return redirect("user:profile")
@@ -345,7 +356,7 @@ class ChangePasswordView(GenericView):
 
 
 class TokenListView(GenericView):
-    view_titles = Titles(titles={"*": "API Tokens"})
+    view_titles = Titles(titles={"*": _("API Tokens")})
 
     def get(self, request):
         tokens = Token.objects.filter(user=request.user)
@@ -446,7 +457,7 @@ class TokenDeleteView(GenericView):
         form = ConfirmationForm(request.POST)
         if form.is_valid():
             token.delete()
-            messages.success(request, "Token deleted")
+            messages.success(request, gettext("Token deleted"))
             return redirect("user:token_list")
 
         return render(
@@ -468,7 +479,7 @@ class TokenDeleteView(GenericView):
 
 class AdvancedProfileSettingsEditView(GenericView):
     template_name = "users/advanced_settings_edit.html"
-    view_titles = Titles(titles={"*": "Advanced Settings"})
+    view_titles = Titles(titles={"*": _("Advanced Settings")})
 
     def get(self, request):
         silk_record_requests = request.session.get("silk_record_requests", False)

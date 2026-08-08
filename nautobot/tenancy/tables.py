@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import django_tables2 as tables
 
 from nautobot.core.tables import (
@@ -57,7 +58,7 @@ class TenantGroupTable(BaseTable):
     tenant_count = LinkedCountColumn(
         viewname="tenancy:tenant_list",
         url_params={"tenant_group": "name"},
-        verbose_name="Tenants",
+        verbose_name=_("Tenants"),
     )
     actions = ButtonsColumn(TenantGroup)
 

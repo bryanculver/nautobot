@@ -9,7 +9,9 @@ from django.db.models.constants import LOOKUP_SEP
 from django.db.models.fields.related import ManyToManyRel, ManyToOneRel, OneToOneRel
 from django.forms.utils import ErrorDict, ErrorList
 from django.utils.encoding import force_str
+from django.utils.functional import lazy
 from django.utils.text import capfirst
+from django.utils.translation import gettext_lazy as _
 import django_filters
 from django_filters.constants import EMPTY_VALUES
 from django_filters.filterset import remote_queryset
@@ -31,6 +33,16 @@ from nautobot.core.models import fields as core_fields
 from nautobot.core.utils import data as data_utils
 
 logger = logging.getLogger(__name__)
+
+
+def _compose_filter_label(*parts):
+    """Join the parts of a filter label, resolving any lazy translations at call time."""
+    return capfirst(" ".join(force_str(part) for part in parts if part))
+
+
+# Deferred so the label renders in the language of the reader rather than the language that
+# happened to be active when the filterset class was first built or first accessed.
+compose_filter_label_lazy = lazy(_compose_filter_label, str)
 
 
 def multivalue_field_factory(field_class, widget=django_forms.SelectMultiple):
@@ -462,7 +474,7 @@ class ModelMultipleChoiceFilter(django_filters.ModelMultipleChoiceFilter):
             name = verbose_field_name(self.model, self.field_name)  # pylint: disable=no-member
             if name == "[invalid name]":
                 name = self.field_name
-            verbose_expression = ["exclude", name] if self.exclude else [name]
+            verbose_expression = [_("exclude"), name] if self.exclude else [name]
 
             # Nautobot-specific enhancement
             verbose_expression.append(f"({self.to_field_name_label})")
@@ -471,8 +483,7 @@ class ModelMultipleChoiceFilter(django_filters.ModelMultipleChoiceFilter):
             if isinstance(self.lookup_expr, str):
                 verbose_expression.append(verbose_lookup_expr(self.lookup_expr))
 
-            verbose_expression = [force_str(part) for part in verbose_expression if part]
-            self._label = capfirst(" ".join(verbose_expression))
+            self._label = compose_filter_label_lazy(*verbose_expression)
         return self._label
 
     @label.setter
@@ -831,11 +842,10 @@ class BaseFilterSet(django_filters.FilterSet):
                 filter_field.exclude,
             ):
                 # Lightly adjusted from label_for_filter() implementation:
-                verbose_expression = ["exclude", filter_field.label] if new_filter.exclude else [filter_field.label]
+                verbose_expression = [_("exclude"), filter_field.label] if new_filter.exclude else [filter_field.label]
                 if isinstance(lookup_expr, str):
                     verbose_expression.append(verbose_lookup_expr(lookup_expr))
-                verbose_expression = [force_str(part) for part in verbose_expression if part]
-                new_filter.label = capfirst(" ".join(verbose_expression))
+                new_filter.label = compose_filter_label_lazy(*verbose_expression)
 
             magic_filters[new_filter_name] = new_filter
 
@@ -931,7 +941,7 @@ class BaseFilterSet(django_filters.FilterSet):
                     queryset=Contact.objects.all(),
                     field_name="associated_contacts__contact",
                     to_field_name="name",
-                    label="Contacts (name or ID)",
+                    label=_("Contacts (name or ID)"),
                 )
                 cls.declared_filters["contacts"] = filters["contacts"]  # pylint: disable=no-member
 
@@ -940,7 +950,7 @@ class BaseFilterSet(django_filters.FilterSet):
                     queryset=Team.objects.all(),
                     field_name="associated_contacts__team",
                     to_field_name="name",
-                    label="Teams (name or ID)",
+                    label=_("Teams (name or ID)"),
                 )
                 cls.declared_filters["teams"] = filters["teams"]  # pylint: disable=no-member
 
@@ -961,7 +971,7 @@ class BaseFilterSet(django_filters.FilterSet):
                     field_name="static_group_association_set__dynamic_group",
                     to_field_name="name",
                     query_params={"content_type": cls._meta.model._meta.label_lower},  # pylint: disable=no-member
-                    label="Dynamic groups (name or ID)",
+                    label=_("Dynamic groups (name or ID)"),
                 )
                 cls.declared_filters["dynamic_groups"] = filters["dynamic_groups"]  # pylint: disable=no-member
 

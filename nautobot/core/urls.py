@@ -2,6 +2,7 @@ from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotFound
 from django.urls import include, path
 from django.views.generic import RedirectView, TemplateView
+from django.views.i18n import JavaScriptCatalog
 
 from nautobot.core.views import (
     AboutView,
@@ -61,6 +62,17 @@ urlpatterns = [
     path("api/", include("nautobot.core.api.urls")),
     # GraphQL
     path("graphql/", CustomGraphQLView.as_view(graphiql=True), name="graphql"),
+    # Translation catalog for strings that are translated in JavaScript rather than server-side.
+    # Served per-request so it reflects the requesting user's active language.
+    #
+    # Deliberately no `packages=` argument: it *restricts* the catalog rather than adding to it, so
+    # naming any package excludes every other installed app -- including Apps, which is how an App
+    # ships its own JavaScript strings. Omitting it makes Django harvest all of `INSTALLED_APPS`.
+    #
+    # Do not wrap this in `cache_page` either: the response varies by the signed-in user's stored
+    # language preference, not by `Accept-Language`, so there is no header a shared cache could key
+    # on and one user's language would be served to another.
+    path("jsi18n/", JavaScriptCatalog.as_view(), name="javascript_catalog"),
     # Serving static media in Django (TODO: should be DEBUG mode only - "This view is NOT hardened for production use")
     path("media/<path:path>", MediaView.as_view(), name="media"),
     # Admin

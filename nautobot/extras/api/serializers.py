@@ -3,6 +3,7 @@ import logging
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
@@ -139,7 +140,7 @@ class ApprovalWorkflowStageDefinitionSerializer(NautobotModelSerializer):
 
     approver_group = GroupField(
         queryset=Group.objects.all(),
-        help_text="The group that will be assigned to approve this stage.",
+        help_text=_("The group that will be assigned to approve this stage."),
     )
 
     class Meta:
@@ -772,15 +773,16 @@ class JobRunResponseSerializer(serializers.Serializer):
 class JobResultCancelPreviewSerializer(serializers.Serializer):
     """Describes what a cancel action would do, returned by GET on the cancel endpoint."""
 
-    message = serializers.CharField(help_text="Confirmation prompt to display to the user.")
+    message = serializers.CharField(help_text=_("Confirmation prompt to display to the user."))
     job_status = serializers.ChoiceField(
         choices=["RUNNING", "NOT RUNNING", "UNKNOWN", *JobResultStatusChoices.ALL_STATES],
-        help_text=("For unready jobs: RUNNING, NOT RUNNING, or UNKNOWN. For ready jobs: the terminal state."),
+        help_text=(_("For unready jobs: RUNNING, NOT RUNNING, or UNKNOWN. For ready jobs: the terminal state.")),
     )
     irreversible = serializers.CharField(
-        required=False, help_text="Warning that the action cannot be undone. Omitted when the job is already finished."
+        required=False,
+        help_text=_("Warning that the action cannot be undone. Omitted when the job is already finished."),
     )
-    timestamp = serializers.DateTimeField(help_text="Server time when this preview was generated.")
+    timestamp = serializers.DateTimeField(help_text=_("Server time when this preview was generated."))
 
 
 #
@@ -871,20 +873,22 @@ class JobCreationSerializer(BaseModelSerializer):
 
         if attrs["interval"] in choices.JobExecutionType.SCHEDULE_CHOICES:
             if "name" not in attrs:
-                raise serializers.ValidationError({"name": "Please provide a name for the job schedule."})
+                raise serializers.ValidationError({"name": _("Please provide a name for the job schedule.")})
 
             if ("start_time" not in attrs and attrs["interval"] != choices.JobExecutionType.TYPE_CUSTOM) or (
                 "start_time" in attrs and attrs["start_time"] < models.ScheduledJob.earliest_possible_time()
             ):
                 raise serializers.ValidationError(
                     {
-                        "start_time": "Please enter a valid date and time greater than or equal to the current date and time."
+                        "start_time": _(
+                            "Please enter a valid date and time greater than or equal to the current date and time."
+                        )
                     }
                 )
 
             if attrs["interval"] == choices.JobExecutionType.TYPE_CUSTOM:
                 if attrs.get("crontab") is None:
-                    raise serializers.ValidationError({"crontab": "Please enter a valid crontab."})
+                    raise serializers.ValidationError({"crontab": _("Please enter a valid crontab.")})
                 try:
                     models.ScheduledJob.get_crontab(attrs["crontab"])
                 except Exception as e:
@@ -915,7 +919,7 @@ class JobMultiPartInputSerializer(serializers.Serializer):
 
         if "_schedule_interval" in attrs and attrs["_schedule_interval"] != JobExecutionType.TYPE_IMMEDIATELY:
             if "_schedule_name" not in attrs:
-                raise serializers.ValidationError({"_schedule_name": "Please provide a name for the job schedule."})
+                raise serializers.ValidationError({"_schedule_name": _("Please provide a name for the job schedule.")})
 
             if (
                 "_schedule_start_time" not in attrs and attrs["_schedule_interval"] != JobExecutionType.TYPE_CUSTOM
@@ -925,13 +929,15 @@ class JobMultiPartInputSerializer(serializers.Serializer):
             ):
                 raise serializers.ValidationError(
                     {
-                        "_schedule_start_time": "Please enter a valid date and time greater than or equal to the current date and time."
+                        "_schedule_start_time": _(
+                            "Please enter a valid date and time greater than or equal to the current date and time."
+                        )
                     }
                 )
 
             if attrs["_schedule_interval"] == JobExecutionType.TYPE_CUSTOM:
                 if attrs.get("_schedule_crontab") is None:
-                    raise serializers.ValidationError({"_schedule_crontab": "Please enter a valid crontab."})
+                    raise serializers.ValidationError({"_schedule_crontab": _("Please enter a valid crontab.")})
                 try:
                     ScheduledJob.get_crontab(attrs["_schedule_crontab"])
                 except Exception as e:

@@ -1,5 +1,7 @@
 """Views for nautobot_load_balancer_models."""
 
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.core.ui.object_detail import (
     ObjectDetailContent,
     ObjectFieldsPanel,
@@ -39,7 +41,7 @@ class VirtualServerUIViewSet(NautobotUIViewSet):
             ),
             ObjectFieldsPanel(
                 weight=200,
-                label="Configuration",
+                label=_("Configuration"),
                 section=SectionChoices.LEFT_HALF,
                 fields=[
                     "port",
@@ -54,7 +56,7 @@ class VirtualServerUIViewSet(NautobotUIViewSet):
             ),
             ObjectFieldsPanel(
                 weight=300,
-                label="Assignment",
+                label=_("Assignment"),
                 section=SectionChoices.RIGHT_HALF,
                 fields=[
                     "device",
@@ -68,7 +70,7 @@ class VirtualServerUIViewSet(NautobotUIViewSet):
                 weight=500,
                 table_class=tables.CertificateProfileTable,
                 table_filter="virtual_servers",
-                table_title="Certificate Profiles",
+                table_title=_("Certificate Profiles"),
                 exclude_columns=["tenant", "actions"],
                 add_button_route=None,
             ),
@@ -98,7 +100,7 @@ class LoadBalancerPoolUIViewSet(NautobotUIViewSet):
             ),
             ObjectFieldsPanel(
                 weight=200,
-                label="Configuration",
+                label=_("Configuration"),
                 section=SectionChoices.LEFT_HALF,
                 fields=[
                     "load_balancing_algorithm",
@@ -110,7 +112,7 @@ class LoadBalancerPoolUIViewSet(NautobotUIViewSet):
                 weight=300,
                 table_class=tables.VirtualServerTable,
                 table_filter="load_balancer_pool",
-                table_title="Virtual Servers",
+                table_title=_("Virtual Servers"),
                 exclude_columns=["load_balancer_pool", "tenant", "actions"],
                 add_button_route=None,
             ),
@@ -119,7 +121,7 @@ class LoadBalancerPoolUIViewSet(NautobotUIViewSet):
                 weight=400,
                 table_class=tables.LoadBalancerPoolMemberTable,
                 table_filter="load_balancer_pool",
-                table_title="Load Balancer Pool Members",
+                table_title=_("Load Balancer Pool Members"),
                 exclude_columns=["load_balancer_pool", "ssl_offload", "tenant", "actions"],
                 add_button_route=None,
             ),
@@ -149,7 +151,7 @@ class LoadBalancerPoolMemberUIViewSet(NautobotUIViewSet):
             ),
             ObjectFieldsPanel(
                 weight=200,
-                label="Configuration",
+                label=_("Configuration"),
                 section=SectionChoices.RIGHT_HALF,
                 fields=[
                     "ssl_offload",
@@ -161,7 +163,7 @@ class LoadBalancerPoolMemberUIViewSet(NautobotUIViewSet):
                 weight=400,
                 table_class=tables.CertificateProfileTable,
                 table_filter="load_balancer_pool_members",
-                table_title="Certificate Profiles",
+                table_title=_("Certificate Profiles"),
                 exclude_columns=["tenant", "actions"],
                 add_button_route=None,
             ),
@@ -200,7 +202,7 @@ class HealthCheckMonitorUIViewSet(NautobotUIViewSet):
             StatsPanel(
                 section=SectionChoices.RIGHT_HALF,
                 weight=200,
-                label="Stats",
+                label=_("Stats"),
                 filter_name="health_check_monitor",
                 related_models=[models.VirtualServer, models.LoadBalancerPool, models.LoadBalancerPoolMember],
             ),
@@ -240,7 +242,7 @@ class CertificateProfileUIViewSet(NautobotUIViewSet):
             StatsPanel(
                 section=SectionChoices.RIGHT_HALF,
                 weight=300,
-                label="Stats",
+                label=_("Stats"),
                 filter_name="certificate_profiles",
                 related_models=[models.VirtualServer, models.LoadBalancerPoolMember],
             ),

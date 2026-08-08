@@ -1,14 +1,15 @@
+{% load i18n %}
 {% load helpers %}
 
 <div class="card">
     <div class="card-header">
-        <strong>Response</strong>
-        <button class="btn btn-primary btn-sm float-end" onclick="test_query()">Execute</button>
+        <strong>{% trans "Response" %}</strong>
+        <button class="btn btn-primary btn-sm float-end" onclick="test_query()">{% trans "Execute" %}</button>
     </div>
     {% if object.variables %}
         <table class="table table-hover card-body attr-table">
             <tr>
-                <td>Variables:</td>
+                <td>{% trans "Variables:" %}</td>
                 <td><textarea id="query_variables" class="form-control">{{ object.variables|render_json:False }}</textarea></td>
             </tr>
         </table>

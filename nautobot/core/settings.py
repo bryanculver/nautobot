@@ -10,6 +10,7 @@ import tempfile
 from django.contrib.messages import constants as messages
 import django.forms
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 
 from nautobot import __version__
 from nautobot.core.constants import (
@@ -17,6 +18,7 @@ from nautobot.core.constants import (
     MAX_PAGE_SIZE_DEFAULT as _MAX_PAGE_SIZE_DEFAULT,
     PAGINATE_COUNT_DEFAULT as _PAGINATE_COUNT_DEFAULT,
 )
+from nautobot.core.formats import NAUTOBOT_FORMAT_DEFAULTS as _NAUTOBOT_FORMAT_DEFAULTS
 from nautobot.core.settings_funcs import ConstanceConfigItem, is_truthy, parse_redis_connection
 
 #
@@ -543,8 +545,8 @@ if "NAUTOBOT_CSRF_TRUSTED_ORIGINS" in os.environ and os.environ["NAUTOBOT_CSRF_T
     CSRF_TRUSTED_ORIGINS = os.getenv("NAUTOBOT_CSRF_TRUSTED_ORIGINS", "").split(_CONFIG_SETTING_SEPARATOR)
 
 CSRF_FAILURE_VIEW = "nautobot.core.views.csrf_failure"
-DATE_FORMAT = os.getenv("NAUTOBOT_DATE_FORMAT", "N j, Y")
-DATETIME_FORMAT = os.getenv("NAUTOBOT_DATETIME_FORMAT", "N j, Y g:i a")
+DATE_FORMAT = os.getenv("NAUTOBOT_DATE_FORMAT", _NAUTOBOT_FORMAT_DEFAULTS["DATE_FORMAT"])
+DATETIME_FORMAT = os.getenv("NAUTOBOT_DATETIME_FORMAT", _NAUTOBOT_FORMAT_DEFAULTS["DATETIME_FORMAT"])
 DEBUG = is_truthy(os.getenv("NAUTOBOT_DEBUG", "False"))
 INTERNAL_IPS = ["127.0.0.1", "::1"]
 FORCE_SCRIPT_NAME = None
@@ -601,9 +603,9 @@ MEDIA_ROOT = os.path.join(NAUTOBOT_ROOT, "media").rstrip("/")
 SESSION_EXPIRE_AT_BROWSER_CLOSE = is_truthy(os.getenv("NAUTOBOT_SESSION_EXPIRE_AT_BROWSER_CLOSE", "False"))
 SESSION_COOKIE_AGE = int(os.getenv("NAUTOBOT_SESSION_COOKIE_AGE", "1209600"))  # 2 weeks, in seconds
 SESSION_FILE_PATH = os.getenv("NAUTOBOT_SESSION_FILE_PATH", None)
-SHORT_DATE_FORMAT = os.getenv("NAUTOBOT_SHORT_DATE_FORMAT", "Y-m-d")
-SHORT_DATETIME_FORMAT = os.getenv("NAUTOBOT_SHORT_DATETIME_FORMAT", "Y-m-d H:i")
-TIME_FORMAT = os.getenv("NAUTOBOT_TIME_FORMAT", "g:i a")
+SHORT_DATE_FORMAT = os.getenv("NAUTOBOT_SHORT_DATE_FORMAT", _NAUTOBOT_FORMAT_DEFAULTS["SHORT_DATE_FORMAT"])
+SHORT_DATETIME_FORMAT = os.getenv("NAUTOBOT_SHORT_DATETIME_FORMAT", _NAUTOBOT_FORMAT_DEFAULTS["SHORT_DATETIME_FORMAT"])
+TIME_FORMAT = os.getenv("NAUTOBOT_TIME_FORMAT", _NAUTOBOT_FORMAT_DEFAULTS["TIME_FORMAT"])
 TIME_ZONE = os.getenv("NAUTOBOT_TIME_ZONE", "UTC")
 
 # Disable importing the WSGI module before starting the server application. This is required for
@@ -676,6 +678,7 @@ MIDDLEWARE = [
     "nautobot.core.middleware.ExternalAuthMiddleware",
     "nautobot.core.middleware.GraphQLOpenTelemetryMiddleware",
     "nautobot.core.middleware.ObjectChangeMiddleware",
+    "nautobot.core.middleware.UserDefinedLanguageMiddleware",
     "nautobot.core.middleware.UserDefinedTimeZoneMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
@@ -722,6 +725,9 @@ TEMPLATES = [
                 "nautobot.core.context_processors.sso_auth",
             ],
             "environment": "jinja2.sandbox.SandboxedEnvironment",
+            # Gives Jinja2 templates the same {% trans %}/{% blocktrans %} vocabulary as the Django
+            # backend, so a template's translatability does not depend on which engine renders it.
+            "extensions": ["jinja2.ext.i18n"],
         },
     },
 ]
@@ -734,6 +740,19 @@ AUTHENTICATION_BACKENDS = [
 
 # Internationalization
 LANGUAGE_CODE = "en-us"
+# Languages that Nautobot ships translation catalogs for, and that users may therefore select in
+# their preferences. Operators may narrow this to a subset; reducing it to `[("en", "English")]`
+# is the supported way to turn the language-selection feature off entirely.
+# Language names are given in the language itself, so they are deliberately not translated.
+LANGUAGES = [
+    ("en", "English"),
+    ("de", "Deutsch"),
+    ("es", "Español"),
+    ("fr", "Français"),
+    # Full-width parentheses are the correct punctuation in Chinese text; ASCII parens would look wrong.
+    ("zh-hans", "中文（简体）"),  # noqa: RUF001  # ambiguous-unicode-character-string
+]
+LOCALE_PATHS = [os.path.join(BASE_DIR, "locale")]
 USE_I18N = True
 USE_TZ = True
 # Group numbers into thousands (e.g. 1,009,518) for filters that force grouping such as `intcomma`.
@@ -821,160 +840,188 @@ CONSTANCE_ADDITIONAL_FIELDS = {
 CONSTANCE_CONFIG = {
     "ALLOW_REQUEST_PROFILING": ConstanceConfigItem(
         default=False,
-        help_text="Allow users to enable request profiling on their login session.",
+        help_text=_("Allow users to enable request profiling on their login session."),
         field_type=bool,
     ),
     "BANNER_BOTTOM": ConstanceConfigItem(
         default="",
-        help_text="Custom Markdown or limited HTML to display in a banner at the bottom of all pages.",
+        help_text=_("Custom Markdown or limited HTML to display in a banner at the bottom of all pages."),
     ),
     "BANNER_LOGIN": ConstanceConfigItem(
         default="",
-        help_text="Custom Markdown or limited HTML to display in a banner at the top of the login page.",
+        help_text=_("Custom Markdown or limited HTML to display in a banner at the top of the login page."),
     ),
     "BANNER_TOP": ConstanceConfigItem(
         default="",
-        help_text="Custom Markdown or limited HTML to display in a banner at the top of all pages.",
+        help_text=_("Custom Markdown or limited HTML to display in a banner at the top of all pages."),
     ),
     "CHANGELOG_RETENTION": ConstanceConfigItem(
         default=90,
-        help_text="Number of days to retain object changelog history.\nSet this to 0 to retain changes indefinitely.",
+        help_text=_(
+            "Number of days to retain object changelog history.\nSet this to 0 to retain changes indefinitely."
+        ),
         field_type=int,
     ),
     "DEVICE_UNIQUENESS": ConstanceConfigItem(
         default="location_tenant_name",
         help_text=(
-            "Select how Devices are uniquely identified:\n"
-            "- 'location_tenant_name': combination of Location + Tenant + Name\n"
-            "- 'name': Device name must be globally unique\n"
-            "- 'none': No enforced uniqueness (rely on other validation rules or custom validators)"
+            _(
+                "Select how Devices are uniquely identified:\n"
+                "- 'location_tenant_name': combination of Location + Tenant + Name\n"
+                "- 'name': Device name must be globally unique\n"
+                "- 'none': No enforced uniqueness (rely on other validation rules or custom validators)"
+            )
         ),
         field_type=str,
     ),
     "DEPLOYMENT_ID": ConstanceConfigItem(
         default="",
-        help_text="Randomly generated UUID used to identify this installation.\n"
-        "Used for sending anonymous installation metrics, when settings.INSTALLATION_METRICS_ENABLED is set to True.",
+        help_text=_(
+            "Randomly generated UUID used to identify this installation.\n"
+            "Used for sending anonymous installation metrics, when settings.INSTALLATION_METRICS_ENABLED is set to True."
+        ),
         field_type=str,
     ),
     "JOB_CREATE_FILE_MAX_SIZE": ConstanceConfigItem(
         default=10 << 20,
-        help_text=mark_safe(
-            "Maximum size (in bytes) of any single file generated by a <code>Job.create_file()</code> call."
+        help_text=mark_safe(  # noqa: S308  # our own literal, not user input
+            _("Maximum size (in bytes) of any single file generated by a <code>Job.create_file()</code> call.")
         ),
         field_type=int,
     ),
     "LOCATION_LIST_DEFAULT_MAX_DEPTH": ConstanceConfigItem(
         default=0,
-        help_text=mark_safe(
-            "Default <code>max_depth</code> filter value to use for Location list views (0 for no filter).\n"
-            "Setting this to a small value may improve performance when the number of records is large.",
+        help_text=mark_safe(  # noqa: S308  # our own literal, not user input
+            _(
+                "Default <code>max_depth</code> filter value to use for Location list views (0 for no filter).\n"
+                "Setting this to a small value may improve performance when the number of records is large."
+            ),
         ),
         field_type=int,
     ),
     "LOCATION_NAME_AS_NATURAL_KEY": ConstanceConfigItem(
         default=False,
-        help_text="Location names are not guaranteed globally-unique by Nautobot but in practice they often are. "
-        "Set this to True to use the location name alone as the natural key for Location objects. "
-        "Set this to False to use the sequence (name, parent__name, parent__parent__name, ...) "
-        "as the natural key instead.",
+        help_text=_(
+            "Location names are not guaranteed globally-unique by Nautobot but in practice they often are. "
+            "Set this to True to use the location name alone as the natural key for Location objects. "
+            "Set this to False to use the sequence (name, parent__name, parent__parent__name, ...) "
+            "as the natural key instead."
+        ),
         field_type=bool,
     ),
     "MAX_PAGE_SIZE": ConstanceConfigItem(
         default=_MAX_PAGE_SIZE_DEFAULT,
-        help_text="Maximum number of objects that a user can list in one UI page or one API call.\n"
-        "If set to 0, a user can retrieve an unlimited number of objects.",
+        help_text=_(
+            "Maximum number of objects that a user can list in one UI page or one API call.\n"
+            "If set to 0, a user can retrieve an unlimited number of objects."
+        ),
         field_type=int,
     ),
     "PAGINATE_COUNT": ConstanceConfigItem(
         default=_PAGINATE_COUNT_DEFAULT,
-        help_text="Default number of objects to display per page when listing objects in the UI and/or REST API.",
+        help_text=_("Default number of objects to display per page when listing objects in the UI and/or REST API."),
         field_type=int,
     ),
     "PER_PAGE_DEFAULTS": ConstanceConfigItem(
         default=[25, 50, 100, 250, 500, 1000],
-        help_text="Pagination options to present to the user to choose amongst.\n"
-        "For proper user experience, this list should include the PAGINATE_COUNT and MAX_PAGE_SIZE values as options.",
+        help_text=_(
+            "Pagination options to present to the user to choose amongst.\n"
+            "For proper user experience, this list should include the PAGINATE_COUNT and MAX_PAGE_SIZE values as options."
+        ),
         # Use custom field type defined above
         field_type="per_page_defaults_field",
     ),
     "PREFIX_LIST_DEFAULT_CONTAINER_ONLY": ConstanceConfigItem(
         default=False,
-        help_text=mark_safe(
-            "Enable a default <code>type=container</code> filter on Prefix list views.\n"
-            "Enabling this may improve performance when the number of records is large."
+        help_text=mark_safe(  # noqa: S308  # our own literal, not user input
+            _(
+                "Enable a default <code>type=container</code> filter on Prefix list views.\n"
+                "Enabling this may improve performance when the number of records is large."
+            )
         ),
         field_type=bool,
     ),
     "PREFIX_LIST_DEFAULT_MAX_DEPTH": ConstanceConfigItem(
         default=0,
-        help_text=mark_safe(
-            "Default <code>max_depth</code> filter value to use for Prefix list views (0 for no filter).\n"
-            "Setting this to a small value may improve performance when the number of records is large.",
+        help_text=mark_safe(  # noqa: S308  # our own literal, not user input
+            _(
+                "Default <code>max_depth</code> filter value to use for Prefix list views (0 for no filter).\n"
+                "Setting this to a small value may improve performance when the number of records is large."
+            ),
         ),
         field_type=int,
     ),
     "NETWORK_DRIVERS": ConstanceConfigItem(
         default={},
-        help_text=mark_safe(
-            "Extend or override default Platform.network_driver translations provided by "
-            '<a href="https://netutils.readthedocs.io/en/latest/user/lib_use_cases_lib_mapper/">netutils</a>. '
-            "Enter a dictionary in JSON format, for example:\n"
-            '<pre><code class="language-json">{\n'
-            '    "netmiko": {"my_network_driver": "cisco_ios"},\n'
-            '    "pyats": {"my_network_driver": "iosxe"} \n'
-            "}</code></pre>",
+        help_text=mark_safe(  # noqa: S308  # our own literal, not user input
+            _(
+                "Extend or override default Platform.network_driver translations provided by "
+                '<a href="https://netutils.readthedocs.io/en/latest/user/lib_use_cases_lib_mapper/">netutils</a>. '
+                "Enter a dictionary in JSON format, for example:\n"
+                '<pre><code class="language-json">{\n'
+                '    "netmiko": {"my_network_driver": "cisco_ios"},\n'
+                '    "pyats": {"my_network_driver": "iosxe"} \n'
+                "}</code></pre>"
+            ),
         ),
         # Use custom field type defined above
         field_type="optional_json_field",
     ),
     "NTC_SUPPORT_CONTRACT_EXPIRATION_DATE": ConstanceConfigItem(
         default="",
-        help_text="Expiration date for an active Nautobot support contract with Network to Code. "
-        "This value is displayed in the About page to provide additional support information.",
+        help_text=_(
+            "Expiration date for an active Nautobot support contract with Network to Code. "
+            "This value is displayed in the About page to provide additional support information."
+        ),
         field_type="optional_date_field",
     ),
     "PREFER_IPV4": ConstanceConfigItem(
         default=False,
-        help_text="Whether to prefer IPv4 primary addresses over IPv6 primary addresses for devices.",
+        help_text=_("Whether to prefer IPv4 primary addresses over IPv6 primary addresses for devices."),
         field_type=bool,
     ),
     "RACK_DEFAULT_U_HEIGHT": ConstanceConfigItem(
         default=42,
-        help_text="Default height in rack units (U) for newly created racks. Must be between 1 and 500.",
+        help_text=_("Default height in rack units (U) for newly created racks. Must be between 1 and 500."),
         field_type=int,
     ),
     "RACK_ELEVATION_DEFAULT_UNIT_HEIGHT": ConstanceConfigItem(
-        default=22, help_text="Default height (in pixels) of a rack unit in a rack elevation diagram", field_type=int
+        default=22, help_text=_("Default height (in pixels) of a rack unit in a rack elevation diagram"), field_type=int
     ),
     "RACK_ELEVATION_DEFAULT_UNIT_WIDTH": ConstanceConfigItem(
-        default=230, help_text="Default width (in pixels) of a rack unit in a rack elevation diagram", field_type=int
+        default=230, help_text=_("Default width (in pixels) of a rack unit in a rack elevation diagram"), field_type=int
     ),
     "RACK_ELEVATION_UNIT_TWO_DIGIT_FORMAT": ConstanceConfigItem(
         default=False,
-        help_text="Enables two-digit format for the rack unit numbering in a rack elevation diagram",
+        help_text=_("Enables two-digit format for the rack unit numbering in a rack elevation diagram"),
         field_type=bool,
     ),
     "RELEASE_CHECK_TIMEOUT": ConstanceConfigItem(
         default=24 * 3600,
-        help_text="Number of seconds (must be at least 3600, or one hour) to cache the result of a release check "
-        "before checking again for a new release.",
+        help_text=_(
+            "Number of seconds (must be at least 3600, or one hour) to cache the result of a release check "
+            "before checking again for a new release."
+        ),
         # Use custom field type defined above
         field_type="release_check_timeout_field",
     ),
     "RELEASE_CHECK_URL": ConstanceConfigItem(
         default="",
-        help_text="URL of GitHub repository REST API endpoint to poll periodically for availability of new Nautobot releases.\n"
-        'This can be set to the official repository "https://api.github.com/repos/nautobot/nautobot/releases" or '
-        "a custom fork.\nSet this to an empty string to disable automatic update checks.",
+        help_text=_(
+            "URL of GitHub repository REST API endpoint to poll periodically for availability of new Nautobot releases.\n"
+            'This can be set to the official repository "https://api.github.com/repos/nautobot/nautobot/releases" or '
+            "a custom fork.\nSet this to an empty string to disable automatic update checks."
+        ),
         # Use custom field type defined above
         field_type="release_check_url_field",
     ),
     "SUPPORT_MESSAGE": ConstanceConfigItem(
         default="",
-        help_text="Help message to include on 4xx and 5xx error pages. "
-        "Markdown is supported, as are some HTML tags and attributes.\n"
-        "If unspecified, instructions to join Network to Code's Slack community will be provided.",
+        help_text=_(
+            "Help message to include on 4xx and 5xx error pages. "
+            "Markdown is supported, as are some HTML tags and attributes.\n"
+            "If unspecified, instructions to join Network to Code's Slack community will be provided."
+        ),
     ),
 }
 

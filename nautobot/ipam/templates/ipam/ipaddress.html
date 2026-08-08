@@ -1,4 +1,5 @@
 {% extends 'generic/object_retrieve.html' %}
+{% load i18n %}
 {% load helpers %}
 {% load render_table from django_tables2 %}
 
@@ -6,14 +7,14 @@
     {% with interface_count=object.interfaces.count %}
         {% if interface_count %}
             <li class="nav-item" role="presentation">
-                <a href="{% url 'ipam:ipaddress_interfaces' pk=object.pk %}" class="nav-link{% if active_tab == 'interfaces' %} active{% endif %}">Interfaces {% badge interface_count %}</a>
+                <a href="{% url 'ipam:ipaddress_interfaces' pk=object.pk %}" class="nav-link{% if active_tab == 'interfaces' %} active{% endif %}">{% trans "Interfaces" %} {% badge interface_count %}</a>
             </li>
         {% endif %}
     {% endwith %}
     {% with vm_interface_count=object.vm_interfaces.count %}
         {% if vm_interface_count %}
             <li class="nav-item" role="presentation">
-                <a href="{% url 'ipam:ipaddress_vm_interfaces' pk=object.pk %}" class="nav-link{% if active_tab == 'vm_interfaces' %} active{% endif %}">VM Interfaces {% badge vm_interface_count %}</a>
+                <a href="{% url 'ipam:ipaddress_vm_interfaces' pk=object.pk %}" class="nav-link{% if active_tab == 'vm_interfaces' %} active{% endif %}">{% trans "VM Interfaces" %} {% badge vm_interface_count %}</a>
             </li>
         {% endif %}
     {% endwith %}
@@ -22,35 +23,35 @@
 {% block content_left_page %}
     <div class="card">
         <div class="card-header">
-            <strong>IP Address</strong>
+            <strong>{% trans "IP Address" %}</strong>
         </div>
         <table class="table table-hover card-body attr-table">
             <tr>
-                <td>Namespace</td>
+                <td>{% trans "Namespace" %}</td>
                 <td>{{ object.parent.namespace|hyperlinked_object }}</td>
             </tr>
             <tr>
-                <td>IP Version</td>
+                <td>{% trans "IP Version" %}</td>
                 <td>IPv{{ object.ip_version }}</td>
             </tr>
             <tr>
-                <td>Type</td>
+                <td>{% trans "Type" %}</td>
                 <td>{{ object.type|hyperlinked_object }}</td>
             </tr>
             <tr>
-                <td>Status</td>
+                <td>{% trans "Status" %}</td>
                 <td>
                     {{ object.status| hyperlinked_object_with_color }}
                 </td>
             </tr>
             <tr>
-                <td>Role</td>
+                <td>{% trans "Role" %}</td>
                 <td>
                     {{ object.role | hyperlinked_object_with_color }}
                 </td>
             </tr>
             <tr>
-                <td>VRFs</td>
+                <td>{% trans "VRFs" %}</td>
                 <td>
                     {% if object.parent.vrfs.exists %}
                         <ul class="list-unstyled">
@@ -62,11 +63,11 @@
                 </td>
             </tr>
             <tr>
-                <td>DNS Name</td>
+                <td>{% trans "DNS Name" %}</td>
                 <td>{{ object.dns_name|placeholder }}</td>
             </tr>
             <tr>
-                <td>Description</td>
+                <td>{% trans "Description" %}</td>
                 <td>{{ object.description|placeholder }}</td>
             </tr>
         </table>
@@ -76,12 +77,12 @@
 {% block content_right_page %}
     <div class="card">
         <div class="card-header">
-            <strong>Operational Details</strong>
+            <strong>{% trans "Operational Details" %}</strong>
         </div>
         <table class="table table-hover card-body attr-table">
             {% include 'inc/tenant_table_row.html' %}
             <tr>
-                <td>Assignment</td>
+                <td>{% trans "Assignment" %}</td>
                 <td>
                     {% with interface_count=object.interfaces.count vm_interface_count=object.vm_interfaces.count %}
                         {% if interface_count == 1 and vm_interface_count == 0 %}
@@ -93,7 +94,7 @@
                         {% else %}
                             {% if interface_count > 0 %}
                                 <a href="{% url 'ipam:ipaddress_interfaces' pk=object.pk %}">
-                                    {{ interface_count }} interface{{ interface_count|pluralize }}
+                                    {% blocktrans count count=interface_count %}{{ count }} interface{% plural %}{{ count }} interfaces{% endblocktrans %}
                                 </a>
                                 {% if vm_interface_count > 0 %}
                                     <br>
@@ -101,7 +102,7 @@
                             {% endif %}
                             {% if vm_interface_count > 0 %}
                                 <a href="{% url 'ipam:ipaddress_vm_interfaces' pk=object.pk %}">
-                                    {{ vm_interface_count }} VM interface{{ vm_interface_count|pluralize }}
+                                    {% blocktrans count count=vm_interface_count %}{{ count }} VM interface{% plural %}{{ count }} VM interfaces{% endblocktrans %}
                                 </a>
                             {% endif %}
                         {% endif %}
@@ -110,7 +111,7 @@
             </tr>
             <tr>
                     <!-- TODO: update to work with interface M2M -->
-                <td>NAT (inside)</td>
+                <td>{% trans "NAT (inside)" %}</td>
                 <td>
                     {% if object.nat_inside %}
                         {{ object.nat_inside|hyperlinked_object }}
@@ -118,12 +119,12 @@
                             ({{ object.nat_inside.assigned_object.parent|hyperlinked_object }})
                         {% endif %}
                     {% else %}
-                        <span class="text-secondary">None</span>
+                        <span class="text-secondary">{% trans "None" %}</span>
                     {% endif %}
                 </td>
             </tr>
             <tr>
-                <td>NAT (outside)</td>
+                <td>{% trans "NAT (outside)" %}</td>
                 <td>
                     {% if object.nat_outside_list.exists %}
                         <ul class="list-unstyled">
@@ -132,12 +133,12 @@
                             {% endfor %}
                         </ul>
                     {% else %}
-                        <span class="text-secondary">None</span>
+                        <span class="text-secondary">{% trans "None" %}</span>
                     {% endif %}
                 </td>
             </tr>
             <tr>
-                <td>VPN Endpoints</td>
+                <td>{% trans "VPN Endpoints" %}</td>
                 <td>
                     {% if object.vpn_tunnel_endpoints_src_ip.exists %}
                         <ul class="list-unstyled">
@@ -146,21 +147,25 @@
                             {% endfor %}
                         </ul>
                     {% else %}
-                        <span class="text-secondary">None</span>
+                        <span class="text-secondary">{% trans "None" %}</span>
                     {% endif %}
                 </td>
             </tr>
         </table>
     </div>
     {% if object.load_balancer_pool_members.exists %}
-        {% include 'utilities/obj_table.html' with table=load_balancer_pool_members_table table_template='panel_table.html' heading='Load Balancer Pool Members' %}
+        {% trans "Load Balancer Pool Members" as panel_heading %}
+        {% include 'utilities/obj_table.html' with table=load_balancer_pool_members_table table_template='panel_table.html' heading=panel_heading %}
     {% endif %}
     {% if object.virtual_servers.exists %}
-        {% include 'utilities/obj_table.html' with table=virtual_servers_table table_template='panel_table.html' heading='Virtual Servers' %}
+        {% trans "Virtual Servers" as panel_heading %}
+        {% include 'utilities/obj_table.html' with table=virtual_servers_table table_template='panel_table.html' heading=panel_heading %}
     {% endif %}
 {% endblock content_right_page %}
 
 {% block content_full_width_page %}
-    {% include 'utilities/obj_table.html' with table=parent_prefixes_table table_template='panel_table.html' heading='Parent Prefixes' %}
-    {% include 'utilities/obj_table.html' with table=related_ips_table table_template='panel_table.html' heading='Related IP Addresses' %}
+    {% trans "Parent Prefixes" as panel_heading %}
+    {% include 'utilities/obj_table.html' with table=parent_prefixes_table table_template='panel_table.html' heading=panel_heading %}
+    {% trans "Related IP Addresses" as panel_heading %}
+    {% include 'utilities/obj_table.html' with table=related_ips_table table_template='panel_table.html' heading=panel_heading %}
 {% endblock content_full_width_page %}

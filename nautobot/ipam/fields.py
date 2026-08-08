@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext
 import netaddr
 
 from . import lookups
@@ -49,7 +50,7 @@ class VarbinaryIPField(models.BinaryField):
         try:
             return netaddr.IPAddress(value, version=version)
         except netaddr.AddrFormatError:
-            raise ValidationError(f"Invalid IP address format: {value}")
+            raise ValidationError(gettext("Invalid IP address format: %(value)s") % {"value": value})
         except (TypeError, ValueError) as e:
             raise ValidationError(e)
 

@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.models.generics import OrganizationalModel, PrimaryModel
@@ -20,8 +21,8 @@ class TenantGroup(TreeModel, OrganizationalModel):
     An arbitrary collection of Tenants.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     class Meta:
         ordering = ["name"]
@@ -43,16 +44,17 @@ class Tenant(PrimaryModel):
     department.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
     tenant_group = models.ForeignKey(
         to="tenancy.TenantGroup",
         on_delete=models.SET_NULL,
         related_name="tenants",
         blank=True,
         null=True,
+        verbose_name=_("tenant group"),
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    comments = models.TextField(blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
+    comments = models.TextField(blank=True, verbose_name=_("comments"))
 
     clone_fields = [
         "tenant_group",

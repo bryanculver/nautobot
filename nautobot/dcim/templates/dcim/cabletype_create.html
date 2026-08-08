@@ -1,4 +1,5 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load form_helpers %}
 
 {% block form %}
@@ -22,16 +23,16 @@
     {# Lane Mapping — separate card at root level #}
     <div class="card mt-3">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <strong>Lane Mapping</strong>
+            <strong>{% trans "Lane Mapping" %}</strong>
             <div class="btn-group btn-group-sm" id="mapping-mode-toggle">
-                <button type="button" class="btn btn-primary bg-primary nb-text-body-bg" data-mode="table">Table</button>
+                <button type="button" class="btn btn-primary bg-primary nb-text-body-bg" data-mode="table">{% trans "Table" %}</button>
                 <button type="button" class="btn btn-primary" data-mode="json">JSON</button>
             </div>
         </div>
         <div class="card-body">
             {% if form.mapping.errors %}
                 <div class="alert alert-danger mb-3">
-                    <strong>Mapping errors:</strong>
+                    <strong>{% trans "Mapping errors:" %}</strong>
                     <ul class="mb-0">
                         {% for error in form.mapping.errors %}
                             <li>{{ error }}</li>
@@ -41,8 +42,8 @@
             {% endif %}
             <div class="alert alert-info mb-3">
                 <span class="mdi mdi-information-outline"></span>
-                The mapping is auto-generated from the connector counts and total lanes above.
-                Edit individual lane mappings below if needed, or switch to JSON mode for advanced editing.
+                {% trans "The mapping is auto-generated from the connector counts and total lanes above.
+                Edit individual lane mappings below if needed, or switch to JSON mode for advanced editing." %}
             </div>
 
             {# Table editor — loaded via HTMX from the server #}
@@ -58,7 +59,7 @@
             <div id="mapping-json-editor" class="d-none">
                 <div id="mapping-json-editor-invalid" class="alert alert-danger mb-3 d-none">
                     <span class="mdi mdi-alert"></span>
-                    Invalid JSON - please correct it or remove it before switching to the table editor.
+                    {% trans "Invalid JSON - please correct it or remove it before switching to the table editor." %}
                 </div>
                 {% render_field form.mapping %}
             </div>

@@ -1,9 +1,10 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load form_helpers %}
 
 {% block form %}
     <div class="card">
-        <div class="card-header"><strong>Config Context</strong></div>
+        <div class="card-header"><strong>{% trans "Config Context" %}</strong></div>
         <div class="card-body">
             {% render_field form.name %}
             {% render_field form.weight %}
@@ -13,7 +14,7 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Assignment</strong></div>
+        <div class="card-header"><strong>{% trans "Assignment" %}</strong></div>
         <div class="card-body">
             {% render_field form.locations %}
             {% render_field form.roles %}
@@ -32,7 +33,7 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Data</strong></div>
+        <div class="card-header"><strong>{% trans "Data" %}</strong></div>
         <div class="card-body">
             {% render_field form.data %}
         </div>
@@ -43,7 +44,7 @@
     but they do support notes.
     {% endcomment %}
     <div class="card">
-        <div class="card-header"><strong>Notes</strong></div>
+        <div class="card-header"><strong>{% trans "Notes" %}</strong></div>
         <div class="card-body">
             {% render_field form.object_note %}
         </div>

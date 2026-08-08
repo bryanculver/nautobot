@@ -1,0 +1,1 @@
+Fixed the JavaScript translation catalog at `/jsi18n/` restricting itself to a single package directory that does not exist. The restriction excluded every other installed application, so App-supplied JavaScript strings and Django's own admin JavaScript strings were served untranslated.

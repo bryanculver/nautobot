@@ -34,19 +34,22 @@ class NavMenuBase(ABC):
 class NavMenuTab(NavMenuBase, PermissionsMixin):
     """
     Ths class represents a navigation menu tab. This is built up from a name and a weight value. The name is
-    the display text and the weight defines its position in the navbar.
+    the stable identity of the tab and the weight defines its position in the navbar. The optional label is
+    the text actually displayed; when omitted it defaults to the name.
 
     Groups are each specified as a list of NavMenuGroup instances.
     """
 
     permissions = []
     groups = []
+    label = None
 
     @property
     def initial_dict(self) -> dict:
         """Attributes to be stored when adding this item to the nav menu data for the first time."""
         return {
             "icon": self.icon,
+            "label": self.label if self.label is not None else self.name,
             "weight": self.weight,
             "groups": {},
             "permissions": set(),
@@ -57,21 +60,26 @@ class NavMenuTab(NavMenuBase, PermissionsMixin):
         """Tuple of (name, attribute) entries describing fields that may not be altered after declaration."""
         return ()
 
-    def __init__(self, name, permissions=None, groups=None, weight=1000, icon=None):
+    def __init__(self, name, permissions=None, groups=None, weight=1000, icon=None, label=None):
         """
         Ensure tab properties.
 
         Args:
-            name (str): The name of the tab.
+            name (str): The name of the tab. This is the stable key that apps use to attach groups to
+                an existing tab, and that navigation-related preferences are stored against, so it
+                must not be translated or otherwise varied.
             permissions (list): The permissions required to view this tab.
             groups (list): List of groups to be rendered in this tab.
             weight (int): The weight of this tab.
             icon (str): The name of the Nautobot icon representing this tab or an SVG static file URL.
+            label (str): Text to display for this tab, defaulting to `name`. May be a lazily-translated
+                string; it is resolved once per request, under that request's active language.
         """
         super().__init__(permissions)
         self.name = name
         self.weight = weight
         self.icon = icon
+        self.label = label
 
         if groups is not None:
             if not isinstance(groups, (list, tuple)):
@@ -84,18 +92,21 @@ class NavMenuTab(NavMenuBase, PermissionsMixin):
 class NavMenuGroup(NavMenuBase, PermissionsMixin):
     """
     Ths class represents a navigation menu group. This is built up from a name and a weight value. The name is
-    the display text and the weight defines its position in the navbar.
+    the stable identity of the group and the weight defines its position in the navbar. The optional label is
+    the text actually displayed; when omitted it defaults to the name.
 
     Items are each specified as a list of NavMenuItem instances.
     """
 
     permissions = []
     items = []
+    label = None
 
     @property
     def initial_dict(self) -> dict:
         """Attributes to be stored when adding this item to the nav menu data for the first time."""
         return {
+            "label": self.label if self.label is not None else self.name,
             "weight": self.weight,
             "items": {},
             "permissions": set(),
@@ -106,17 +117,21 @@ class NavMenuGroup(NavMenuBase, PermissionsMixin):
         """Tuple of (name, attribute) entries describing fields that may not be altered after declaration."""
         return ()
 
-    def __init__(self, name, items=None, weight=1000):
+    def __init__(self, name, items=None, weight=1000, label=None):
         """
         Ensure group properties.
 
         Args:
-            name (str): The name of the group.
+            name (str): The name of the group. This is the stable key that apps use to attach items to
+                an existing group, so it must not be translated or otherwise varied.
             items (list): List of items to be rendered in this group.
             weight (int): The weight of this group.
+            label (str): Text to display for this group, defaulting to `name`. May be a lazily-translated
+                string; it is resolved once per request, under that request's active language.
         """
         self.name = name
         self.weight = weight
+        self.label = label
 
         if items is not None and not isinstance(items, (list, tuple)):
             raise TypeError("Items must be passed as a tuple or list.")
@@ -140,6 +155,7 @@ class NavMenuItem(NavMenuBase, PermissionsMixin):
         """Attributes to be stored when adding this item to the nav menu data for the first time."""
         return {
             "name": self.name,
+            "label": self.label if self.label is not None else self.name,
             "weight": self.weight,
             "buttons": {},
             "permissions": self.permissions,
@@ -160,27 +176,41 @@ class NavMenuItem(NavMenuBase, PermissionsMixin):
     buttons = []
     args = []
     kwargs = {}
+    label = None
 
     def __init__(
-        self, link, name, args=None, kwargs=None, query_params=None, permissions=None, buttons=(), weight=1000
+        self,
+        link,
+        name,
+        args=None,
+        kwargs=None,
+        query_params=None,
+        permissions=None,
+        buttons=(),
+        weight=1000,
+        label=None,
     ):
         """
         Ensure item properties.
 
         Args:
             link (str): The link to be used for this item.
-            name (str): The name of the item.
+            name (str): The name of the item. This is the stable key: it is what gets stored when a
+                user favorites this item, so it must not be translated or otherwise varied.
             args (list): Arguments that are being passed to the url with reverse() method
             kwargs (dict): Keyword arguments are are being passed to the url with reverse() method
             query_params (dict): Query parameters to be appended to the URL.
             permissions (list): The permissions required to view this item.
             buttons (list): List of buttons to be rendered in this item.
             weight (int): The weight of this item.
+            label (str): Text to display for this item, defaulting to `name`. May be a lazily-translated
+                string; it is resolved once per request, under that request's active language.
         """
         super().__init__(permissions)
         self.link = link
         self.name = name
         self.weight = weight
+        self.label = label
         self.args = args
         self.kwargs = kwargs
         self.query_params = query_params

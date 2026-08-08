@@ -1,11 +1,12 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load form_helpers %}
 {% load helpers %}
 {% load static %}
 
 {% block form %}
     <div class="card">
-        <div class="card-header"><strong>Device</strong></div>
+        <div class="card-header"><strong>{% trans "Device" %}</strong></div>
         <div class="card-body">
             {% render_field form.name %}
             {% render_field form.role %}
@@ -14,14 +15,14 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Location</strong></div>
+        <div class="card-header"><strong>{% trans "Location" %}</strong></div>
         <div class="card-body">
             {% render_field form.location %}
             {% render_field form.rack_group %}
             {% render_field form.rack %}
             {% if obj.device_type.is_child_device and obj.parent_bay %}
                 <div class="mb-10 d-flex justify-content-center">
-                    <label class="col-lg-3 col-form-label">Parent device</label>
+                    <label class="col-lg-3 col-form-label">{% trans "Parent device" %}</label>
                     <div class="col-lg-9">
                         <p class="form-control-plaintext">
                             {{ obj.parent_bay.device|hyperlinked_object }}
@@ -29,13 +30,13 @@
                     </div>
                 </div>
                 <div class="mb-10 d-flex justify-content-center">
-                    <label class="col-lg-3 col-form-label">Parent bay</label>
+                    <label class="col-lg-3 col-form-label">{% trans "Parent bay" %}</label>
                     <div class="col-lg-9">
                         <p class="form-control-plaintext">
                             {{ obj.parent_bay.name }}
                             {% if perms.dcim.change_devicebay %}
                                 <a href="{% url 'dcim:devicebay_depopulate' pk=obj.parent_bay.pk %}" class="btn btn-danger btn-sm">
-                                    <span class="mdi mdi-close-thick" aria-hidden="true" title="Remove device"></span> Remove
+                                    <span class="mdi mdi-close-thick" aria-hidden="true" title="{% trans "Remove device" %}"></span> {% trans "Remove" %}
                                 </a>
                             {% endif %}
                         </p>
@@ -48,7 +49,7 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Hardware</strong></div>
+        <div class="card-header"><strong>{% trans "Hardware" %}</strong></div>
         <div class="card-body">
             {% render_field form.manufacturer %}
             {% render_field form.device_type %}
@@ -57,7 +58,7 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Software</strong></div>
+        <div class="card-header"><strong>{% trans "Software" %}</strong></div>
         <div class="card-body">
             {% render_field form.platform %}
             {% render_field form.software_version %}
@@ -69,7 +70,7 @@
                     <span class="form-text">
                         <span id="software_version_image_description"><img src="{% static 'img/ajax-loader.gif' %}"></span>
                         <ul id="software_version_image_list">
-                            <li> Software images for the selected software version will appear here </li>
+                            <li> {% trans "Software images for the selected software version will appear here" %} </li>
                         </ul>
                     </span>
                 </div>
@@ -78,13 +79,13 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>VRF Assignment</strong></div>
+        <div class="card-header"><strong>{% trans "VRF Assignment" %}</strong></div>
         <div class="card-body">
             {% render_field form.vrfs %}
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Management</strong></div>
+        <div class="card-header"><strong>{% trans "Management" %}</strong></div>
         <div class="card-body">
             {% if editing %}
                 {% render_field form.primary_ip4 %}
@@ -93,7 +94,7 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Topology</strong></div>
+        <div class="card-header"><strong>{% trans "Topology" %}</strong></div>
         <div class="card-body">
             {% render_field form.device_redundancy_group %}
             {% render_field form.device_redundancy_group_priority %}
@@ -101,7 +102,7 @@
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Virtualization</strong></div>
+        <div class="card-header"><strong>{% trans "Virtualization" %}</strong></div>
         <div class="card-body">
             {% render_field form.cluster_group %}
             {% render_field form.clusters %}
@@ -110,14 +111,14 @@
     {% include 'inc/tenancy_form_panel.html' %}
     {% include 'inc/extras_features_edit_form_fields.html' %}
     <div class="card">
-        <div class="card-header"><strong>Local Config Context Data</strong></div>
+        <div class="card-header"><strong>{% trans "Local Config Context Data" %}</strong></div>
         <div class="card-body">
             {% render_field form.local_config_context_schema %}
             {% render_field form.local_config_context_data %}
         </div>
     </div>
     <div class="card">
-        <div class="card-header"><strong>Comments</strong></div>
+        <div class="card-header"><strong>{% trans "Comments" %}</strong></div>
         <div class="card-body">
             {% render_field form.comments %}
         </div>

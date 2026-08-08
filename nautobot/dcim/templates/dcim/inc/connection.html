@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
 Renders the "Connection" card for a CableTermination detail view (the legacy object_retrieve-based
 templates). The inner body is shared with the UI component framework `ConnectionPanel` via
@@ -10,7 +11,7 @@ Required context:
 {% if object.is_connectable %}
     <div class="card">
         <div class="card-header">
-            <strong>Connections</strong>
+            <strong>{% trans "Connections" %}</strong>
         </div>
         <div class="card-body">
             {% include 'dcim/inc/connection_body.html' %}

@@ -9,6 +9,7 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.models import BaseManager, BaseModel, CompositeKeyQuerySetMixin
@@ -54,15 +55,15 @@ class User(BaseModel, AbstractUser):
     This model also implements the user configuration (preferences) data store functionality.
     """
 
-    config_data = models.JSONField(encoder=DjangoJSONEncoder, default=dict, blank=True)
+    config_data = models.JSONField(encoder=DjangoJSONEncoder, default=dict, blank=True, verbose_name=_("config data"))
     default_saved_views = models.ManyToManyField(
         to="extras.SavedView",
         related_name="users",
         through="extras.UserSavedViewAssociation",
         through_fields=("user", "saved_view"),
         blank=True,
-        verbose_name="user-specific default saved views",
-        help_text="User specific default saved views",
+        verbose_name=_("user-specific default saved views"),
+        help_text=_("User specific default saved views"),
     )
 
     # TODO: we don't currently have a general "Users" guide.
@@ -223,6 +224,10 @@ class AdminGroup(Group):
     """
 
     class Meta:
+        # Left untranslated deliberately: Django derives verbose_name_plural as
+        # verbose_name + "s", so translating the singular alone renders "Gruppes" / "组s".
+        # Declaring the plural needs an AlterModelOptions migration, deferred with the other
+        # model names. Guarded by test_translated_verbose_name_requires_explicit_plural.
         verbose_name = "Group"
         proxy = True
 
@@ -238,12 +243,18 @@ class Token(BaseModel):
     It also supports setting an expiration time and toggling write ability.
     """
 
-    user = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="tokens")
+    user = models.ForeignKey(
+        to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="tokens", verbose_name=_("user")
+    )
     created = models.DateTimeField(auto_now_add=True)
-    expires = models.DateTimeField(blank=True, null=True)
-    key = models.CharField(max_length=40, unique=True, validators=[MinLengthValidator(40)])
-    write_enabled = models.BooleanField(default=True, help_text="Permit create/update/delete operations using this key")
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    expires = models.DateTimeField(blank=True, null=True, verbose_name=_("expires"))
+    key = models.CharField(max_length=40, unique=True, validators=[MinLengthValidator(40)], verbose_name=_("key"))
+    write_enabled = models.BooleanField(
+        default=True,
+        help_text=_("Permit create/update/delete operations using this key"),
+        verbose_name=_("write enabled"),
+    )
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     documentation_static_path = "docs/user-guide/platform-functionality/users/token.html"
     natural_key_field_names = ["pk"]  # default would be `["key"]`, which is obviously not ideal!
@@ -284,9 +295,9 @@ class ObjectPermission(BaseModel, ChangeLoggedModel):
     identified by ORM query parameters.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    enabled = models.BooleanField(default=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
+    enabled = models.BooleanField(default=True, verbose_name=_("enabled"))
     # TODO: Remove pylint disable after issue is resolved (see: https://github.com/PyCQA/pylint/issues/7381)
     # pylint: disable=unsupported-binary-operation
     object_types = models.ManyToManyField(
@@ -307,19 +318,24 @@ class ObjectPermission(BaseModel, ChangeLoggedModel):
             | Q(app_label="users", model__in=["objectpermission", "token", "user"])
         ),
         related_name="object_permissions",
+        verbose_name=_("object types"),
     )
     # pylint: enable=unsupported-binary-operation
-    groups = models.ManyToManyField(to=Group, blank=True, related_name="object_permissions")
-    users = models.ManyToManyField(to=settings.AUTH_USER_MODEL, blank=True, related_name="object_permissions")
+    groups = models.ManyToManyField(to=Group, blank=True, related_name="object_permissions", verbose_name=_("groups"))
+    users = models.ManyToManyField(
+        to=settings.AUTH_USER_MODEL, blank=True, related_name="object_permissions", verbose_name=_("users")
+    )
     actions = JSONArrayField(
         base_field=models.CharField(max_length=30),
-        help_text="The list of actions granted by this permission",
+        help_text=_("The list of actions granted by this permission"),
+        verbose_name=_("actions"),
     )
     constraints = models.JSONField(
         encoder=DjangoJSONEncoder,
         blank=True,
         null=True,
-        help_text="Queryset filter matching the applicable objects of the selected type(s)",
+        help_text=_("Queryset filter matching the applicable objects of the selected type(s)"),
+        verbose_name=_("constraints"),
     )
 
     documentation_static_path = "docs/user-guide/platform-functionality/users/objectpermission.html"
@@ -327,6 +343,10 @@ class ObjectPermission(BaseModel, ChangeLoggedModel):
 
     class Meta:
         ordering = ["name"]
+        # Left untranslated deliberately: Django derives verbose_name_plural as
+        # verbose_name + "s", so translating the singular alone renders "Gruppes" / "组s".
+        # Declaring the plural needs an AlterModelOptions migration, deferred with the other
+        # model names. Guarded by test_translated_verbose_name_requires_explicit_plural.
         verbose_name = "permission"
 
     def __str__(self):

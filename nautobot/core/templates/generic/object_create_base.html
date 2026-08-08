@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load form_helpers %}
 {% load helpers %}
 {% load static %}
 
-{% block title %}{% if editing %}Editing {{ obj_type }} {{ obj }}{% else %}Add a new {{ obj_type }}{% endif %}{% endblock %}
+{% block title %}{% if editing %}{% blocktrans with obj_type=obj_type obj=obj %}Editing {{ obj_type }} {{ obj }}{% endblocktrans %}{% else %}{% blocktrans with obj_type=obj_type %}Add a new {{ obj_type }}{% endblocktrans %}{% endif %}{% endblock %}
 
 {% block content %}
     <form id="nb-create-form" action="" data-nb-obj-type="{{ obj_type }}" method="post" enctype="multipart/form-data" class="h-100 vstack">
@@ -17,7 +18,7 @@
                     {% if obj %}
                         {% with obj|get_docs_url as docs_url %}
                             {% if docs_url %}
-                                <a href="{{ docs_url }}" target="_blank" class="btn btn-link btn-sm float-end" title="Help">
+                                <a href="{{ docs_url }}" target="_blank" class="btn btn-link btn-sm float-end" title="{% trans "Help" %}">
                                     <span aria-hidden="true" class="mdi mdi-help-circle"></span>
                                 </a>
                             {% endif %}
@@ -31,7 +32,7 @@
                     {% if form.non_field_errors or model_form.non_field_errors %}
                         <div class="card border-danger">
                             <div class="card-header bg-danger-subtle border-danger text-body">
-                                <strong>Errors</strong>
+                                <strong>{% trans "Errors" %}</strong>
                             </div>
                             <div class="card-body">
                                 {{ form.non_field_errors }}
@@ -58,21 +59,21 @@
                 {% if editing %}
                     <button type="submit" name="_update" class="btn btn-primary">
                         <span aria-hidden="true" class="mdi mdi-check me-4"></span><!--
-                        -->Update
+                        -->{% trans "Update" %}
                     </button>
                 {% else %}
                     <button type="submit" name="_create" class="btn btn-primary">
                         <span aria-hidden="true" class="mdi mdi-check me-4"></span><!--
-                        -->Create
+                        -->{% trans "Create" %}
                     </button>
                     <button type="submit" name="_addanother" class="btn btn-primary">
                         <span aria-hidden="true" class="mdi mdi-check me-4"></span><!--
-                        -->Create and Add Another
+                        -->{% trans "Create and Add Another" %}
                     </button>
                 {% endif %}
                 <a href="{{ return_url }}" class="btn btn-secondary">
                     <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-                    -->Cancel
+                    -->{% trans "Cancel" %}
                 </a>
             {% endblock %}
         </div>
@@ -140,7 +141,7 @@
                 const modal = document.querySelector('#embedded_action_modal');
                 const content = modal.querySelector('.modal-content');
                 content.innerHTML =
-                    '<div class="spinner-border mx-auto my-16"><span class="visually-hidden">Loading...</span></div>';
+                    '<div class="spinner-border mx-auto my-16"><span class="visually-hidden">{% trans "Loading..." %}</span></div>';
                 window.nb.embeddedAction.targetFieldName = targetFieldName;
             };
 

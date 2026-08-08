@@ -1,13 +1,14 @@
 {% load helpers %}
+{% load i18n %}
 
 {% if diff_added == diff_removed %}
     <span class="text-secondary" style="margin-left: 10px;">
         {% if object.action == "create" %}
-            Object created
+            {% trans "Object created" %}
         {% elif object.action == "delete" %}
-            Object deleted
+            {% trans "Object deleted" %}
         {% else %}
-            No changes
+            {% trans "No changes" %}
         {% endif %}
     </span>
 {% else %}

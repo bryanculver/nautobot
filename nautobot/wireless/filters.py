@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import django_filters
 
 from nautobot.core.filters import (
@@ -34,7 +35,7 @@ class SupportedDataRateFilterSet(BaseFilterSet):
     )
     has_radio_profiles = RelatedMembershipBooleanFilter(
         field_name="radio_profiles",
-        label="Has radio profiles",
+        label=_("Has radio profiles"),
     )
 
     class Meta:
@@ -73,7 +74,7 @@ class RadioProfileFilterSet(NautobotFilterSet):
     )
     has_controller_managed_device_groups = RelatedMembershipBooleanFilter(
         field_name="controller_managed_device_groups",
-        label="Has controller managed device groups",
+        label=_("Has controller managed device groups"),
     )
 
     class Meta:
@@ -118,7 +119,7 @@ class WirelessNetworkFilterSet(NautobotFilterSet, TenancyModelFilterSetMixin):
     )
     has_controller_managed_device_groups = RelatedMembershipBooleanFilter(
         field_name="controller_managed_device_groups",
-        label="Has controller managed device groups",
+        label=_("Has controller managed device groups"),
     )
     hidden = django_filters.BooleanFilter()
 

@@ -1,5 +1,6 @@
 import { Tooltip } from 'bootstrap';
 import ClipboardJS from 'clipboard';
+import { gettext } from './i18n.js';
 
 /**
  * Initialize a single global ClipboardJS instance covering every "copy to clipboard" button on the page.
@@ -33,7 +34,7 @@ export const initializeClipboard = () => {
   };
 
   const onSuccess = (event) => {
-    flashTooltip(event.trigger, 'Copied!');
+    flashTooltip(event.trigger, gettext('Copied!'));
     event.clearSelection();
   };
 

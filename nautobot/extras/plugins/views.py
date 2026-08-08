@@ -6,6 +6,7 @@ from django.conf import settings
 from django.http import Http404
 from django.shortcuts import render
 from django.urls.exceptions import NoReverseMatch
+from django.utils.translation import gettext_lazy as _
 from django_tables2 import RequestConfig
 from drf_spectacular.utils import extend_schema
 from rest_framework import permissions
@@ -86,7 +87,7 @@ class InstalledAppsView(GenericView):
     """
 
     table = InstalledAppsTable
-    view_titles = Titles(titles={"*": "Installed Apps"})
+    view_titles = Titles(titles={"*": '{% trans "Installed Apps" %}'})
 
     def get(self, request):
         marketplace_data = load_marketplace_data()
@@ -140,7 +141,7 @@ class InstalledAppDetailView(GenericView):
     breadcrumbs = Breadcrumbs(
         items={
             "*": [
-                ViewNameBreadcrumbItem(view_name="apps:apps_list", label="Installed Apps"),
+                ViewNameBreadcrumbItem(view_name="apps:apps_list", label=_("Installed Apps")),
             ]
         }
     )
@@ -244,7 +245,7 @@ class MarketplaceView(GenericView):
     View for listing all available Apps.
     """
 
-    view_titles = Titles(titles={"generic": "Apps Marketplace"})
+    view_titles = Titles(titles={"generic": '{% trans "Apps Marketplace" %}'})
 
     def get(self, request):
         marketplace_data = load_marketplace_data()

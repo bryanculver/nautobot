@@ -4,6 +4,7 @@ from time import monotonic
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext
 import netaddr
 
 from nautobot.ipam.constants import IPV4_BYTE_LENGTH, IPV6_BYTE_LENGTH
@@ -774,7 +775,9 @@ def validate_cidr(value):
     try:
         return netaddr.IPNetwork(value)
     except netaddr.AddrFormatError as err:
-        raise ValidationError({"cidr": f"{value} does not appear to be an IPv4 or IPv6 network."}) from err
+        raise ValidationError(
+            {"cidr": gettext("%(value)s does not appear to be an IPv4 or IPv6 network.") % {"value": value}}
+        ) from err
 
 
 def ensure_correct_prefix_broadcast(apps):

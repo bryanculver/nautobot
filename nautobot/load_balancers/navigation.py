@@ -1,21 +1,26 @@
 """Menu items."""
 
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.core.apps import NavMenuAddButton, NavMenuGroup, NavMenuItem, NavMenuTab
 from nautobot.core.ui.choices import NavigationIconChoices, NavigationWeightChoices
 
 menu_items = (
     NavMenuTab(
         name="Load Balancers",
+        label=_("Load Balancers"),
         icon=NavigationIconChoices.LOAD_BALANCERS,
         weight=NavigationWeightChoices.LOAD_BALANCERS,
         groups=(
             NavMenuGroup(
                 name="Load Balancers",
+                label=_("Load Balancers"),
                 weight=100,
                 items=(
                     NavMenuItem(
                         link="load_balancers:virtualserver_list",
                         name="Virtual Servers",
+                        label=_("Virtual Servers"),
                         weight=100,
                         permissions=["load_balancers.view_virtualserver"],
                         buttons=(
@@ -28,6 +33,7 @@ menu_items = (
                     NavMenuItem(
                         link="load_balancers:loadbalancerpool_list",
                         name="Load Balancer Pools",
+                        label=_("Load Balancer Pools"),
                         weight=200,
                         permissions=["load_balancers.view_loadbalancerpool"],
                         buttons=(
@@ -40,6 +46,7 @@ menu_items = (
                     NavMenuItem(
                         link="load_balancers:loadbalancerpoolmember_list",
                         name="Load Balancer Pool Members",
+                        label=_("Load Balancer Pool Members"),
                         weight=300,
                         permissions=["load_balancers.view_loadbalancerpoolmember"],
                         buttons=(
@@ -52,6 +59,7 @@ menu_items = (
                     NavMenuItem(
                         link="load_balancers:healthcheckmonitor_list",
                         name="Health Check Monitors",
+                        label=_("Health Check Monitors"),
                         weight=400,
                         permissions=["load_balancers.view_healthcheckmonitor"],
                         buttons=(
@@ -64,6 +72,7 @@ menu_items = (
                     NavMenuItem(
                         link="load_balancers:certificateprofile_list",
                         name="Certificate Profiles",
+                        label=_("Certificate Profiles"),
                         weight=500,
                         permissions=["load_balancers.view_certificateprofile"],
                         buttons=(

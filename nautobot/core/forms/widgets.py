@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 from django import forms
 from django.forms.models import ModelChoiceIterator
 from django.urls import get_script_prefix
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core import choices as core_choices
 from nautobot.core.forms import utils
@@ -260,7 +261,10 @@ class DatePicker(forms.TextInput):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.attrs["class"] = "date-picker"
-        self.attrs["placeholder"] = "YYYY-MM-DD"
+        # Translators: Date format hint shown in the picker. Translate the letters to your
+        # language's convention (JJJJ-MM-TT, AAAA-MM-JJ) but keep the ISO field order and the
+        # separators: the date picker always writes year-month-day.
+        self.attrs["placeholder"] = _("YYYY-MM-DD")
 
 
 class DateTimePicker(forms.TextInput):
@@ -271,7 +275,9 @@ class DateTimePicker(forms.TextInput):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.attrs["class"] = "datetime-picker"
-        self.attrs["placeholder"] = "YYYY-MM-DD hh:mm:ss"
+        # Translators: Date and time format hint. Translate the letters only; keep the ISO
+        # field order and the separators.
+        self.attrs["placeholder"] = _("YYYY-MM-DD hh:mm:ss")
 
 
 class TimePicker(forms.TextInput):
@@ -282,7 +288,8 @@ class TimePicker(forms.TextInput):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.attrs["class"] = "time-picker"
-        self.attrs["placeholder"] = "hh:mm:ss"
+        # Translators: Time format hint, 24-hour. Translate the letters only.
+        self.attrs["placeholder"] = _("hh:mm:ss")
 
 
 class MultiValueCharInput(StaticSelect2Multiple):

@@ -1,4 +1,5 @@
 {% extends 'generic/object_retrieve.html' %}
+{% load i18n %}
 {% load helpers %}
 {% load ui_framework %}
 
@@ -14,17 +15,17 @@
                 {% block buttons %}
                     {% if app_data.home_url %}
                         <a href="{% url app_data.home_url %}" class="btn btn-primary">
-                            <span class="mdi mdi-home"></span> App Home
+                            <span class="mdi mdi-home"></span> {% trans "App Home" %}
                         </a>
                     {% endif %}
                     {% if app_data.config_url %}
                         <a href="{% url app_data.config_url %}" class="btn btn-warning">
-                            <span class="mdi mdi-cog"></span> App Configuration
+                            <span class="mdi mdi-cog"></span> {% trans "App Configuration" %}
                         </a>
                     {% endif %}
                     {% if app_data.docs_url %}
                         <a href="{% url app_data.docs_url %}" class="btn btn-info">
-                            <span class="mdi mdi-cog"></span> App Documentation
+                            <span class="mdi mdi-cog"></span> {% trans "App Documentation" %}
                         </a>
                     {% endif %}
                 {% endblock buttons %}
@@ -37,29 +38,29 @@
             {% block content_left_page %}
                 <div class="card">
                     <div class="card-header">
-                        <strong>App</strong>
+                        <strong>{% trans "App" %}</strong>
                     </div>
                     <table class="table table-hover card-body attr-table">
                         <tr>
-                            <td>Package Name</td>
+                            <td>{% trans "Package Name" %}</td>
                             <td><code>{{ app_data.package }}</code></td>
                         </tr>
                         <tr>
-                            <td>Headline</td>
+                            <td>{% trans "Headline" %}</td>
                             <td>{{ app_data.headline }}</td>
                         </tr>
                         {% if app_data.description and app_data.headline != app_data.description %}
                             <tr>
-                                <td>Description</td>
+                                <td>{% trans "Description" %}</td>
                                 <td>{{ app_data.description }}</td>
                             </tr>
                         {% endif %}
                         <tr>
-                            <td>Version</td>
+                            <td>{% trans "Version" %}</td>
                             <td>v{{ app_data.version }}</td>
                         </tr>
                         <tr>
-                            <td>By</td>
+                            <td>{% trans "By" %}</td>
                             <td>
                                 {{ app_data.author | placeholder }}
                                 {% if app_data.author_email %}
@@ -69,7 +70,7 @@
                         </tr>
                         {% if app_data.availability %}
                             <tr>
-                                <td>License</td>
+                                <td>{% trans "License" %}</td>
                                 <td><label class="badge border border-primary text-primary">{{ app_data.availability }}</label></td>
                             </tr>
                         {% endif %}
@@ -77,15 +78,15 @@
                 </div>
                 <div class="card">
                     <div class="card-header">
-                        <strong>Compatibility</strong>
+                        <strong>{% trans "Compatibility" %}</strong>
                     </div>
                     <table class="table table-hover card-body attr-table">
                         <tr>
-                            <td>Min Nautobot Version</td>
+                            <td>{% trans "Min Nautobot Version" %}</td>
                             <td>{% if object.min_version %}v{{ object.min_version }}{% else %}{{ None|placeholder }}{% endif %}</td>
                         </tr>
                         <tr>
-                            <td>Max Nautobot Version</td>
+                            <td>{% trans "Max Nautobot Version" %}</td>
                             <td>{% if object.max_version %}v{{ object.max_version }}{% else %}{{ None|placeholder }}{% endif %}</td>
                         </tr>
                     </table>
@@ -96,12 +97,12 @@
             {% block content_right_page %}
                 <div class="card">
                     <div class="card-header">
-                        <strong>Features Employed</strong>
+                        <strong>{% trans "Features Employed" %}</strong>
                     </div>
                     <table class="table table-hover card-body attr-table">
                         {% with object.features as features %}
                             <tr>
-                                <td>Constance Config</td>
+                                <td>{% trans "Constance Config" %}</td>
                                 <td>
                                     {% if features.constance_config %}
                                         <ul class="list-unstyled">
@@ -117,7 +118,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Data Models</td>
+                                <td>{% trans "Data Models" %}</td>
                                 <td>
                                     {% if features.models %}
                                         <ul class="list-unstyled">
@@ -131,7 +132,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Data Validators</td>
+                                <td>{% trans "Data Validators" %}</td>
                                 <td>
                                     {% if features.custom_validators %}
                                         <ul class="list-unstyled">
@@ -145,7 +146,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Django Apps</td>
+                                <td>{% trans "Django Apps" %}</td>
                                 <td>
                                     {% if object.installed_apps %}
                                         <ul class="list-unstyled">
@@ -159,7 +160,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Git Data</td>
+                                <td>{% trans "Git Data" %}</td>
                                 <td>
                                     {% if features.datasource_contents %}
                                         <ul class="list-unstyled">
@@ -175,11 +176,11 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Filters</td>
+                                <td>{% trans "Filters" %}</td>
                                 <td>
                                     {% if features.filter_extensions %}
                                         {% if features.filter_extensions.filterset_fields %}
-                                            <b>FilterSet Filters</b>
+                                            <b>{% trans "FilterSet Filters" %}</b>
                                             <ul class="list-unstyled">
                                                 {% for filterset_field in features.filter_extensions.filterset_fields %}
                                                     <li><code>{{ filterset_field }}</code></li>
@@ -187,7 +188,7 @@
                                             </ul>
                                         {% endif %}
                                         {% if features.filter_extensions.filterform_fields %}
-                                            <b>FilterForm Fields</b>
+                                            <b>{% trans "FilterForm Fields" %}</b>
                                             <ul class="list-unstyled">
                                                 {% for filterform_field in features.filter_extensions.filterform_fields %}
                                                     <li><code>{{ filterform_field }}</code></li>
@@ -200,15 +201,15 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Home Page Content</td>
+                                <td>{% trans "Home Page Content" %}</td>
                                 <td>{% include 'utilities/render_boolean.html' with value=features.home_page %}</td>
                             </tr>
                             <tr>
-                                <td>Jinja Filters</td>
+                                <td>{% trans "Jinja Filters" %}</td>
                                 <td>{% include 'utilities/render_boolean.html' with value=features.jinja_filters %}</td>
                             </tr>
                             <tr>
-                                <td>Jobs</td>
+                                <td>{% trans "Jobs" %}</td>
                                 <td>
                                     {% if features.jobs %}
                                         <ul class="list-unstyled">
@@ -222,7 +223,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Middleware</td>
+                                <td>{% trans "Middleware" %}</td>
                                 <td>
                                     {% if object.middleware %}
                                         <ul class="list-unstyled">
@@ -236,15 +237,15 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Nav Menu Items</td>
+                                <td>{% trans "Nav Menu Items" %}</td>
                                 <td>{% include 'utilities/render_boolean.html' with value=features.nav_menu %}</td>
                             </tr>
                             <tr>
-                                <td>Page Banner</td>
+                                <td>{% trans "Page Banner" %}</td>
                                 <td>{% include 'utilities/render_boolean.html' with value=features.banner %}</td>
                             </tr>
                             <tr>
-                                <td>Page Template Extensions</td>
+                                <td>{% trans "Page Template Extensions" %}</td>
                                 <td>
                                     {% if features.template_extensions %}
                                         <ul class="list-unstyled">
@@ -258,7 +259,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>REST API Endpoints</td>
+                                <td>{% trans "REST API Endpoints" %}</td>
                                 <td>
                                     {% if features.api_urlpatterns %}
                                         <ul class="list-unstyled">
@@ -272,7 +273,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Secrets Providers</td>
+                                <td>{% trans "Secrets Providers" %}</td>
                                 <td>
                                     {% if features.secrets_providers %}
                                         <ul class="list-unstyled">
@@ -290,11 +291,11 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Table Extensions</td>
+                                <td>{% trans "Table Extensions" %}</td>
                                 <td>
                                     {% if features.table_extensions %}
                                         {% if features.table_extensions.columns %}
-                                            <b>Custom Columns</b>
+                                            <b>{% trans "Custom Columns" %}</b>
                                             <ul class="list-unstyled">
                                                 {% for column in features.table_extensions.columns %}
                                                     <li><code>{{ column }}</code></li>
@@ -302,7 +303,7 @@
                                             </ul>
                                         {% endif %}
                                         {% if features.table_extensions.add_to_default_columns %}
-                                            <b>Additional Default Columns</b>
+                                            <b>{% trans "Additional Default Columns" %}</b>
                                             <ul class="list-unstyled">
                                                 {% for column in features.table_extensions.add_to_default_columns %}
                                                     <li><code>{{ column }}</code></li>
@@ -310,7 +311,7 @@
                                             </ul>
                                         {% endif %}
                                         {% if features.table_extensions.remove_from_default_columns %}
-                                            <b>Remove from Default Columns</b>
+                                            <b>{% trans "Remove from Default Columns" %}</b>
                                             <ul class="list-unstyled">
                                                 {% for column in features.table_extensions.remove_from_default_columns %}
                                                     <li><code>{{ column }}</code></li>
@@ -323,7 +324,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Views/URLs</td>
+                                <td>{% trans "Views/URLs" %}</td>
                                 <td>
                                     {% if features.urlpatterns %}
                                         <ul class="list-unstyled">
@@ -337,7 +338,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Core View Overrides</td>
+                                <td>{% trans "Core View Overrides" %}</td>
                                 <td>
                                     {% if features.overridden_views %}
                                         <ul class="list-unstyled">
@@ -351,7 +352,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>App Metrics</td>
+                                <td>{% trans "App Metrics" %}</td>
                                 <td>
                                     {% if features.metrics %}
                                         <ul class="list-unstyled">

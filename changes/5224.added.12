@@ -1,0 +1,1 @@
+Marked ModelForm `Meta.help_texts` and `Meta.labels` dictionary values as translatable, along with the bulk-actions dropdown toggle.

@@ -1,4 +1,5 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load form_helpers %}
 {% load helpers %}
 {% load static %}
@@ -18,7 +19,7 @@
             <span class="form-text">
                 <span id="software_version_image_description"><img src="{% static 'img/ajax-loader.gif' %}"></span>
                 <ul id="software_version_image_list">
-                    <li> Software images for the selected software version will appear here </li>
+                    <li> {% trans "Software images for the selected software version will appear here" %} </li>
                 </ul>
             </span>
         </div>

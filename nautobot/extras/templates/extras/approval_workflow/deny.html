@@ -1,16 +1,17 @@
 {% extends 'utilities/confirmation_form.html' %}
+{% load i18n %}
 {% load form_helpers %}
 {% load helpers %}
 
-{% block title %}Deny Workflow Stage?{% endblock %}
+{% block title %}{% trans "Deny Workflow Stage?" %}{% endblock %}
 
 {% block message %}
-    <p>Are you sure you want to deny</p>
+    <p>{% trans "Are you sure you want to deny" %}</p>
     <ul>
-        <li>Stage <strong>{{ obj.approval_workflow_stage_definition.name }}</strong></li>
-        <li>from Workflow <strong>{{ obj.approval_workflow_stage_definition.approval_workflow_definition.name }}</strong></li>
+        <li>{% trans "Stage" %} <strong>{{ obj.approval_workflow_stage_definition.name }}</strong></li>
+        <li>{% trans "from Workflow" %} <strong>{{ obj.approval_workflow_stage_definition.approval_workflow_definition.name }}</strong></li>
         <li>for {{ object_under_review|meta:"verbose_name"|bettertitle }} <strong>{{ object_under_review|hyperlinked_object}}</strong>?</li>
     </ul>
-    <p>You can leave optional comments here.</p>
+    <p>{% trans "You can leave optional comments here." %}</p>
     {% render_field form.comments %}
 {% endblock %}

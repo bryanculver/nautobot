@@ -1,4 +1,5 @@
 {% extends 'users/base.html' %}
+{% load i18n %}
 {% load form_helpers %}
 
 {% block usercontent %}
@@ -9,7 +10,7 @@
                 {% if form.non_field_errors %}
                     <div class="card border-danger">
                         <div class="card-header bg-danger-subtle border-danger text-body">
-                            <strong>Errors</strong>
+                            <strong>{% trans "Errors" %}</strong>
                         </div>
                         <div class="card-body">
                             {{ form.non_field_errors }}
@@ -17,12 +18,12 @@
                     </div>
                 {% endif %}
                 <div class="card">
-                    <div class="card-header"><strong>Advanced Settings</strong></div>
+                    <div class="card-header"><strong>{% trans "Advanced Settings" %}</strong></div>
                     <div class="card-body">
                         {% render_field form.request_profiling %}
                         {% if request.user.is_superuser %}
                             <div class="col-md-9 offset-md-3">
-                                <a href="{% url 'silk:summary' %}">Silk Request Profiling Dashboard</a>
+                                <a href="{% url 'silk:summary' %}">{% trans "Silk Request Profiling Dashboard" %}</a>
                             </div>
                         {% endif %}
                     </div>
@@ -32,11 +33,11 @@
         <div class="nb-form-sticky-footer">
             <button type="submit" name="_update" class="btn btn-primary">
                 <span aria-hidden="true" class="mdi mdi-check me-4"></span><!--
-                -->Update
+                -->{% trans "Update" %}
             </button>
             <a href="{% url 'user:profile' %}" class="btn btn-secondary">
                 <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-                -->Cancel
+                -->{% trans "Cancel" %}
             </a>
         </div>
     </form>

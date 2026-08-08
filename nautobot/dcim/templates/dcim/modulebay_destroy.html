@@ -1,8 +1,9 @@
 {% extends "generic/object_destroy.html" %}
+{% load i18n %}
 {% load helpers %}
 
 {% block message_extra %}
     {% if object.installed_module %}
-        <p><strong>Note: This will also delete the installed module {{ object.installed_module|hyperlinked_object }}!</strong></p>
+        <p><strong>{% blocktrans with module=object.installed_module|hyperlinked_object %}Note: This will also delete the installed module {{ module }}!{% endblocktrans %}</strong></p>
     {% endif %}
 {% endblock %}

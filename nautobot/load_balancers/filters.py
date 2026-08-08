@@ -1,5 +1,6 @@
 """Filtering for nautobot_load_balancer_models."""
 
+from django.utils.translation import gettext_lazy as _
 import django_filters
 
 from nautobot.cloud.models import CloudService
@@ -32,42 +33,42 @@ class VirtualServerFilterSet(TenancyModelFilterSetMixin, NautobotFilterSet):  # 
 
     vip = django_filters.ModelMultipleChoiceFilter(
         queryset=IPAddress.objects.all(),
-        label="VIP (ID)",
+        label=_("VIP (ID)"),
     )
     source_nat_pool = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Prefix.objects.all(),
         prefers_id=True,
         to_field_name="network",
-        label="Source NAT Pool (ID or network string)",
+        label=_("Source NAT Pool (ID or network string)"),
     )
     load_balancer_pool = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.LoadBalancerPool.objects.all(),
-        label="Load Balancer Pool (name or ID)",
+        label=_("Load Balancer Pool (name or ID)"),
     )
     device = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Device.objects.all(),
-        label="Device (name or ID)",
+        label=_("Device (name or ID)"),
     )
     device_redundancy_group = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=DeviceRedundancyGroup.objects.all(),
-        label="Device Redundancy Group (name or ID)",
+        label=_("Device Redundancy Group (name or ID)"),
     )
     cloud_service = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=CloudService.objects.all(),
-        label="Cloud Service (name or ID)",
+        label=_("Cloud Service (name or ID)"),
     )
     virtual_chassis = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=VirtualChassis.objects.all(),
-        label="Virtual Chassis (name or ID)",
+        label=_("Virtual Chassis (name or ID)"),
     )
     health_check_monitor = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.HealthCheckMonitor.objects.all(),
-        label="Health Check Monitor (name or ID)",
+        label=_("Health Check Monitor (name or ID)"),
     )
     certificate_profiles = NaturalKeyOrPKMultipleChoiceFilter(
         to_field_name="name",
         queryset=models.CertificateProfile.objects.all(),
-        label="Certificate Profile (name or ID)",
+        label=_("Certificate Profile (name or ID)"),
     )
 
     class Meta:
@@ -83,7 +84,7 @@ class LoadBalancerPoolFilterSet(NameSearchFilterSet, NautobotFilterSet, TenancyM
 
     health_check_monitor = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.HealthCheckMonitor.objects.all(),
-        label="Health Check Monitor (name or ID)",
+        label=_("Health Check Monitor (name or ID)"),
     )
 
     class Meta:
@@ -107,21 +108,21 @@ class LoadBalancerPoolMemberFilterSet(StatusModelFilterSetMixin, TenancyModelFil
     )
     ip_address = django_filters.ModelMultipleChoiceFilter(
         queryset=IPAddress.objects.all(),
-        label="IP Address (ID)",
+        label=_("IP Address (ID)"),
     )
     load_balancer_pool = NaturalKeyOrPKMultipleChoiceFilter(
         to_field_name="name",
         queryset=models.LoadBalancerPool.objects.all(),
-        label="Load Balancer Pool (name or ID)",
+        label=_("Load Balancer Pool (name or ID)"),
     )
     health_check_monitor = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.HealthCheckMonitor.objects.all(),
-        label="Health Check Monitor (name or ID)",
+        label=_("Health Check Monitor (name or ID)"),
     )
     certificate_profiles = NaturalKeyOrPKMultipleChoiceFilter(
         to_field_name="name",
         queryset=models.CertificateProfile.objects.all(),
-        label="Certificate Profile (name or ID)",
+        label=_("Certificate Profile (name or ID)"),
     )
 
     class Meta:
@@ -181,11 +182,11 @@ class CertificateProfileFilterSet(TenancyModelFilterSetMixin, NautobotFilterSet)
     load_balancer_pool_members = NaturalKeyOrPKMultipleChoiceFilter(
         to_field_name="ip_address__host",
         queryset=models.LoadBalancerPoolMember.objects.all(),
-        label="Load Balancer Pool Members (ID or host string)",
+        label=_("Load Balancer Pool Members (ID or host string)"),
     )
     virtual_servers = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VirtualServer.objects.all(),
-        label="Virtual Servers",
+        label=_("Virtual Servers"),
     )
 
     class Meta:
@@ -201,12 +202,12 @@ class VirtualServerCertificateProfileAssignmentFilterSet(BaseFilterSet):  # pyli
     virtual_server = NaturalKeyOrPKMultipleChoiceFilter(
         to_field_name="name",
         queryset=models.VirtualServer.objects.all(),
-        label="Virtual Server (name or ID)",
+        label=_("Virtual Server (name or ID)"),
     )
     certificate_profile = NaturalKeyOrPKMultipleChoiceFilter(
         to_field_name="name",
         queryset=models.CertificateProfile.objects.all(),
-        label="Certificate Profile (name or ID)",
+        label=_("Certificate Profile (name or ID)"),
     )
 
     class Meta:
@@ -222,12 +223,12 @@ class LoadBalancerPoolMemberCertificateProfileAssignmentFilterSet(BaseFilterSet)
     load_balancer_pool_member = NaturalKeyOrPKMultipleChoiceFilter(
         to_field_name="name",
         queryset=models.LoadBalancerPoolMember.objects.all(),
-        label="Load Balancer Pool Member (name or ID)",
+        label=_("Load Balancer Pool Member (name or ID)"),
     )
     certificate_profile = NaturalKeyOrPKMultipleChoiceFilter(
         to_field_name="name",
         queryset=models.CertificateProfile.objects.all(),
-        label="Certificate Profile (name or ID)",
+        label=_("Certificate Profile (name or ID)"),
     )
 
     class Meta:

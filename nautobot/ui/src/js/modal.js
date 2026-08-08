@@ -1,19 +1,27 @@
+import { gettext } from './i18n.js';
 import { initializeSelect2Fields } from './select2.js';
 
 const MODAL_ID = 'nautobot-generic-modal';
 const MODAL_CONTENT_CONTAINER_ID = 'modal-content-container';
 const REFRESH_ON_CLOSE_SELECTOR = '[data-nb-refresh-on-close="true"]';
 
-const FALLBACK_CONTENT = `
+/**
+ * Placeholder markup shown while the real modal content is being fetched.
+ *
+ * Built per call rather than once at module scope: `gettext` has to run after the JavaScript
+ * catalog has loaded, and re-reading it on each open keeps the text right for the active language.
+ * @returns {string} The fallback markup, translated into the active language.
+ */
+const fallbackContent = () => `
   <div class="modal-header">
-    <h4 class="modal-title" id="modal-fallback-title">Loading...</h4>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <h4 class="modal-title" id="modal-fallback-title">${gettext('Loading...')}</h4>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${gettext('Close')}"></button>
   </div>
   <div class="modal-body text-center p-5">
     <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
+      <span class="visually-hidden">${gettext('Loading...')}</span>
     </div>
-    <p class="mt-2 text-muted">Please wait while we fetch the content...</p>
+    <p class="mt-2 text-muted">${gettext('Please wait while we fetch the content...')}</p>
   </div>
 `;
 
@@ -74,7 +82,7 @@ export const initializeModal = () => {
       return;
     }
 
-    container.innerHTML = FALLBACK_CONTENT;
+    container.innerHTML = fallbackContent();
   });
 
   document.body.addEventListener('htmx:afterSwap', (event) => {

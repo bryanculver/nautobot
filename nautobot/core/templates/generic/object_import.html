@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load helpers %}
 {% load form_helpers %}
 
-{% block title %}{{ obj_type|bettertitle }} Import{% endblock %}
+{% block title %}{% blocktrans with obj_type=obj_type|bettertitle %}{{ obj_type }} Import{% endblocktrans %}{% endblock %}
 
 {% block content %}
     {% block tabs %}{% endblock %}
@@ -13,7 +14,7 @@
                 {% if form.non_field_errors %}
                     <div class="card border-danger">
                         <div class="card-header bg-danger-subtle border-danger text-body">
-                            <strong>Errors</strong>
+                            <strong>{% trans "Errors" %}</strong>
                         </div>
                         <div class="card-body">
                             {{ form.non_field_errors }}
@@ -21,13 +22,13 @@
                     </div>
                 {% endif %}
                 <div class="card">
-                    <div class="card-header">Data</div>
+                    <div class="card-header">{% trans "Data" %}</div>
                     <div class="card-body">
                         {% render_field form.data %}
                     </div>
                 </div>
                 <div class="card">
-                    <div class="card-header">Format</div>
+                    <div class="card-header">{% trans "Format" %}</div>
                     <div class="card-body">
                         {% render_field form.format %}
                     </div>
@@ -35,16 +36,16 @@
                 <div class="nb-form-sticky-footer">
                     <button type="submit" name="_create" class="btn btn-primary">
                         <span aria-hidden="true" class="mdi mdi-check me-4"></span><!--
-                        -->Submit
+                        -->{% trans "Submit" %}
                     </button>
                     <button type="submit" name="_addanother" class="btn btn-primary">
                         <span aria-hidden="true" class="mdi mdi-check me-4"></span><!--
-                        -->Submit and Import Another
+                        -->{% trans "Submit and Import Another" %}
                     </button>
                     {% if return_url %}
                         <a href="{{ return_url }}" class="btn btn-secondary">
                             <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-                            -->Cancel
+                            -->{% trans "Cancel" %}
                         </a>
                     {% endif %}
                 </div>

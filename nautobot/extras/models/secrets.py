@@ -3,6 +3,7 @@ import logging
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.utils.translation import gettext, gettext_lazy as _
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.sandbox import unsafe
 
@@ -32,10 +33,10 @@ class Secret(PrimaryModel):
     Nautobot models and APIs to make use of as needed and appropriate.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    provider = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
-    parameters = models.JSONField(encoder=DjangoJSONEncoder, default=dict)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
+    provider = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("provider"))
+    parameters = models.JSONField(encoder=DjangoJSONEncoder, default=dict, verbose_name=_("parameters"))
 
     clone_fields = [
         "provider",
@@ -84,7 +85,12 @@ class Secret(PrimaryModel):
     def clean(self):
         provider = registry["secrets_providers"].get(self.provider)
         if not provider:
-            raise ValidationError({"provider": f'No registered provider "{self.provider}" is available'})
+            raise ValidationError(
+                {
+                    "provider": gettext('No registered provider "%(provider)s" is available')
+                    % {"provider": self.provider}
+                }
+            )
 
         # Apply any provider-specific validation of the parameters
         form = provider.ParametersForm(self.parameters)
@@ -101,10 +107,14 @@ class Secret(PrimaryModel):
 class SecretsGroup(OrganizationalModel):
     """A group of related Secrets."""
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     secrets = models.ManyToManyField(
-        to=Secret, related_name="secrets_groups", through="extras.SecretsGroupAssociation", blank=True
+        to=Secret,
+        related_name="secrets_groups",
+        through="extras.SecretsGroupAssociation",
+        blank=True,
+        verbose_name=_("secrets"),
     )
 
     documentation_static_path = "docs/user-guide/platform-functionality/secret.html"
@@ -132,11 +142,18 @@ class SecretsGroup(OrganizationalModel):
 class SecretsGroupAssociation(BaseModel):
     """The intermediary model for associating Secret(s) to SecretsGroup(s)."""
 
-    secrets_group = models.ForeignKey(SecretsGroup, on_delete=models.CASCADE, related_name="secrets_group_associations")
-    secret = models.ForeignKey(Secret, on_delete=models.CASCADE, related_name="secrets_group_associations")
+    secrets_group = models.ForeignKey(
+        SecretsGroup,
+        on_delete=models.CASCADE,
+        related_name="secrets_group_associations",
+        verbose_name=_("secrets group"),
+    )
+    secret = models.ForeignKey(
+        Secret, on_delete=models.CASCADE, related_name="secrets_group_associations", verbose_name=_("secret")
+    )
 
-    access_type = models.CharField(max_length=32, choices=SecretsGroupAccessTypeChoices)
-    secret_type = models.CharField(max_length=32, choices=SecretsGroupSecretTypeChoices)
+    access_type = models.CharField(max_length=32, choices=SecretsGroupAccessTypeChoices, verbose_name=_("access type"))
+    secret_type = models.CharField(max_length=32, choices=SecretsGroupSecretTypeChoices, verbose_name=_("secret type"))
 
     natural_key_field_names = ["secrets_group", "access_type", "secret_type", "secret"]
 

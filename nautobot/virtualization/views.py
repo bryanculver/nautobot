@@ -1,7 +1,8 @@
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
-from django.utils.html import mark_safe
+from django.utils.html import format_html
 from django.utils.http import urlencode
+from django.utils.translation import gettext_lazy as _
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -113,7 +114,7 @@ class ClusterUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.FULL_WIDTH,
                 table_class=DeviceTable,
                 table_filter="clusters",
-                table_title="Host Devices",
+                table_title=_("Host Devices"),
                 enable_bulk_actions=True,
                 exclude_columns=["cluster_count"],
             ),
@@ -189,7 +190,9 @@ class VirtualMachineUIViewSet(NautobotUIViewSet):
             object_detail.ObjectsTablePanel(
                 weight=100,
                 section=SectionChoices.RIGHT_HALF,
-                table_title="Assigned VRFs",  # TODO: why does `label` get added to the table_title instead of overwriting
+                table_title=_(
+                    "Assigned VRFs"
+                ),  # TODO: why does `label` get added to the table_title instead of overwriting
                 table_class=VRFDeviceAssignmentTable,
                 table_filter="virtual_machine",
                 exclude_columns=["related_object_type", "related_object_name"],
@@ -199,23 +202,23 @@ class VirtualMachineUIViewSet(NautobotUIViewSet):
             object_detail.ObjectFieldsPanel(
                 weight=200,
                 section=SectionChoices.RIGHT_HALF,
-                label="Cluster",
+                label=_("Cluster"),
                 fields=("cluster", "cluster__cluster_type"),
                 key_transforms={"cluster__cluster_type": "Cluster Type"},
             ),
             object_detail.ObjectFieldsPanel(
                 weight=300,
                 section=SectionChoices.RIGHT_HALF,
-                label="Resources",
+                label=_("Resources"),
                 fields=(
                     "vcpus",
                     "memory",
                     "disk",
                 ),
                 key_transforms={
-                    "vcpus": mark_safe('<span class="mdi mdi-gauge"></span> Virtual CPUs'),
-                    "memory": mark_safe('<span class="mdi mdi-chip"></span> Memory'),
-                    "disk": mark_safe('<span class="mdi mdi-harddisk"></span> Disk Space'),
+                    "vcpus": format_html('<span class="mdi mdi-gauge"></span> {}', _("Virtual CPUs")),
+                    "memory": format_html('<span class="mdi mdi-chip"></span> {}', _("Memory")),
+                    "disk": format_html('<span class="mdi mdi-harddisk"></span> {}', _("Disk Space")),
                 },
                 value_transforms={
                     "memory": [lambda value: f"{value} MB" if value else HTML_NONE],
@@ -225,7 +228,7 @@ class VirtualMachineUIViewSet(NautobotUIViewSet):
             object_detail.ObjectsTablePanel(
                 weight=400,
                 section=SectionChoices.RIGHT_HALF,
-                table_title="Services",
+                table_title=_("Services"),
                 table_class=ServiceTable,
                 table_filter="virtual_machine",
                 exclude_columns=["parent"],
@@ -234,7 +237,7 @@ class VirtualMachineUIViewSet(NautobotUIViewSet):
             object_detail.ObjectsTablePanel(
                 weight=100,
                 section=SectionChoices.FULL_WIDTH,
-                table_title="Interfaces",
+                table_title=_("Interfaces"),
                 table_class=tables.VirtualMachineVMInterfaceTable,
                 table_filter="virtual_machine",
                 header_extra_content_template_path="virtualization/inc/virtualmachine_vminterface_filter.html",
@@ -245,7 +248,7 @@ class VirtualMachineUIViewSet(NautobotUIViewSet):
                 weight=100,
                 color=ButtonActionColorChoices.ADD,
                 link_name="virtualization:vminterface_add",
-                label="Add Interfaces",
+                label=_("Add Interfaces"),
                 icon="mdi-plus-thick",
                 required_permissions=["virtualization.add_vminterface"],
                 link_includes_pk=False,
@@ -255,7 +258,7 @@ class VirtualMachineUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=1000,
                 tab_id="config_context",
-                label="Config Context",
+                label=_("Config Context"),
                 url_name="virtualization:virtualmachine_configcontext",
                 required_permissions=["extras.view_configcontext"],
             ),
@@ -358,7 +361,7 @@ class VMInterfaceUIViewSet(ComponentCreateViewMixin, NautobotUIViewSet):
     object_detail_content = object_detail.ObjectDetailContent(
         panels=[
             object_detail.ObjectFieldsPanel(
-                label="Interface",
+                label=_("Interface"),
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
                 exclude_fields=["untagged_vlan"],
@@ -385,7 +388,7 @@ class VMInterfaceUIViewSet(ComponentCreateViewMixin, NautobotUIViewSet):
                 related_field_name="vm_interfaces",
             ),
             ChildInterfacesTablePanel(
-                table_title="Child Interfaces",
+                table_title=_("Child Interfaces"),
                 section=SectionChoices.FULL_WIDTH,
                 weight=500,
                 table_class=tables.VMInterfaceTable,

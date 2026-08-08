@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.core.apps import (
     NavMenuAddButton,
     NavMenuGroup,
@@ -9,16 +11,19 @@ from nautobot.core.ui.choices import NavigationIconChoices, NavigationWeightChoi
 menu_items = (
     NavMenuTab(
         name="Cloud",
+        label=_("Cloud"),
         icon=NavigationIconChoices.CLOUD,
         weight=NavigationWeightChoices.CLOUD,
         groups=(
             NavMenuGroup(
                 name="Cloud",
+                label=_("Cloud"),
                 weight=100,
                 items=(
                     NavMenuItem(
                         link="cloud:cloudservice_list",
                         name="Cloud Services",
+                        label=_("Cloud Services"),
                         weight=100,
                         permissions=[
                             "cloud.view_cloudservice",
@@ -35,6 +40,7 @@ menu_items = (
                     NavMenuItem(
                         link="cloud:cloudnetwork_list",
                         name="Cloud Networks",
+                        label=_("Cloud Networks"),
                         weight=200,
                         permissions=[
                             "cloud.view_cloudnetwork",
@@ -51,6 +57,7 @@ menu_items = (
                     NavMenuItem(
                         link="cloud:cloudresourcetype_list",
                         name="Cloud Resource Types",
+                        label=_("Cloud Resource Types"),
                         weight=300,
                         permissions=[
                             "cloud.view_cloudresourcetype",
@@ -67,6 +74,7 @@ menu_items = (
                     NavMenuItem(
                         link="cloud:cloudaccount_list",
                         name="Cloud Accounts",
+                        label=_("Cloud Accounts"),
                         weight=400,
                         permissions=[
                             "cloud.view_cloudaccount",

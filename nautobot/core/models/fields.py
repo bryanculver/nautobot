@@ -5,9 +5,10 @@ from django.core import exceptions
 from django.core.validators import MaxLengthValidator, RegexValidator
 from django.db import models
 from django.forms import TextInput
-from django.utils.text import slugify
+from django.utils.translation import gettext, gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField as _AutoSlugField
 from netaddr import AddrFormatError, EUI, mac_unix_expanded
+from slugify import slugify as python_slugify
 from taggit.managers import TaggableManager
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
@@ -54,7 +55,7 @@ class MACAddressCharField(models.CharField):
         try:
             return EUI(value, version=48, dialect=mac_unix_expanded_uppercase)
         except AddrFormatError:
-            raise exceptions.ValidationError(f"Invalid MAC address format: {value}")
+            raise exceptions.ValidationError(gettext("Invalid MAC address format: %(value)s") % {"value": value})
 
     def get_prep_value(self, value):
         if not value:
@@ -62,9 +63,18 @@ class MACAddressCharField(models.CharField):
         return str(self.to_python(value))
 
 
+GRAPHQL_SAFE_FIRST_CHARACTER = re.compile("[_A-Za-z]")
+
+# python-slugify discards underscores by default, turning them into the separator. These callers
+# derive dotted paths and keys where an underscore is meaningful (`apps.my_app.jobs`), so keep it.
+_SLUGIFY_ALLOWED_CHARACTERS = r"[^-a-z0-9_]+"
+
+
 def slugify_dots_to_dashes(content):
     """Custom slugify_function - convert '.' to '-' instead of removing dots outright."""
-    return slugify(content.replace(".", "-"))
+    # `str()` because callers pass model metadata such as `verbose_name`, which is a lazy
+    # translation proxy: Django's `slugify` coerced it, but `python-slugify` does not.
+    return python_slugify(str(content).replace(".", "-"), regex_pattern=_SLUGIFY_ALLOWED_CHARACTERS)
 
 
 def slugify_dashes_to_underscores(content):
@@ -75,13 +85,29 @@ def slugify_dashes_to_underscores(content):
     This method will prepend an "a" to content to make it graphql-safe
     e.g:
         123 main st -> a123_main_st
+
+    Non-Latin scripts are transliterated rather than discarded, so a label like "設備名稱" derives a
+    meaningful key instead of collapsing to "a". `python-slugify` is the same transliterating
+    slugifier already used by `natural_slug`; Django's `slugify` is ASCII-destructive and strips
+    such labels to the empty string.
     """
-    graphql_safe_pattern = re.compile("[_A-Za-z]")
-    # If the first letter of the slug is not GraphQL safe.
-    # We append "a" to it.
-    if graphql_safe_pattern.fullmatch(content[0]) is None:
-        content = "a" + content
-    return slugify(content).replace("-", "_")
+    content = str(content)
+    slug = python_slugify(content, separator="_", regex_pattern=_SLUGIFY_ALLOWED_CHARACTERS)
+
+    if not slug:
+        # Nothing survived slugification. Previously this path raised IndexError on `content[0]`.
+        return "a"
+
+    # Test GraphQL-safety against the *slug*, not the raw input: the slug's first character is what
+    # ends up in the identifier, and transliteration frequently makes it a letter even when the raw
+    # label's first character is not (`設備名稱` -> `she_bei_ming_cheng`, which needs no prefix).
+    if GRAPHQL_SAFE_FIRST_CHARACTER.fullmatch(slug[0]) is None:
+        # Preserve the separator that leading whitespace or punctuation used to contribute, so that
+        # `" 123 main st"` stays `a_123_main_st` rather than becoming `a123_main_st`.
+        prefix = "a" if content[:1].isalnum() else "a_"
+        slug = prefix + slug
+
+    return slug
 
 
 class AutoSlugField(_AutoSlugField):
@@ -428,7 +454,7 @@ class TagsField(TaggableManager):
 
 class PositiveRangeNumberTextField(models.TextField):
     default_error_messages = {
-        "invalid": "Invalid value. Specify a value using non-negative integers in a range format (i.e. '10-20').",
+        "invalid": _("Invalid value. Specify a value using non-negative integers in a range format (i.e. '10-20')."),
     }
 
     description = "A text based representation of positive number range."

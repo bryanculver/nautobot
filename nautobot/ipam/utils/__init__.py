@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from django.core.exceptions import ValidationError
 from django.utils.html import format_html, format_html_join
+from django.utils.translation import gettext_lazy as _
 import netaddr
 
 from nautobot.core.forms.utils import compress_range
@@ -385,7 +386,7 @@ def render_ip_with_nat(ip):
         return HTML_NONE
 
     if ip.nat_inside is not None:
-        nat = format_html("(NAT for {})", hyperlinked_object(ip.nat_inside))
+        nat = format_html(_("(NAT for {target})"), target=hyperlinked_object(ip.nat_inside))
     elif ip.nat_outside_list.exists():
         nat = format_html(
             "<br>NAT:<ul>{}</ul>",

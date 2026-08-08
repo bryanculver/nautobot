@@ -1,3 +1,6 @@
+from django.utils.translation import gettext_lazy as _
+
+
 class ChoiceSetMeta(type):
     """
     Metaclass for ChoiceSet
@@ -118,33 +121,33 @@ class ColorChoices(ChoiceSet):
     COLOR_WHITE = "ffffff"
 
     CHOICES = (
-        (COLOR_DARK_RED, "Dark red"),
-        (COLOR_RED, "Red"),
-        (COLOR_PINK, "Pink"),
-        (COLOR_ROSE, "Rose"),
-        (COLOR_FUCHSIA, "Fuchsia"),
-        (COLOR_PURPLE, "Purple"),
-        (COLOR_DARK_PURPLE, "Dark purple"),
-        (COLOR_INDIGO, "Indigo"),
-        (COLOR_BLUE, "Blue"),
-        (COLOR_LIGHT_BLUE, "Light blue"),
-        (COLOR_CYAN, "Cyan"),
-        (COLOR_TEAL, "Teal"),
-        (COLOR_AQUA, "Aqua"),
-        (COLOR_DARK_GREEN, "Dark green"),
-        (COLOR_GREEN, "Green"),
-        (COLOR_LIGHT_GREEN, "Light green"),
-        (COLOR_LIME, "Lime"),
-        (COLOR_YELLOW, "Yellow"),
-        (COLOR_AMBER, "Amber"),
-        (COLOR_ORANGE, "Orange"),
-        (COLOR_DARK_ORANGE, "Dark orange"),
-        (COLOR_BROWN, "Brown"),
-        (COLOR_LIGHT_GREY, "Light grey"),
-        (COLOR_GREY, "Grey"),
-        (COLOR_DARK_GREY, "Dark grey"),
-        (COLOR_BLACK, "Black"),
-        (COLOR_WHITE, "White"),
+        (COLOR_DARK_RED, _("Dark red")),
+        (COLOR_RED, _("Red")),
+        (COLOR_PINK, _("Pink")),
+        (COLOR_ROSE, _("Rose")),
+        (COLOR_FUCHSIA, _("Fuchsia")),
+        (COLOR_PURPLE, _("Purple")),
+        (COLOR_DARK_PURPLE, _("Dark purple")),
+        (COLOR_INDIGO, _("Indigo")),
+        (COLOR_BLUE, _("Blue")),
+        (COLOR_LIGHT_BLUE, _("Light blue")),
+        (COLOR_CYAN, _("Cyan")),
+        (COLOR_TEAL, _("Teal")),
+        (COLOR_AQUA, _("Aqua")),
+        (COLOR_DARK_GREEN, _("Dark green")),
+        (COLOR_GREEN, _("Green")),
+        (COLOR_LIGHT_GREEN, _("Light green")),
+        (COLOR_LIME, _("Lime")),
+        (COLOR_YELLOW, _("Yellow")),
+        (COLOR_AMBER, _("Amber")),
+        (COLOR_ORANGE, _("Orange")),
+        (COLOR_DARK_ORANGE, _("Dark orange")),
+        (COLOR_BROWN, _("Brown")),
+        (COLOR_LIGHT_GREY, _("Light grey")),
+        (COLOR_GREY, _("Grey")),
+        (COLOR_DARK_GREY, _("Dark grey")),
+        (COLOR_BLACK, _("Black")),
+        (COLOR_WHITE, _("White")),
     )
 
 
@@ -199,13 +202,13 @@ class ButtonColorChoices(ChoiceSet):
     BLACK = "dark"
 
     CHOICES = (
-        (DEFAULT, "Default"),
-        (BLUE, "Blue"),
-        (GREY, "Grey"),
-        (GREEN, "Green"),
-        (RED, "Red"),
-        (YELLOW, "Yellow"),
-        (BLACK, "Black"),
+        (DEFAULT, _("Default")),
+        (BLUE, _("Blue")),
+        (GREY, _("Grey")),
+        (GREEN, _("Green")),
+        (RED, _("Red")),
+        (YELLOW, _("Yellow")),
+        (BLACK, _("Black")),
     )
 
 

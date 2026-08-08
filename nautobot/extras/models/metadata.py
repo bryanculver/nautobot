@@ -7,6 +7,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.html import format_html
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.forms import (
@@ -62,14 +63,16 @@ class MetadataType(PrimaryModel):
         to=ContentType,
         related_name="metadata_types",
         limit_choices_to=FeatureQuery("metadata"),
-        help_text="The object type(s) to which Metadata of this type can be applied.",
+        help_text=_("The object type(s) to which Metadata of this type can be applied."),
+        verbose_name=_("content types"),
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     data_type = models.CharField(
         max_length=50,
         choices=MetadataTypeDataTypeChoices,
-        help_text="The type of data allowed for any Metadata of this type.",
+        help_text=_("The type of data allowed for any Metadata of this type."),
+        verbose_name=_("data type"),
     )
     # TODO: validation_minimum, validation_maximum, validation_regex?
     # TODO: weight, grouping, advanced_ui?
@@ -91,14 +94,14 @@ class MetadataType(PrimaryModel):
             # Check immutable fields
             database_object = self.__class__.objects.get(pk=self.pk)
             if self.data_type != database_object.data_type:
-                raise ValidationError({"data_type": "Type cannot be changed once created"})
+                raise ValidationError({"data_type": _("Type cannot be changed once created")})
 
         # Choices can be set only on selection fields
         if self.choices.exists() and self.data_type not in (
             MetadataTypeDataTypeChoices.TYPE_SELECT,
             MetadataTypeDataTypeChoices.TYPE_MULTISELECT,
         ):
-            raise ValidationError("Choices may be set only for select/multi-select data_type.")
+            raise ValidationError(_("Choices may be set only for select/multi-select data_type."))
 
     def to_form_field(self, required=False, initial=None):
         """
@@ -172,9 +175,12 @@ class MetadataChoice(ChangeLoggedModel, BaseModel):
         limit_choices_to=models.Q(
             data_type__in=[MetadataTypeDataTypeChoices.TYPE_SELECT, MetadataTypeDataTypeChoices.TYPE_MULTISELECT]
         ),
+        verbose_name=_("metadata type"),
     )
-    value = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
-    weight = models.PositiveSmallIntegerField(default=100, help_text="Higher weights appear later in the list")
+    value = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("value"))
+    weight = models.PositiveSmallIntegerField(
+        default=100, help_text=_("Higher weights appear later in the list"), verbose_name=_("weight")
+    )
     is_metadata_associable_model = False
 
     documentation_static_path = "docs/user-guide/platform-functionality/objectmetadata.html"
@@ -193,14 +199,14 @@ class MetadataChoice(ChangeLoggedModel, BaseModel):
             # Check immutable fields
             database_object = self.__class__.objects.get(pk=self.pk)
             if self.metadata_type != database_object.metadata_type:
-                raise ValidationError({"metadata_type": "Cannot be changed once created"})
+                raise ValidationError({"metadata_type": _("Cannot be changed once created")})
 
         if self.metadata_type.data_type not in (
             MetadataTypeDataTypeChoices.TYPE_SELECT,
             MetadataTypeDataTypeChoices.TYPE_MULTISELECT,
         ):
             raise ValidationError(
-                {"metadata_type": "Metadata choices can only be assigned to select/multiselect data_type."}
+                {"metadata_type": _("Metadata choices can only be assigned to select/multiselect data_type.")}
             )
         # TODO: enforce validation_minimum, validation_maximum, validation_regex like CustomFieldChoice does?
 
@@ -235,9 +241,7 @@ class ObjectMetadataManager(BaseManager.from_queryset(RestrictedQuerySet)):
 )
 class ObjectMetadata(ChangeLoggedModel, BaseModel):
     metadata_type = models.ForeignKey(
-        to=MetadataType,
-        on_delete=models.PROTECT,
-        related_name="object_metadata",
+        to=MetadataType, on_delete=models.PROTECT, related_name="object_metadata", verbose_name=_("metadata type")
     )
     contact = models.ForeignKey(
         to=Contact,
@@ -245,28 +249,28 @@ class ObjectMetadata(ChangeLoggedModel, BaseModel):
         related_name="object_metadata",
         blank=True,
         null=True,
+        verbose_name=_("contact"),
     )
     team = models.ForeignKey(
-        to=Team,
-        on_delete=models.PROTECT,
-        related_name="object_metadata",
-        blank=True,
-        null=True,
+        to=Team, on_delete=models.PROTECT, related_name="object_metadata", blank=True, null=True, verbose_name=_("team")
     )
     scoped_fields = JSONArrayField(
         base_field=models.CharField(
             max_length=CHARFIELD_MAX_LENGTH,
         ),
         blank=True,
-        help_text="List of scoped fields, only direct fields on the model",
+        help_text=_("List of scoped fields, only direct fields on the model"),
+        verbose_name=_("scoped fields"),
     )
     _value = models.JSONField(
         blank=True,
         null=True,
-        help_text="Relevant data value to an object field or a set of object fields",
+        help_text=_("Relevant data value to an object field or a set of object fields"),
     )
-    assigned_object_type = models.ForeignKey(to=ContentType, on_delete=models.CASCADE, related_name="+")
-    assigned_object_id = models.UUIDField(db_index=True)
+    assigned_object_type = models.ForeignKey(
+        to=ContentType, on_delete=models.CASCADE, related_name="+", verbose_name=_("assigned object type")
+    )
+    assigned_object_id = models.UUIDField(db_index=True, verbose_name=_("assigned object id"))
     assigned_object = GenericForeignKey(ct_field="assigned_object_type", fk_field="assigned_object_id")
 
     objects = ObjectMetadataManager()
@@ -276,7 +280,7 @@ class ObjectMetadata(ChangeLoggedModel, BaseModel):
 
     class Meta:
         ordering = ["metadata_type"]
-        verbose_name_plural = "object metadata"
+        verbose_name_plural = _("object metadata")
 
         indexes = [
             models.Index(
@@ -305,7 +309,8 @@ class ObjectMetadata(ChangeLoggedModel, BaseModel):
         if self.metadata_type.data_type == MetadataTypeDataTypeChoices.TYPE_CONTACT_TEAM:
             if v is not None:
                 raise ValidationError(
-                    f"{v} is an invalid value for metadata type data type {self.metadata_type.data_type}"
+                    gettext("%(v)s is an invalid value for metadata type data type %(data_type)s")
+                    % {"v": v, "data_type": self.metadata_type.data_type}
                 )
         else:
             self._value = v
@@ -369,23 +374,30 @@ class ObjectMetadata(ChangeLoggedModel, BaseModel):
             # Check immutable fields
             database_object = self.__class__.objects.get(pk=self.pk)
             if self.metadata_type != database_object.metadata_type:
-                raise ValidationError({"metadata_type": "Cannot be changed once created"})
+                raise ValidationError({"metadata_type": _("Cannot be changed once created")})
         # Validate the assigned_object_type is allowed in metadata_type's content_types
         if not self.metadata_type.content_types.filter(pk=self.assigned_object_type.id).exists():
             raise ValidationError(
-                f"Assigned Object Type {self.assigned_object_type} is not allowed by Metadata Type {self.metadata_type}"
+                gettext(
+                    "Assigned Object Type %(assigned_object_type)s is not allowed by Metadata Type %(metadata_type)s"
+                )
+                % {"assigned_object_type": self.assigned_object_type, "metadata_type": self.metadata_type}
             )
         # Check for MetadataTypeDataTypeChoices.TYPE_CONTACT_TEAM first
         if metadata_type_data_type == MetadataTypeDataTypeChoices.TYPE_CONTACT_TEAM:
             if value is not None:
-                raise ValidationError(f"A value cannot be specified for type {metadata_type_data_type}")
+                raise ValidationError(
+                    gettext("A value cannot be specified for type %(metadata_type_data_type)s")
+                    % {"metadata_type_data_type": metadata_type_data_type}
+                )
             if self.contact is None and self.team is None:
-                raise ValidationError("Either a contact or a team must be specified")
+                raise ValidationError(_("Either a contact or a team must be specified"))
             if self.contact is not None and self.team is not None:
-                raise ValidationError("A contact and a team cannot be both specified at once")
+                raise ValidationError(_("A contact and a team cannot be both specified at once"))
         elif value is None:
             raise ValidationError(
-                f"value is a required field that cannot be empty for metadata type {metadata_type_data_type}."
+                gettext("value is a required field that cannot be empty for metadata type %(metadata_type_data_type)s.")
+                % {"metadata_type_data_type": metadata_type_data_type}
             )
         else:
             # Validate text field
@@ -395,7 +407,7 @@ class ObjectMetadata(ChangeLoggedModel, BaseModel):
                 MetadataTypeDataTypeChoices.TYPE_MARKDOWN,
             ):
                 if not isinstance(value, str):
-                    raise ValidationError("Value must be a string")
+                    raise ValidationError(_("Value must be a string"))
                 # TODO uncomment this when MetaDataType validation_minimum, validation_maximum and validation_regex fields are implemented
                 # if self.metadata_type.validation_minimum is not None and len(value) < self.metadata_type.validation_minimum:
                 #     raise ValidationError(f"Value must be at least {self.metadata_type.validation_minimum} characters in length")
@@ -438,7 +450,7 @@ class ObjectMetadata(ChangeLoggedModel, BaseModel):
                 try:
                     value = int(value)
                 except ValueError:
-                    raise ValidationError("Value must be an integer.")
+                    raise ValidationError(_("Value must be an integer."))
                 # TODO uncomment this when MetaDataType validation_minimum, validation_maximum and validation_regex fields are implemented
                 # if self.metadata_type.validation_minimum is not None and value < self.metadata_type.validation_minimum:
                 #     raise ValidationError(f"Value must be at least {self.metadata_type.validation_minimum}")
@@ -449,13 +461,13 @@ class ObjectMetadata(ChangeLoggedModel, BaseModel):
                 try:
                     value = float(value)
                 except ValueError:
-                    raise ValidationError("Value must be a float.")
+                    raise ValidationError(_("Value must be a float."))
             # Validate boolean
             elif metadata_type_data_type == MetadataTypeDataTypeChoices.TYPE_BOOLEAN:
                 try:
                     value = is_truthy(value)
                 except ValueError as exc:
-                    raise ValidationError("Value must be true or false.") from exc
+                    raise ValidationError(_("Value must be true or false.")) from exc
 
             # Validate date
             elif metadata_type_data_type == MetadataTypeDataTypeChoices.TYPE_DATE:
@@ -463,9 +475,9 @@ class ObjectMetadata(ChangeLoggedModel, BaseModel):
                     try:
                         datetime.strptime(value, "%Y-%m-%d")
                     except TypeError:
-                        raise ValidationError("Value must be a date or str object.")
+                        raise ValidationError(_("Value must be a date or str object."))
                     except ValueError:
-                        raise ValidationError("Date values must be in the format YYYY-MM-DD.")
+                        raise ValidationError(_("Date values must be in the format YYYY-MM-DD."))
             # Validate datetime
             elif metadata_type_data_type == MetadataTypeDataTypeChoices.TYPE_DATETIME:
                 if isinstance(value, datetime):
@@ -488,15 +500,22 @@ class ObjectMetadata(ChangeLoggedModel, BaseModel):
                             value += "+0000"
                         except ValueError:
                             raise ValidationError(
-                                f"Datetime values must be in the following formats {acceptable_datetime_formats}"
+                                gettext(
+                                    "Datetime values must be in the following formats %(acceptable_datetime_formats)s"
+                                )
+                                % {"acceptable_datetime_formats": acceptable_datetime_formats}
                             )
                     except TypeError:
-                        raise ValidationError("Value must be a datetime or str object.")
+                        raise ValidationError(_("Value must be a datetime or str object."))
             # Validate selected choice
             elif metadata_type_data_type == MetadataTypeDataTypeChoices.TYPE_SELECT:
                 if value not in self.metadata_type.choices.values_list("value", flat=True):
                     raise ValidationError(
-                        f"Invalid choice ({value}). Available choices are: {', '.join(self.metadata_type.choices.values_list('value', flat=True))}"
+                        gettext("Invalid choice (%(value)s). Available choices are: %(choices)s")
+                        % {
+                            "value": value,
+                            "choices": ", ".join(self.metadata_type.choices.values_list("value", flat=True)),
+                        }
                     )
 
             elif metadata_type_data_type == MetadataTypeDataTypeChoices.TYPE_MULTISELECT:
@@ -504,7 +523,11 @@ class ObjectMetadata(ChangeLoggedModel, BaseModel):
                     value = value.split(",")
                 if not set(value).issubset(self.metadata_type.choices.values_list("value", flat=True)):
                     raise ValidationError(
-                        f"Invalid choice(s) ({value}). Available choices are: {', '.join(self.metadata_type.choices.values_list('value', flat=True))}"
+                        gettext("Invalid choice(s) (%(value)s). Available choices are: %(choices)s")
+                        % {
+                            "value": value,
+                            "choices": ", ".join(self.metadata_type.choices.values_list("value", flat=True)),
+                        }
                     )
         self._value = value
 
@@ -529,19 +552,32 @@ class ObjectMetadata(ChangeLoggedModel, BaseModel):
             if not self.scoped_fields:
                 raise ValidationError(
                     {
-                        "scoped_fields": f"This Object Metadata {self} scoping all the fields for {self.assigned_object} has overlapped with the scoped fields of other Object Metadata instances."
+                        "scoped_fields": gettext(
+                            "This Object Metadata %(value)s scoping all the fields for %(assigned_object)s has overlapped with the scoped fields of other Object Metadata instances."
+                        )
+                        % {"value": self, "assigned_object": self.assigned_object}
                     }
                 )
             if not scoped_fields:
                 raise ValidationError(
                     {
-                        "scoped_fields": f"There are other Object Metadata instances of metadata type {self.metadata_type} scoping all the fields for {self.assigned_object}"
+                        "scoped_fields": gettext(
+                            "There are other Object Metadata instances of metadata type %(metadata_type)s scoping all the fields for %(assigned_object)s"
+                        )
+                        % {"metadata_type": self.metadata_type, "assigned_object": self.assigned_object}
                     }
                 )
 
         if duplicate_scoped_fields_list:
             raise ValidationError(
                 {
-                    "scoped_fields": f"There are other Object Metadata instances of metadata type {self.metadata_type} scoping the same fields {duplicate_scoped_fields_list} for {self.assigned_object}"
+                    "scoped_fields": gettext(
+                        "There are other Object Metadata instances of metadata type %(metadata_type)s scoping the same fields %(duplicate_scoped_fields_list)s for %(assigned_object)s"
+                    )
+                    % {
+                        "metadata_type": self.metadata_type,
+                        "duplicate_scoped_fields_list": duplicate_scoped_fields_list,
+                        "assigned_object": self.assigned_object,
+                    }
                 }
             )

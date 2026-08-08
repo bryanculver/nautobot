@@ -1,0 +1,1 @@
+Added an optional `label` argument to `HomePagePanel`, `HomePageGroup`, and `HomePageItem`, and marked home-page item descriptions as translatable. Apps that pass only `name` are unaffected.

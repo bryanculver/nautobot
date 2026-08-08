@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -103,7 +104,7 @@ class CloudNetworkUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.RIGHT_HALF,
                 weight=100,
                 object_field="extra_config",
-                label="Extra Config",
+                label=_("Extra Config"),
                 render_as=object_detail.ObjectTextPanel.RenderOptions.JSON,
             ),
         ),
@@ -111,14 +112,14 @@ class CloudNetworkUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=700,
                 tab_id="children",
-                label="Children",
+                label=_("Children"),
                 url_name="cloud:cloudnetwork_children",
                 related_object_attribute="children",
                 panels=(
                     object_detail.ObjectsTablePanel(
                         section=SectionChoices.FULL_WIDTH,
                         weight=100,
-                        label="Children",
+                        label=_("Children"),
                         table_class=CloudNetworkTable,
                         table_filter="parent",
                         tab_id="children",
@@ -129,7 +130,7 @@ class CloudNetworkUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=800,
                 tab_id="prefixes",
-                label="Prefixes",
+                label=_("Prefixes"),
                 url_name="cloud:cloudnetwork_prefixes",
                 related_object_attribute="prefixes",
                 panels=(
@@ -147,7 +148,7 @@ class CloudNetworkUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=900,
                 tab_id="circuits",
-                label="Circuits",
+                label=_("Circuits"),
                 url_name="cloud:cloudnetwork_circuits",
                 related_object_attribute="circuit_terminations",
                 panels=(
@@ -166,7 +167,7 @@ class CloudNetworkUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=1000,
                 tab_id="cloud_services",
-                label="Cloud Services",
+                label=_("Cloud Services"),
                 url_name="cloud:cloudnetwork_cloud_services",
                 related_object_attribute="cloud_services",
                 panels=(
@@ -245,7 +246,7 @@ class CloudResourceTypeUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.RIGHT_HALF,
                 weight=100,
                 object_field="config_schema",
-                label="Config Schema",
+                label=_("Config Schema"),
                 render_as=object_detail.ObjectTextPanel.RenderOptions.JSON,
             ),
         ),
@@ -253,7 +254,7 @@ class CloudResourceTypeUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=900,
                 tab_id="networks",
-                label="Cloud Networks",
+                label=_("Cloud Networks"),
                 url_name="cloud:cloudresourcetype_networks",
                 related_object_attribute="cloud_networks",
                 panels=(
@@ -270,7 +271,7 @@ class CloudResourceTypeUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=1000,
                 tab_id="services",
-                label="Cloud Services",
+                label=_("Cloud Services"),
                 url_name="cloud:cloudresourcetype_services",
                 related_object_attribute="cloud_services",
                 panels=(
@@ -334,7 +335,7 @@ class CloudServiceUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.RIGHT_HALF,
                 weight=100,
                 object_field="extra_config",
-                label="Extra Config",
+                label=_("Extra Config"),
                 render_as=object_detail.ObjectTextPanel.RenderOptions.JSON,
             ),
         ),
@@ -342,7 +343,7 @@ class CloudServiceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=800,
                 tab_id="cloud_networks",
-                label="Cloud Networks",
+                label=_("Cloud Networks"),
                 url_name="cloud:cloudservice_cloud_networks",
                 related_object_attribute="cloud_networks",
                 panels=(

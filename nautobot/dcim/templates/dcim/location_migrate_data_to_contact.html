@@ -1,29 +1,30 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load form_helpers %}
 {% load helpers %}
 
-{% block title %}Migrating contact data from {{ obj_type }} {{ obj }}{% endblock %}
+{% block title %}{% blocktrans with obj_type=obj_type obj=obj %}Migrating contact data from {{ obj_type }} {{ obj }}{% endblocktrans %}{% endblock %}
 {% block form %}
     <div id="assign" class="tabcontent">
         <div class="card">
-            <div class="card-header"><strong>Contact Data</strong></div>
+            <div class="card-header"><strong>{% trans "Contact Data" %}</strong></div>
             <div class="card-body">
                 {% render_field form.action %}
                 {% render_field form.location %}
                 <div class="mb-10 d-flex justify-content-center">
-                    <label class="col-lg-3 col-form-label nb-required">Source Location "Contact Name"</label>
+                    <label class="col-lg-3 col-form-label nb-required">{% blocktrans %}Source Location "Contact Name"{% endblocktrans %}</label>
                     <div class="col-lg-9">
                         <p class="form-control-plaintext">{{ obj.contact_name | placeholder}}</p>
                     </div>
                 </div>
                 <div class="mb-10 d-flex justify-content-center">
-                    <label class="col-lg-3 col-form-label nb-required">Source Location "Contact Phone"</label>
+                    <label class="col-lg-3 col-form-label nb-required">{% blocktrans %}Source Location "Contact Phone"{% endblocktrans %}</label>
                     <div class="col-lg-9">
                         <p class="form-control-plaintext">{{ obj.contact_phone | placeholder}}</p>
                     </div>
                 </div>
                 <div class="mb-10 d-flex justify-content-center">
-                    <label class="col-lg-3 col-form-label nb-required">Source Location "Contact Email"</label>
+                    <label class="col-lg-3 col-form-label nb-required">{% blocktrans %}Source Location "Contact Email"{% endblocktrans %}</label>
                     <div class="col-lg-9">
                         <p class="form-control-plaintext">{{ obj.contact_email | placeholder}}</p>
                     </div>
@@ -43,11 +44,11 @@
 {% block buttons %}
     <button type="submit" name="_create" class="btn btn-primary">
         <span aria-hidden="true" class="mdi mdi-check me-4"></span><!--
-        -->Assign
+        -->{% trans "Assign" %}
     </button>
     <a href="{% url 'dcim:location' pk=obj.pk %}" class="btn btn-secondary">
         <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-        -->Cancel
+        -->{% trans "Cancel" %}
     </a>
 {% endblock %}
 

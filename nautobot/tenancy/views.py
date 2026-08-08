@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from django_tables2 import RequestConfig
 
 from nautobot.circuits.models import Circuit
@@ -93,7 +94,7 @@ class TenantUIViewSet(NautobotUIViewSet):
                 fields="__all__",
             ),
             StatsPanel(
-                label="Stats",
+                label=_("Stats"),
                 filter_name="tenant",
                 related_models=[
                     Circuit,

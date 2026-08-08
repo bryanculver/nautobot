@@ -1,0 +1,1 @@
+Added `invoke makemessages`, `invoke compilemessages`, and `invoke check-translations` tasks for maintaining translation catalogs. `invoke check-translations` runs as part of `invoke lint` and fails if catalogs are stale or contain placeholder mismatches.

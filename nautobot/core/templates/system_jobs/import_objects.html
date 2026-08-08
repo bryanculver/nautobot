@@ -1,11 +1,12 @@
 {% extends 'extras/job.html' %}
+{% load i18n %}
 {% load helpers %}
 {% load form_helpers %}
 
 {% block job_form_wrapper %}
     <div class="card">
         <div class="card-header">
-            <strong>Job Data</strong>
+            <strong>{% trans "Job Data" %}</strong>
         </div>
         <div class="card-body">
             {% render_field job_form.content_type %}
@@ -15,8 +16,8 @@
     <div class="card">
         <div class="card-header">
             <ul class="nav nav-tabs card-header-tabs" role="tablist">
-                <li class="nav-item" role="presentation"><a class="nav-link active" href="#csv-file" role="tab" data-bs-toggle="tab">CSV File Upload</a></li>
-                <li class="nav-item" role="presentation"><a class="nav-link" href="#csv-text" role="tab" data-bs-toggle="tab">CSV Text Input</a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link active" href="#csv-file" role="tab" data-bs-toggle="tab">{% trans "CSV File Upload" %}</a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="#csv-text" role="tab" data-bs-toggle="tab">{% trans "CSV Text Input" %}</a></li>
             </ul>
         </div>
         <div class="card-body">
@@ -32,12 +33,12 @@
             <div id="csv-fields-info" class="alert alert-info" role="alert" style="display: none">
                 <p>
                     <span class="text-success"><span aria-hidden="true" class="mdi mdi-check-bold"></span></span>
-                    Required fields <strong>must</strong> be present in the data.
+                    {% blocktrans trimmed %}Required fields <strong>must</strong> be present in the data.{% endblocktrans %}
                 </p>
                 <p>
                     <span class="text-warning"><span aria-hidden="true" class="mdi mdi-key-link"></span></span>
-                    Related objects may be identified by their UUID(s) and/or by any field(s) that uniquely identify them.
-                    For example:
+                    {% trans "Related objects may be identified by their UUID(s) and/or by any field(s) that uniquely identify them.
+                    For example:" %}
                     <ul>
                         <li>
                             A <code>status</code> field could be populated by UUID or by the field <code>status__name</code>.
@@ -47,22 +48,24 @@
                             <code>location__name</code> and <code>location__location_type</code>.
                         </li>
                     </ul>
-                    In either case, if no related object is intended for a given field, the string <code>NoObject</code>
-                    can be given.
+                    {% blocktrans trimmed %}
+                        In either case, if no related object is intended for a given field, the string
+                        <code>NoObject</code> can be given.
+                    {% endblocktrans %}
                 </p>
                 <p>
                     <span class="text-info"><span aria-hidden="true" class="mdi mdi-help-circle"></span></span>
-                    Some fields have a defined set of valid values. Click the button to view the list of choices.
+                    {% trans "Some fields have a defined set of valid values. Click the button to view the list of choices." %}
                 </p>
             </div>
             <table id="csv-fields-table" class="table" style="display: none">
                 <thead>
                     <tr>
-                        <th>Field</th>
-                        <th>Required</th>
-                        <th>Related Object</th>
-                        <th>Choices</th>
-                        <th>Description</th>
+                        <th>{% trans "Field" %}</th>
+                        <th>{% trans "Required" %}</th>
+                        <th>{% trans "Related Object" %}</th>
+                        <th>{% trans "Choices" %}</th>
+                        <th>{% trans "Description" %}</th>
                     </tr>
                 </thead>
                 <tbody id="csv-fields-tbody"></tbody>
@@ -123,7 +126,7 @@
                 /* Required */
                 td = document.createElement("td");
                 if (field.required) {
-                    td.innerHTML = '<span class="text-success"><i class="mdi mdi-check-bold" title="Yes"></i></span>';
+                    td.innerHTML = '<span class="text-success"><i class="mdi mdi-check-bold" title="{% trans "Yes" %}"></i></span>';
                     if (updateCsvData) {
                         if (csv_data.value != "") {
                             csv_data.value += ","
@@ -131,7 +134,7 @@
                         csv_data.value += field.name;
                     }
                 } else {
-                    td.innerHTML = '<span class="text-danger"><i class="mdi mdi-close-thick" title="No"></i></span>';
+                    td.innerHTML = '<span class="text-danger"><i class="mdi mdi-close-thick" title="{% trans "No" %}"></i></span>';
                 }
                 tr.appendChild(td);
 
@@ -165,7 +168,7 @@
                                 <div class="modal-content">
                                     <div class="modal-header">
                                         <h4 class="modal-title">${field.name} Choices</h4>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}">
                                         </button>
                                     </div>
                                     <table class="table table-hover modal-body">

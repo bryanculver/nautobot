@@ -16,6 +16,7 @@ from django.core.files.storage import storages
 from django.db.models.signals import m2m_changed, post_delete, post_migrate, post_save, pre_delete, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django_prometheus.models import model_deletes, model_inserts, model_updates
 import redis.exceptions
 
@@ -614,7 +615,9 @@ def dynamic_group_children_changed(sender, instance, action, reverse, model, pk_
     if action == "pre_add" and instance.filter:
         raise ValidationError(
             {
-                "children": "A parent group may have either a filter or child groups, but not both. Clear the parent filter and try again."
+                "children": _(
+                    "A parent group may have either a filter or child groups, but not both. Clear the parent filter and try again."
+                )
             }
         )
 

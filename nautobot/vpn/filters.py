@@ -1,5 +1,7 @@
 """Filtering for the vpn models."""
 
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.apps.filters import (
     BaseFilterSet,
     MultiValueCharFilter,
@@ -29,12 +31,12 @@ class VPNProfileFilterSet(RoleModelFilterSetMixin, TenancyModelFilterSetMixin, N
     vpn_phase1_policies = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VPNPhase1Policy.objects.all(),
         to_field_name="name",
-        label="Phase 1 Policies (name or ID)",
+        label=_("Phase 1 Policies (name or ID)"),
     )
     vpn_phase2_policies = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VPNPhase2Policy.objects.all(),
         to_field_name="name",
-        label="Phase 2 Policies (name or ID)",
+        label=_("Phase 2 Policies (name or ID)"),
     )
 
     class Meta:
@@ -55,7 +57,7 @@ class VPNPhase1PolicyFilterSet(TenancyModelFilterSetMixin, NautobotFilterSet):  
     )
     vpn_profiles = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VPNProfile.objects.all(),
-        label="VPN Profiles (name or ID)",
+        label=_("VPN Profiles (name or ID)"),
         to_field_name="name",
     )
 
@@ -77,7 +79,7 @@ class VPNPhase2PolicyFilterSet(TenancyModelFilterSetMixin, NautobotFilterSet):  
     )
     vpn_profiles = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VPNProfile.objects.all(),
-        label="VPN Profiles (name or ID)",
+        label=_("VPN Profiles (name or ID)"),
         to_field_name="name",
     )
 
@@ -100,12 +102,12 @@ class VPNProfilePhase1PolicyAssignmentFilterSet(BaseFilterSet):
 
     vpn_profile = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VPNProfile.objects.all(),
-        label="VPN Profile (name or ID)",
+        label=_("VPN Profile (name or ID)"),
         to_field_name="name",
     )
     vpn_phase1_policy = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VPNPhase1Policy.objects.all(),
-        label="Phase 1 Policy (name or ID)",
+        label=_("Phase 1 Policy (name or ID)"),
         to_field_name="name",
     )
 
@@ -126,12 +128,12 @@ class VPNProfilePhase2PolicyAssignmentFilterSet(BaseFilterSet):
 
     vpn_profile = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VPNProfile.objects.all(),
-        label="VPN Profile (name or ID)",
+        label=_("VPN Profile (name or ID)"),
         to_field_name="name",
     )
     vpn_phase2_policy = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VPNPhase2Policy.objects.all(),
-        label="Phase 2 Policy (name or ID)",
+        label=_("Phase 2 Policy (name or ID)"),
         to_field_name="name",
     )
 
@@ -151,14 +153,14 @@ class VPNFilterSet(RoleModelFilterSetMixin, StatusModelFilterSetMixin, TenancyMo
         }
     )
     name = MultiValueCharFilter(
-        label="Name",
+        label=_("Name"),
     )
     vpn_id = MultiValueCharFilter(
-        label="VPN ID",
+        label=_("VPN ID"),
     )
     vpn_profile = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VPNProfile.objects.all(),
-        label="VPN Profile (name or ID)",
+        label=_("VPN Profile (name or ID)"),
         to_field_name="name",
     )
 
@@ -184,12 +186,12 @@ class VPNTunnelFilterSet(
     )
     vpn = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VPN.objects.all(),
-        label="VPN (name or ID)",
+        label=_("VPN (name or ID)"),
         to_field_name="name",
     )
     vpn_profile = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VPNProfile.objects.all(),
-        label="VPN Profile (name or ID)",
+        label=_("VPN Profile (name or ID)"),
         to_field_name="name",
     )
 
@@ -213,32 +215,32 @@ class VPNTunnelEndpointFilterSet(RoleModelFilterSetMixin, TenancyModelFilterSetM
     device = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Device.objects.all(),
         to_field_name="name",
-        label="Device (ID or name)",
+        label=_("Device (ID or name)"),
     )
     source_interface = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Interface.objects.all(),
         to_field_name="name",
-        label="Source Interface (ID or name)",
+        label=_("Source Interface (ID or name)"),
     )
     source_ipaddress = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=IPAddress.objects.all(),
         to_field_name="name",
-        label="Source IPAddress (ID or name)",
+        label=_("Source IPAddress (ID or name)"),
     )
     tunnel_interface = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Interface.objects.filter(type="tunnel"),
         to_field_name="name",
-        label="Tunnel Interface (ID or name)",
+        label=_("Tunnel Interface (ID or name)"),
     )
     endpoint_a_vpn_tunnels = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VPNTunnel.objects.all(),
         to_field_name="name",
-        label="Endpoint A",
+        label=_("Endpoint A"),
     )
     endpoint_z_vpn_tunnels = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VPNTunnel.objects.all(),
         to_field_name="name",
-        label="Endpoint Z",
+        label=_("Endpoint Z"),
     )
 
     class Meta:
@@ -262,25 +264,25 @@ class VPNTerminationFilterSet(NautobotFilterSet):
     vpn = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=models.VPN.objects.all(),
         to_field_name="name",
-        label="VPN (name or ID)",
+        label=_("VPN (name or ID)"),
     )
     vlan = NaturalKeyOrPKMultipleChoiceFilter(
         prefers_id=True,
         to_field_name="vid",
         queryset=VLAN.objects.all(),
-        label="VLAN (VID or ID)",
+        label=_("VLAN (VID or ID)"),
     )
     interface = NaturalKeyOrPKMultipleChoiceFilter(
         prefers_id=True,
         to_field_name="name",
         queryset=Interface.objects.all(),
-        label="Interface (name or ID)",
+        label=_("Interface (name or ID)"),
     )
     vm_interface = NaturalKeyOrPKMultipleChoiceFilter(
         prefers_id=True,
         to_field_name="name",
         queryset=VMInterface.objects.all(),
-        label="VM Interface (name or ID)",
+        label=_("VM Interface (name or ID)"),
     )
 
     class Meta:

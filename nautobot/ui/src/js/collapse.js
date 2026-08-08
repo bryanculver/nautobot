@@ -1,3 +1,5 @@
+import { gettext } from './i18n.js';
+
 /**
  * Initialize collapse toggle all buttons identified by `data-nb-toggle="collapse-all"` data attribute. Collapse toggle
  * all buttons can be further configured with `data-nb-target="{collapse CSS selector}"` data attribute specifying which
@@ -45,7 +47,7 @@ export const initializeCollapseToggleAll = () => {
       .filter((collapseToggleAll) => areAll(getCollapseToggleAllTargets(collapseToggleAll), 'collapsed'))
       .forEach((collapseToggleAll) => {
         collapseToggleAll.setAttribute('aria-expanded', 'false');
-        collapseToggleAll.textContent = 'Expand All Groups';
+        collapseToggleAll.textContent = gettext('Expand All Groups');
       });
 
   const onShownBsCollapse = () =>
@@ -53,7 +55,7 @@ export const initializeCollapseToggleAll = () => {
       .filter((collapseToggleAll) => areAll(getCollapseToggleAllTargets(collapseToggleAll), 'expanded'))
       .forEach((collapseToggleAll) => {
         collapseToggleAll.setAttribute('aria-expanded', 'true');
-        collapseToggleAll.textContent = 'Collapse All Groups';
+        collapseToggleAll.textContent = gettext('Collapse All Groups');
       });
 
   // Using event delegation pattern here to avoid re-creating listeners each time DOM is modified.

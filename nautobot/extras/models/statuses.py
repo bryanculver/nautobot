@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.encoding import force_str
 from django.utils.hashable import make_hashable
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.models.fields import ForeignKeyLimitedByContentTypes
 from nautobot.core.models.name_color_content_types import NameColorContentTypesModel
@@ -23,14 +24,14 @@ class Status(NameColorContentTypesModel):
     content_types = models.ManyToManyField(
         to=ContentType,
         related_name="statuses",
-        verbose_name="Content type(s)",
+        verbose_name=_("Content type(s)"),
         limit_choices_to=FeatureQuery("statuses"),
-        help_text="The content type(s) to which this status applies.",
+        help_text=_("The content type(s) to which this status applies."),
     )
 
     class Meta:
         ordering = ["name"]
-        verbose_name_plural = "statuses"
+        verbose_name_plural = _("statuses")
 
 
 class StatusField(ForeignKeyLimitedByContentTypes):

@@ -2,6 +2,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.models.generics import OrganizationalModel, PrimaryModel  # isort: off
@@ -13,12 +14,12 @@ from .statuses import StatusField
 
 
 class ContactTeamSharedBase(PrimaryModel):
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True)
-    phone = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, db_index=True)
-    email = models.EmailField(blank=True, db_index=True, verbose_name="E-mail")
-    address = models.TextField(blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True, verbose_name=_("name"))
+    phone = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, db_index=True, verbose_name=_("phone"))
+    email = models.EmailField(blank=True, db_index=True, verbose_name=_("E-mail"))
+    address = models.TextField(blank=True, verbose_name=_("address"))
 
-    comments = models.TextField(blank=True)
+    comments = models.TextField(blank=True, verbose_name=_("comments"))
     is_contact_associable_model = False
     is_data_compliance_model = False
 
@@ -64,7 +65,7 @@ class Contact(ContactTeamSharedBase):
 class Team(ContactTeamSharedBase):
     """A group of Contacts, usable interchangeably with a single Contact in most cases."""
 
-    contacts = models.ManyToManyField(to=Contact, related_name="teams", blank=True)
+    contacts = models.ManyToManyField(to=Contact, related_name="teams", blank=True, verbose_name=_("contacts"))
 
     class Meta(ContactTeamSharedBase.Meta):
         abstract = False
@@ -82,17 +83,29 @@ class ContactAssociation(OrganizationalModel):
     """Intermediary model for associating a Contact or Team to any other object."""
 
     contact = models.ForeignKey(
-        to=Contact, blank=True, null=True, on_delete=models.CASCADE, related_name="contact_associations"
+        to=Contact,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="contact_associations",
+        verbose_name=_("contact"),
     )
     team = models.ForeignKey(
-        to=Team, blank=True, null=True, on_delete=models.CASCADE, related_name="contact_associations"
+        to=Team,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="contact_associations",
+        verbose_name=_("team"),
     )
-    associated_object_type = models.ForeignKey(to=ContentType, on_delete=models.SET_NULL, null=True, related_name="+")
-    associated_object_id = models.UUIDField(db_index=True)
+    associated_object_type = models.ForeignKey(
+        to=ContentType, on_delete=models.SET_NULL, null=True, related_name="+", verbose_name=_("associated object type")
+    )
+    associated_object_id = models.UUIDField(db_index=True, verbose_name=_("associated object id"))
     associated_object = GenericForeignKey(ct_field="associated_object_type", fk_field="associated_object_id")
 
-    role = RoleField(blank=False, null=False)
-    status = StatusField(blank=False, null=False)
+    role = RoleField(blank=False, null=False, verbose_name=_("role"))
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
 
     is_contact_associable_model = False
     is_dynamic_group_associable_model = False
@@ -113,11 +126,11 @@ class ContactAssociation(OrganizationalModel):
 
     def clean(self):
         if self.contact is None and self.team is None:
-            raise ValidationError("Either a contact or a team must be specified")
+            raise ValidationError(_("Either a contact or a team must be specified"))
         if self.contact is not None and self.team is not None:
-            raise ValidationError("A contact and a team cannot be both specified at once")
+            raise ValidationError(_("A contact and a team cannot be both specified at once"))
         if self.associated_object is None:
-            raise ValidationError("The associated object must be valid")
+            raise ValidationError(_("The associated object must be valid"))
 
     @property
     def contact_or_team(self):

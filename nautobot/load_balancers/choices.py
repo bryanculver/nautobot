@@ -1,5 +1,7 @@
 """Custom choices for the Load Balancer models."""
 
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.core.choices import ChoiceSet
 
 
@@ -11,9 +13,9 @@ class SourceNATTypeChoices(ChoiceSet):
     TYPE_STATIC = "static"
 
     CHOICES = (
-        (TYPE_AUTO, "Auto"),
-        (TYPE_POOL, "Pool"),
-        (TYPE_STATIC, "Static"),
+        (TYPE_AUTO, _("Auto")),
+        (TYPE_POOL, _("Pool")),
+        (TYPE_STATIC, _("Static")),
     )
 
 
@@ -26,10 +28,10 @@ class LoadBalancerTypeChoices(ChoiceSet):
     TYPE_DNS = "dns"
 
     CHOICES = (
-        (TYPE_LAYER2, "Layer 2"),
-        (TYPE_LAYER4, "Layer 4"),
-        (TYPE_LAYER7, "Layer 7"),
-        (TYPE_DNS, "DNS"),
+        (TYPE_LAYER2, _("Layer 2")),
+        (TYPE_LAYER4, _("Layer 4")),
+        (TYPE_LAYER7, _("Layer 7")),
+        (TYPE_DNS, _("DNS")),
     )
 
 
@@ -99,19 +101,19 @@ class LoadBalancingAlgorithmChoices(ChoiceSet):
     SRCIP_SRCPORT_HASH = "srcip_srcport_hash"
 
     CHOICES = (
-        (ROUND_ROBIN, "Round Robin"),
-        (URL_HASH, "URL Hash"),
-        (LEAST_CONNECTIONS, "Least Connections"),
-        (LEAST_RESPONSE_TIME, "Least Response Time"),
-        (LEAST_BANDWIDTH, "Least Bandwidth"),
-        (LEAST_PACKETS, "Least Packets"),
-        (DOMAIN_HASH, "Domain Hash"),
-        (DESTINATION_IP_HASH, "Destination IP Hash"),
-        (SOURCE_IP_HASH, "Source IP Hash"),
-        (SRCIP_DESTIP_HASH, "Source IP Destination IP Hash"),
-        (LEAST_REQUEST, "Least Request"),
-        (CUSTOM_LOAD, "Custom Load"),
-        (SRCIP_SRCPORT_HASH, "Source IP Source Port Hash"),
+        (ROUND_ROBIN, _("Round Robin")),
+        (URL_HASH, _("URL Hash")),
+        (LEAST_CONNECTIONS, _("Least Connections")),
+        (LEAST_RESPONSE_TIME, _("Least Response Time")),
+        (LEAST_BANDWIDTH, _("Least Bandwidth")),
+        (LEAST_PACKETS, _("Least Packets")),
+        (DOMAIN_HASH, _("Domain Hash")),
+        (DESTINATION_IP_HASH, _("Destination IP Hash")),
+        (SOURCE_IP_HASH, _("Source IP Hash")),
+        (SRCIP_DESTIP_HASH, _("Source IP Destination IP Hash")),
+        (LEAST_REQUEST, _("Least Request")),
+        (CUSTOM_LOAD, _("Custom Load")),
+        (SRCIP_SRCPORT_HASH, _("Source IP Source Port Hash")),
     )
 
 
@@ -125,11 +127,11 @@ class LoadBalancerPoolMemberStatusChoices(ChoiceSet):
     STATUS_DECOMMISSIONING = "decommissioning"
 
     CHOICES = (
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_MAINTENANCE, "Maintenance"),
-        (STATUS_PLANNED, "Planned"),
-        (STATUS_FAILED, "Failed"),
-        (STATUS_DECOMMISSIONING, "Decommissioning"),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_MAINTENANCE, _("Maintenance")),
+        (STATUS_PLANNED, _("Planned")),
+        (STATUS_FAILED, _("Failed")),
+        (STATUS_DECOMMISSIONING, _("Decommissioning")),
     )
 
 
@@ -161,7 +163,7 @@ class CertificateTypeChoices(ChoiceSet):
     TYPE_MTLS = "mutual_tls"
 
     CHOICES = (
-        (TYPE_CLIENT, "Client"),
-        (TYPE_SERVER, "Server"),
-        (TYPE_MTLS, "mTLS (Mutual TLS)"),
+        (TYPE_CLIENT, _("Client")),
+        (TYPE_SERVER, _("Server")),
+        (TYPE_MTLS, _("mTLS (Mutual TLS)")),
     )

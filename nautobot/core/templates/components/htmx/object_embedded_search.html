@@ -1,9 +1,10 @@
+{% load i18n %}
 {% load form_helpers %}
 {% load helpers %}
 
 <div class="modal-header">
-    <h4 class="modal-title">Search {{model|meta:'verbose_name_plural'}}</h4>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <h4 class="modal-title">{% blocktrans with name=model|meta:'verbose_name_plural' %}Search {{ name }}{% endblocktrans %}</h4>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}"></button>
 </div>
 <div class="modal-body overflow-hidden p-0">
     <div class="d-flex h-100" style="max-height: inherit;"{% comment %}Inherit `max-height` from `modal-body` parent to enable individual scrolling of filter form and search results.{% endcomment %}>
@@ -19,11 +20,11 @@
             <div class="nb-form-sticky-footer mb-0 mx-n16 px-16 rounded-bottom">
                 <button class="btn btn-primary" type="submit">
                     <span aria-hidden="true" class="mdi mdi-check me-4"></span><!--
-                    -->Search
+                    -->{% trans "Search" %}
                 </button>
                 <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">
                     <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-                    -->Cancel
+                    -->{% trans "Cancel" %}
                 </button>
             </div>
         </form>

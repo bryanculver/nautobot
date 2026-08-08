@@ -175,6 +175,9 @@ packages = [
 include = [
     # Rendered documentation - Poetry by default would exclude these files as they are in .gitignore
     {path = "nautobot/project-static/docs/**/*", format = ["sdist", "wheel"]},
+    # Compiled translation catalogs - Django reads .mo, never .po, so shipping only the sources
+    # would mean a wheel with no translations at all
+    {path = "nautobot/locale/**/*.mo", format = ["sdist", "wheel"]},
 ]
 exclude = [
     # Source code of the documentation doesn't need to be included since we package the rendered docs

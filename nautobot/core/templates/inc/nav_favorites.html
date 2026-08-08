@@ -1,3 +1,4 @@
+{% load i18n %}
 <ul class="list-unstyled">
     {% for item in request.user.navbar_favorites %}
         {% if item.link and item.name %}
@@ -14,14 +15,14 @@
                         hx-swap="delete"
                 >
                     <span class="visually-hidden">
-                        Remove from favorites
+                        {% trans "Remove from favorites" %}
                     </span>
                 </button>
             </li>
         {% endif %}
     {% empty %}
         <li class="nb-sidenav-link-group text-center" style="text-transform: none;">
-            You don't have any favorite pages yet.
+            {% trans "You don't have any favorite pages yet." %}
         </li>
     {% endfor %}
 </ul>

@@ -1,0 +1,1 @@
+Fixed `invoke makemessages` leaving msgmerge's guessed translations in place for pluralized messages; it stripped the `fuzzy` marker without emptying the `msgstr[N]` forms, turning an ignored guess into a translation that gettext would serve.

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load buttons %}
 {% load helpers %}
 {% load static %}
@@ -47,7 +48,7 @@
         <div class="btn-group">
             {% add_button content_type.model_class|validated_viewname:"add" %}
             <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                <span class="visually-hidden">Toggle Dropdown</span>
+                <span class="visually-hidden">{% trans "Toggle Dropdown" %}</span>
                 <span class="mdi mdi-chevron-down"></span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end" role="menu">

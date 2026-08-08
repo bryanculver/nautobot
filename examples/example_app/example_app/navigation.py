@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.apps.ui import (
     NavigationIconChoices,
     NavigationWeightChoices,
@@ -15,11 +17,13 @@ menu_items = (
         groups=(
             NavMenuGroup(
                 name="Example Nautobot App",
+                label=_("Example Nautobot App"),
                 weight=100,
                 items=(
                     NavMenuItem(
                         link="plugins:example_app:examplemodel_list",
                         name="Example Models",
+                        label=_("Example Models"),
                         permissions=["example_app.view_examplemodel"],
                         buttons=(
                             NavMenuAddButton(
@@ -33,12 +37,14 @@ menu_items = (
                     NavMenuItem(
                         link="plugins:example_app:examplemodel_list",
                         name="Example Models filtered",
+                        label=_("Example Models filtered"),
                         permissions=["example_app.view_examplemodel"],
                         query_params={"number": "100"},
                     ),
                     NavMenuItem(
                         link="plugins:example_app:anotherexamplemodel_list",
                         name="Another Example Models",
+                        label=_("Another Example Models"),
                         permissions=["example_app.view_anotherexamplemodel"],
                         buttons=(
                             NavMenuAddButton(
@@ -55,15 +61,18 @@ menu_items = (
     ),
     NavMenuTab(
         name="Example Menu",
+        label=_("Example Menu"),
         weight=NavigationWeightChoices.CLOUD + 10,
         groups=(
             NavMenuGroup(
                 name="Example Group 1",
+                label=_("Example Group 1"),
                 weight=100,
                 items=(
                     NavMenuItem(
                         link="plugins:example_app:examplemodel_list",
                         name="Example Models",
+                        label=_("Example Models"),
                         permissions=["example_app.view_examplemodel"],
                         buttons=(
                             NavMenuAddButton(
@@ -85,11 +94,13 @@ menu_items = (
         groups=(
             NavMenuGroup(
                 name="Example Circuit Group",
+                label=_("Example Circuit Group"),
                 weight=150,
                 items=(
                     NavMenuItem(
                         link="plugins:example_app:examplemodel_list",
                         name="Example Models",
+                        label=_("Example Models"),
                         permissions=["example_app.view_examplemodel"],
                         buttons=(
                             NavMenuAddButton(

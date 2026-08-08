@@ -16,6 +16,7 @@ from nautobot.core.testing.migrations import NautobotDataMigrationTest
 from nautobot.core.testing.mixins import NautobotTestCaseMixin, NautobotTestClient
 from nautobot.core.testing.models import ModelTestCases
 from nautobot.core.testing.schema import OpenAPISchemaTestCases
+from nautobot.core.testing.translations import TranslationCatalogTestCaseMixin
 from nautobot.core.testing.utils import (
     create_test_user,
     disable_warnings,
@@ -85,6 +86,7 @@ __all__ = (
     "SeleniumTestCase",
     "TestCase",
     "TransactionTestCase",
+    "TranslationCatalogTestCaseMixin",
     "ViewTestCases",
     "create_job_result_and_run_job",
     "create_test_user",

@@ -21,6 +21,7 @@ from django.utils.cache import patch_vary_headers
 from django.utils.encoding import iri_to_uri
 from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext
 from django.views.generic import View
 from django_filters import FilterSet
 from django_tables2 import RequestConfig, Table
@@ -228,7 +229,11 @@ class ObjectListView(UIComponentsMixin, ObjectPermissionRequiredMixin, View):
             else:
                 invalid_actions.append(action)
         if invalid_actions:
-            messages.error(request, f"Missing views for action(s) {', '.join(invalid_actions)}")
+            messages.error(
+                request,
+                gettext("Missing views for action(s) %(invalid_actions)s")
+                % {"invalid_actions": ", ".join(invalid_actions)},
+            )
         return valid_actions
 
     def get(self, request):
@@ -294,7 +299,7 @@ class ObjectListView(UIComponentsMixin, ObjectPermissionRequiredMixin, View):
             if not filterset.is_valid():
                 messages.error(
                     request,
-                    format_html("Invalid filters were specified: {}", filterset.errors),
+                    format_html(gettext("Invalid filters were specified: {errors}"), errors=filterset.errors),
                 )
                 self.queryset = self.queryset.none()
 
@@ -332,7 +337,8 @@ class ObjectListView(UIComponentsMixin, ObjectPermissionRequiredMixin, View):
             except Exception as e:
                 messages.error(
                     request,
-                    f"There was an error rendering the selected export template ({et.name}): {e}",
+                    gettext("There was an error rendering the selected export template (%(name)s): %(e)s")
+                    % {"name": et.name, "e": e},
                 )
 
         # Check for YAML export support
@@ -363,7 +369,11 @@ class ObjectListView(UIComponentsMixin, ObjectPermissionRequiredMixin, View):
                 # User should be able to see any saved view that he has the list view access to.
                 current_saved_view = SavedView.objects.get(view=list_url, pk=current_saved_view_pk)
             except ObjectDoesNotExist:
-                messages.error(request, f"Saved view {current_saved_view_pk} not found")
+                messages.error(
+                    request,
+                    gettext("Saved view %(current_saved_view_pk)s not found")
+                    % {"current_saved_view_pk": current_saved_view_pk},
+                )
 
         # Construct the objects table
         if self.table is not None:
@@ -398,8 +408,11 @@ class ObjectListView(UIComponentsMixin, ObjectPermissionRequiredMixin, View):
             if max_page_size and paginate["per_page"] > max_page_size:
                 messages.warning(
                     request,
-                    'Requested "per_page" is too large. '
-                    f"No more than {max_page_size} items may be displayed at a time.",
+                    gettext(
+                        'Requested "per_page" is too large. '
+                        "No more than %(max_page_size)s items may be displayed at a time."
+                    )
+                    % {"max_page_size": max_page_size},
                 )
 
         valid_actions = self.validate_action_buttons(request)
@@ -928,7 +941,11 @@ class ObjectImportView(UIComponentsMixin, GetReturnURLMixin, ObjectPermissionReq
                 logger.info(f"Import object {obj} (PK: {obj.pk})")
                 messages.success(
                     request,
-                    format_html('Imported object: <a href="{}">{}</a>', obj.get_absolute_url(), obj),
+                    format_html(
+                        gettext('Imported object: <a href="{url}">{obj}</a>'),
+                        url=obj.get_absolute_url(),
+                        obj=obj,
+                    ),
                 )
 
                 if "_addanother" in request.POST:
@@ -1158,7 +1175,10 @@ class BulkEditView(
         if not edit_all:
             table = self.table(queryset, orderable=False)  # pylint: disable=not-callable
             if not table.rows:
-                messages.warning(request, f"No {model._meta.verbose_name_plural} were selected.")
+                messages.warning(
+                    request,
+                    gettext("No %(object_name)s were selected.") % {"object_name": model._meta.verbose_name_plural},
+                )
                 return redirect(self.get_return_url(request))
             # Hide actions column if present
             if "actions" in table.columns:
@@ -1206,7 +1226,11 @@ class BulkRenameView(UIComponentsMixin, GetReturnURLMixin, ObjectPermissionRequi
 
         # selected_objects would return False; if no query_pks or invalid query_pks
         if not selected_objects:
-            messages.warning(request, f"No valid {self.queryset.model._meta.verbose_name_plural} were selected.")
+            messages.warning(
+                request,
+                gettext("No valid %(object_name)s were selected.")
+                % {"object_name": self.queryset.model._meta.verbose_name_plural},
+            )
             return redirect(self.get_return_url(request))
 
         if "_preview" in request.POST or "_apply" in request.POST:
@@ -1253,7 +1277,11 @@ class BulkRenameView(UIComponentsMixin, GetReturnURLMixin, ObjectPermissionRequi
 
                             messages.success(
                                 request,
-                                f"Renamed {len(selected_objects)} {self.queryset.model._meta.verbose_name_plural}",
+                                gettext("Renamed %(count)s %(object_name)s")
+                                % {
+                                    "count": len(selected_objects),
+                                    "object_name": self.queryset.model._meta.verbose_name_plural,
+                                },
                             )
                             return redirect(self.get_return_url(request))
                     except ObjectDoesNotExist:
@@ -1365,7 +1393,8 @@ class BulkDeleteView(
             if not table.rows:
                 messages.warning(
                     request,
-                    f"No {model._meta.verbose_name_plural} were selected for deletion.",
+                    gettext("No %(object_name)s were selected for deletion.")
+                    % {"object_name": model._meta.verbose_name_plural},
                 )
                 return redirect(self.get_return_url(request))
             # Hide actions column if present
@@ -1514,7 +1543,8 @@ class ComponentCreateView(UIComponentsMixin, GetReturnURLMixin, ObjectPermission
 
                     messages.success(
                         request,
-                        f"Added {len(new_components)} {self.queryset.model._meta.verbose_name_plural}",
+                        gettext("Added %(count)s %(object_name)s")
+                        % {"count": len(new_components), "object_name": self.queryset.model._meta.verbose_name_plural},
                     )
                     if "_addanother" in request.POST:
                         return redirect(request.get_full_path())
@@ -1583,7 +1613,8 @@ class BulkComponentCreateView(UIComponentsMixin, GetReturnURLMixin, ObjectPermis
         if not selected_objects:
             messages.warning(
                 request,
-                f"No {self.parent_model._meta.verbose_name_plural} were selected.",
+                gettext("No %(object_name)s were selected.")
+                % {"object_name": self.parent_model._meta.verbose_name_plural},
             )
             return redirect(self.get_return_url(request))
         table = self.table(selected_objects)  # pylint: disable=not-callable

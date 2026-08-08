@@ -11,6 +11,7 @@ from django.db.models import F, ProtectedError, Q
 from django.urls import reverse
 from django.utils.functional import cached_property, classproperty
 from django.utils.html import format_html, format_html_join
+from django.utils.translation import gettext, gettext_lazy as _
 import yaml
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
@@ -84,8 +85,8 @@ class Manufacturer(OrganizationalModel):
     A Manufacturer represents a company which produces hardware devices; for example, Juniper or Dell.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     class Meta:
         ordering = ["name"]
@@ -106,12 +107,12 @@ class DeviceFamily(PrimaryModel):
     A Device Family is a model that represents a grouping of DeviceTypes.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     class Meta:
         ordering = ["name"]
-        verbose_name_plural = "device families"
+        verbose_name_plural = _("device families")
 
     def __str__(self):
         return self.name
@@ -120,10 +121,16 @@ class DeviceFamily(PrimaryModel):
 @extras_features("graphql")
 class DeviceTypeToSoftwareImageFile(BaseModel, ChangeLoggedModel):
     device_type = models.ForeignKey(
-        "dcim.DeviceType", on_delete=models.CASCADE, related_name="software_image_file_mappings"
+        "dcim.DeviceType",
+        on_delete=models.CASCADE,
+        related_name="software_image_file_mappings",
+        verbose_name=_("device type"),
     )
     software_image_file = models.ForeignKey(
-        "dcim.SoftwareImageFile", on_delete=models.PROTECT, related_name="device_type_mappings"
+        "dcim.SoftwareImageFile",
+        on_delete=models.PROTECT,
+        related_name="device_type_mappings",
+        verbose_name=_("software image file"),
     )
     is_metadata_associable_model = False
 
@@ -131,8 +138,8 @@ class DeviceTypeToSoftwareImageFile(BaseModel, ChangeLoggedModel):
         unique_together = [
             ["device_type", "software_image_file"],
         ]
-        verbose_name = "device type to software image file mapping"
-        verbose_name_plural = "device type to software image file mappings"
+        verbose_name = _("device type to software image file mapping")
+        verbose_name_plural = _("device type to software image file mappings")
 
     def __str__(self):
         return f"{self.device_type!s} - {self.software_image_file!s}"
@@ -161,45 +168,53 @@ class DeviceType(PrimaryModel):
     DeviceType) are automatically created as well.
     """
 
-    manufacturer = models.ForeignKey(to="dcim.Manufacturer", on_delete=models.PROTECT, related_name="device_types")
+    manufacturer = models.ForeignKey(
+        to="dcim.Manufacturer", on_delete=models.PROTECT, related_name="device_types", verbose_name=_("manufacturer")
+    )
     device_family = models.ForeignKey(
         to="dcim.DeviceFamily",
         on_delete=models.PROTECT,
         related_name="device_types",
         blank=True,
         null=True,
+        verbose_name=_("device family"),
     )
-    model = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
+    model = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("model"))
     part_number = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH, blank=True, help_text="Discrete part number (optional)"
+        max_length=CHARFIELD_MAX_LENGTH,
+        blank=True,
+        help_text=_("Discrete part number (optional)"),
+        verbose_name=_("part number"),
     )
     # 2.0 TODO: Profile filtering on this field if it could benefit from an index
-    u_height = models.PositiveSmallIntegerField(default=1, verbose_name="Height (U)")
+    u_height = models.PositiveSmallIntegerField(default=1, verbose_name=_("Height (U)"))
     # todoindex:
     is_full_depth = models.BooleanField(
         default=True,
-        verbose_name="Is full depth",
-        help_text="Device consumes both front and rear rack faces",
+        verbose_name=_("Is full depth"),
+        help_text=_("Device consumes both front and rear rack faces"),
     )
     # todoindex:
     subdevice_role = models.CharField(
         max_length=50,
         choices=SubdeviceRoleChoices,
         blank=True,
-        verbose_name="Parent/child status",
-        help_text="Parent devices house child devices in device bays. Leave blank "
-        "if this device type is neither a parent nor a child.",
+        verbose_name=_("Parent/child status"),
+        help_text=_(
+            "Parent devices house child devices in device bays. Leave blank "
+            "if this device type is neither a parent nor a child."
+        ),
     )
-    front_image = models.ImageField(upload_to="devicetype-images", blank=True)
-    rear_image = models.ImageField(upload_to="devicetype-images", blank=True)
+    front_image = models.ImageField(upload_to="devicetype-images", blank=True, verbose_name=_("front image"))
+    rear_image = models.ImageField(upload_to="devicetype-images", blank=True, verbose_name=_("rear image"))
     software_image_files = models.ManyToManyField(
         to="dcim.SoftwareImageFile",
         through=DeviceTypeToSoftwareImageFile,
         related_name="device_types",
         blank=True,
-        verbose_name="Software Image Files",
+        verbose_name=_("Software Image Files"),
     )
-    comments = models.TextField(blank=True)
+    comments = models.TextField(blank=True, verbose_name=_("comments"))
 
     clone_fields = [
         "manufacturer",
@@ -340,7 +355,10 @@ class DeviceType(PrimaryModel):
                 if d.position not in u_available:
                     raise ValidationError(
                         {
-                            "u_height": f"Device {d} in rack {d.rack} does not have sufficient space to accommodate a height of {self.u_height}U"
+                            "u_height": gettext(
+                                "Device %(d)s in rack %(rack)s does not have sufficient space to accommodate a height of %(u_height)sU"
+                            )
+                            % {"d": d, "rack": d.rack, "u_height": self.u_height}
                         }
                     )
 
@@ -352,10 +370,12 @@ class DeviceType(PrimaryModel):
                 raise ValidationError(
                     {
                         "u_height": format_html(
-                            "Unable to set 0U height: "
-                            'Found <a href="{}">{} instances</a> already mounted within racks.',
-                            url,
-                            racked_instance_count,
+                            gettext(
+                                "Unable to set 0U height: "
+                                'Found <a href="{url}">{count} instances</a> already mounted within racks.'
+                            ),
+                            url=url,
+                            count=racked_instance_count,
                         )
                     }
                 )
@@ -363,13 +383,15 @@ class DeviceType(PrimaryModel):
         if not self.is_parent_device and self.device_bay_templates.count():
             raise ValidationError(
                 {
-                    "subdevice_role": "Must delete all device bay templates associated with this device type before "
-                    "declassifying it as a parent device."
+                    "subdevice_role": _(
+                        "Must delete all device bay templates associated with this device type before "
+                        "declassifying it as a parent device."
+                    )
                 }
             )
 
         if self.u_height and self.is_child_device:
-            raise ValidationError({"u_height": "Child device types must be 0U."})
+            raise ValidationError({"u_height": _("Child device types must be 0U.")})
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -426,37 +448,41 @@ class Platform(OrganizationalModel):
     by specifying a network driver; `netutils` is then used to derive library-specific driver information from this.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
     manufacturer = models.ForeignKey(
         to="dcim.Manufacturer",
         on_delete=models.PROTECT,
         related_name="platforms",
         blank=True,
         null=True,
-        help_text="Optionally limit this platform to devices of a certain manufacturer",
+        help_text=_("Optionally limit this platform to devices of a certain manufacturer"),
+        verbose_name=_("manufacturer"),
     )
     network_driver = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
         help_text=(
-            "The normalized network driver to use when interacting with devices, e.g. cisco_ios, arista_eos, etc."
-            " Library-specific driver names will be derived from this setting as appropriate"
+            _(
+                "The normalized network driver to use when interacting with devices, e.g. cisco_ios, arista_eos, etc."
+                " Library-specific driver names will be derived from this setting as appropriate"
+            )
         ),
+        verbose_name=_("network driver"),
     )
     napalm_driver = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        verbose_name="NAPALM driver",
-        help_text="The name of the NAPALM driver to use when Nautobot internals interact with devices",
+        verbose_name=_("NAPALM driver"),
+        help_text=_("The name of the NAPALM driver to use when Nautobot internals interact with devices"),
     )
     napalm_args = models.JSONField(
         encoder=DjangoJSONEncoder,
         blank=True,
         null=True,
-        verbose_name="NAPALM arguments",
-        help_text="Additional arguments to pass when initiating the NAPALM driver (JSON format)",
+        verbose_name=_("NAPALM arguments"),
+        help_text=_("Additional arguments to pass when initiating the NAPALM driver (JSON format)"),
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     @cached_property
     def network_driver_mappings(self):
@@ -506,15 +532,18 @@ class Device(PrimaryModel, ConfigContextModel):
     creation of a Device.
     """
 
-    device_type = models.ForeignKey(to="dcim.DeviceType", on_delete=models.PROTECT, related_name="devices")
-    status = StatusField(blank=False, null=False)
-    role = RoleField(blank=False, null=False)
+    device_type = models.ForeignKey(
+        to="dcim.DeviceType", on_delete=models.PROTECT, related_name="devices", verbose_name=_("device type")
+    )
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
+    role = RoleField(blank=False, null=False, verbose_name=_("role"))
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
         on_delete=models.PROTECT,
         related_name="devices",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
     platform = models.ForeignKey(
         to="dcim.Platform",
@@ -522,54 +551,52 @@ class Device(PrimaryModel, ConfigContextModel):
         related_name="devices",
         blank=True,
         null=True,
+        verbose_name=_("platform"),
     )
     name = models.CharField(  # noqa: DJ001  # django-nullable-model-string-field -- intentional, see below
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
         null=True,  # because name is part of uniqueness constraint but is optional
         db_index=True,
+        verbose_name=_("name"),
     )
     _name = NaturalOrderingField(
         target_field="name", max_length=CHARFIELD_MAX_LENGTH, blank=True, null=True, db_index=True
     )
-    serial = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name="Serial number", db_index=True)
+    serial = models.CharField(
+        max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("Serial number"), db_index=True
+    )
     asset_tag = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
         null=True,
         unique=True,
-        verbose_name="Asset tag",
-        help_text="A unique tag used to identify this device",
+        verbose_name=_("Asset tag"),
+        help_text=_("A unique tag used to identify this device"),
     )
     location = models.ForeignKey(
-        to="dcim.Location",
-        on_delete=models.PROTECT,
-        related_name="devices",
+        to="dcim.Location", on_delete=models.PROTECT, related_name="devices", verbose_name=_("location")
     )
     rack = models.ForeignKey(
-        to="dcim.Rack",
-        on_delete=models.PROTECT,
-        related_name="devices",
-        blank=True,
-        null=True,
+        to="dcim.Rack", on_delete=models.PROTECT, related_name="devices", blank=True, null=True, verbose_name=_("rack")
     )
     # 2.0 TODO: Profile filtering on this field if it could benefit from an index
     position = models.PositiveSmallIntegerField(
         blank=True,
         null=True,
         validators=[MinValueValidator(1)],
-        verbose_name="Position (U)",
-        help_text="The lowest-numbered unit occupied by the device",
+        verbose_name=_("Position (U)"),
+        help_text=_("The lowest-numbered unit occupied by the device"),
     )
     # todoindex:
-    face = models.CharField(max_length=50, blank=True, choices=DeviceFaceChoices, verbose_name="Rack face")
+    face = models.CharField(max_length=50, blank=True, choices=DeviceFaceChoices, verbose_name=_("Rack face"))
     primary_ip4 = models.ForeignKey(
         to="ipam.IPAddress",
         on_delete=models.SET_NULL,
         related_name="primary_ip4_for",
         blank=True,
         null=True,
-        verbose_name="Primary IPv4",
+        verbose_name=_("Primary IPv4"),
     )
     primary_ip6 = models.ForeignKey(
         to="ipam.IPAddress",
@@ -577,13 +604,14 @@ class Device(PrimaryModel, ConfigContextModel):
         related_name="primary_ip6_for",
         blank=True,
         null=True,
-        verbose_name="Primary IPv6",
+        verbose_name=_("Primary IPv6"),
     )
     clusters = models.ManyToManyField(
         to="virtualization.Cluster",
         related_name="devices",
         through="dcim.DeviceClusterAssignment",
         blank=True,
+        verbose_name=_("clusters"),
     )
 
     @property
@@ -623,6 +651,7 @@ class Device(PrimaryModel, ConfigContextModel):
         related_name="members",
         blank=True,
         null=True,
+        verbose_name=_("virtual chassis"),
     )
     device_redundancy_group = models.ForeignKey(
         to="dcim.DeviceRedundancyGroup",
@@ -630,14 +659,14 @@ class Device(PrimaryModel, ConfigContextModel):
         related_name="devices",
         blank=True,
         null=True,
-        verbose_name="Device Redundancy Group",
+        verbose_name=_("Device Redundancy Group"),
     )
     device_redundancy_group_priority = models.PositiveIntegerField(
         blank=True,
         null=True,
         validators=[MinValueValidator(1)],
-        verbose_name="Device Redundancy Group Priority",
-        help_text="The priority the device has in the device redundancy group.",
+        verbose_name=_("Device Redundancy Group Priority"),
+        help_text=_("The priority the device has in the device redundancy group."),
     )
     software_version = models.ForeignKey(
         to="dcim.SoftwareVersion",
@@ -645,12 +674,17 @@ class Device(PrimaryModel, ConfigContextModel):
         related_name="devices",
         blank=True,
         null=True,
-        help_text="The software version installed on this device",
+        help_text=_("The software version installed on this device"),
+        verbose_name=_("software version"),
     )
     # 2.0 TODO: Profile filtering on this field if it could benefit from an index
-    vc_position = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(255)])
-    vc_priority = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(255)])
-    comments = models.TextField(blank=True)
+    vc_position = models.PositiveSmallIntegerField(
+        blank=True, null=True, validators=[MaxValueValidator(255)], verbose_name=_("vc position")
+    )
+    vc_priority = models.PositiveSmallIntegerField(
+        blank=True, null=True, validators=[MaxValueValidator(255)], verbose_name=_("vc priority")
+    )
+    comments = models.TextField(blank=True, verbose_name=_("comments"))
     images = GenericRelation(to="extras.ImageAttachment")
 
     secrets_group = models.ForeignKey(
@@ -660,14 +694,15 @@ class Device(PrimaryModel, ConfigContextModel):
         default=None,
         blank=True,
         null=True,
+        verbose_name=_("secrets group"),
     )
 
     software_image_files = models.ManyToManyField(
         to="dcim.SoftwareImageFile",
         related_name="devices",
         blank=True,
-        verbose_name="Software Image Files",
-        help_text="Override the software image files associated with the software version for this device",
+        verbose_name=_("Software Image Files"),
+        help_text=_("Override the software image files associated with the software version for this device"),
     )
     controller_managed_device_group = models.ForeignKey(
         to="dcim.ControllerManagedDeviceGroup",
@@ -675,6 +710,7 @@ class Device(PrimaryModel, ConfigContextModel):
         related_name="devices",
         blank=True,
         null=True,
+        verbose_name=_("controller managed device group"),
     )
 
     objects = BaseManager.from_queryset(DeviceQuerySet)()
@@ -744,7 +780,10 @@ class Device(PrimaryModel, ConfigContextModel):
                 if device_location not in rack_location.ancestors(include_self=True):
                     raise ValidationError(
                         {
-                            "rack": f'Rack "{self.rack}" does not belong to location "{self.location}" and its descendants.'
+                            "rack": gettext(
+                                'Rack "%(rack)s" does not belong to location "%(location)s" and its descendants.'
+                            )
+                            % {"rack": self.rack, "location": self.location}
                         }
                     )
 
@@ -752,20 +791,23 @@ class Device(PrimaryModel, ConfigContextModel):
 
             if ContentType.objects.get_for_model(self) not in self.location.location_type.content_types.all():
                 raise ValidationError(
-                    {"location": f'Devices may not associate to locations of type "{self.location.location_type}".'}
+                    {
+                        "location": gettext('Devices may not associate to locations of type "%(location_type)s".')
+                        % {"location_type": self.location.location_type}
+                    }
                 )
 
         if self.rack is None:
             if self.face:
                 raise ValidationError(
                     {
-                        "face": "Cannot select a rack face without assigning a rack.",
+                        "face": _("Cannot select a rack face without assigning a rack."),
                     }
                 )
             if self.position:
                 raise ValidationError(
                     {
-                        "position": "Cannot select a rack position without assigning a rack.",
+                        "position": _("Cannot select a rack position without assigning a rack."),
                     }
                 )
 
@@ -773,14 +815,17 @@ class Device(PrimaryModel, ConfigContextModel):
         if self.position and not self.face:
             raise ValidationError(
                 {
-                    "face": "Must specify rack face when defining rack position.",
+                    "face": _("Must specify rack face when defining rack position."),
                 }
             )
 
         # Prevent 0U devices from being assigned to a specific position
         if self.position and self.device_type.u_height == 0:
             raise ValidationError(
-                {"position": f"A U0 device type ({self.device_type}) cannot be assigned to a rack position."}
+                {
+                    "position": gettext("A U0 device type (%(device_type)s) cannot be assigned to a rack position.")
+                    % {"device_type": self.device_type}
+                }
             )
 
         if self.rack:
@@ -789,15 +834,19 @@ class Device(PrimaryModel, ConfigContextModel):
                 if self.device_type.is_child_device and self.face:
                     raise ValidationError(
                         {
-                            "face": "Child device types cannot be assigned to a rack face. This is an attribute of the "
-                            "parent device."
+                            "face": _(
+                                "Child device types cannot be assigned to a rack face. This is an attribute of the "
+                                "parent device."
+                            )
                         }
                     )
                 if self.device_type.is_child_device and self.position:
                     raise ValidationError(
                         {
-                            "position": "Child device types cannot be assigned to a rack position. This is an attribute of "
-                            "the parent device."
+                            "position": _(
+                                "Child device types cannot be assigned to a rack position. This is an attribute of "
+                                "the parent device."
+                            )
                         }
                     )
 
@@ -812,8 +861,14 @@ class Device(PrimaryModel, ConfigContextModel):
                 if self.position and self.position not in available_units:
                     raise ValidationError(
                         {
-                            "position": f"U{self.position} is already occupied or does not have sufficient space to "
-                            f"accommodate this device type: {self.device_type} ({self.device_type.u_height}U)"
+                            "position": gettext(
+                                "U%(position)s is already occupied or does not have sufficient space to accommodate this device type: %(device_type)s (%(u_height)sU)"
+                            )
+                            % {
+                                "position": self.position,
+                                "device_type": self.device_type,
+                                "u_height": self.device_type.u_height,
+                            }
                         }
                     )
 
@@ -827,10 +882,10 @@ class Device(PrimaryModel, ConfigContextModel):
             if ip is not None:
                 if field == "primary_ip4":
                     if ip.ip_version != 4:
-                        raise ValidationError({f"{field}": f"{ip} is not an IPv4 address."})
+                        raise ValidationError({f"{field}": gettext("%(ip)s is not an IPv4 address.") % {"ip": ip}})
                 else:
                     if ip.ip_version != 6:
-                        raise ValidationError({f"{field}": f"{ip} is not an IPv6 address."})
+                        raise ValidationError({f"{field}": gettext("%(ip)s is not an IPv6 address.") % {"ip": ip}})
                 if ipam_models.IPAddressToInterface.objects.filter(
                     ip_address=ip, interface__in=all_interfaces
                 ).exists():
@@ -844,7 +899,10 @@ class Device(PrimaryModel, ConfigContextModel):
                     pass
                 else:
                     raise ValidationError(
-                        {f"{field}": f"The specified IP address ({ip}) is not assigned to this device."}
+                        {
+                            f"{field}": gettext("The specified IP address (%(ip)s) is not assigned to this device.")
+                            % {"ip": ip}
+                        }
                     )
 
         # Validate manufacturer/platform
@@ -853,8 +911,13 @@ class Device(PrimaryModel, ConfigContextModel):
                 raise ValidationError(
                     {
                         "platform": (
-                            f"The assigned platform is limited to {self.platform.manufacturer} device types, "
-                            f"but this device's type belongs to {self.device_type.manufacturer}."
+                            gettext(
+                                "The assigned platform is limited to %(manufacturer)s device types, but this device's type belongs to %(manufacturer_2)s."
+                            )
+                            % {
+                                "manufacturer": self.platform.manufacturer,
+                                "manufacturer_2": self.device_type.manufacturer,
+                            }
                         )
                     }
                 )
@@ -871,14 +934,17 @@ class Device(PrimaryModel, ConfigContextModel):
             ):
                 raise ValidationError(
                     {
-                        "clusters": f"Cluster {cluster} belongs to a location, {cluster.location}, that does not include {self.location}."
+                        "clusters": gettext(
+                            "Cluster %(cluster)s belongs to a location, %(location)s, that does not include %(location_2)s."
+                        )
+                        % {"cluster": cluster, "location": cluster.location, "location_2": self.location}
                     }
                 )
 
         # Validate virtual chassis assignment
         if self.virtual_chassis and self.vc_position is None:
             raise ValidationError(
-                {"vc_position": "A device assigned to a virtual chassis must have its position defined."}
+                {"vc_position": _("A device assigned to a virtual chassis must have its position defined.")}
             )
 
         # Validate device isn't being removed from a virtual chassis when it is the master
@@ -887,7 +953,10 @@ class Device(PrimaryModel, ConfigContextModel):
             if existing_virtual_chassis and existing_virtual_chassis.master == self:
                 raise ValidationError(
                     {
-                        "virtual_chassis": f"The master device for the virtual chassis ({existing_virtual_chassis}) may not be removed"
+                        "virtual_chassis": gettext(
+                            "The master device for the virtual chassis (%(existing_virtual_chassis)s) may not be removed"
+                        )
+                        % {"existing_virtual_chassis": existing_virtual_chassis}
                     }
                 )
 
@@ -895,7 +964,9 @@ class Device(PrimaryModel, ConfigContextModel):
         if self.device_redundancy_group_priority is not None and self.device_redundancy_group is None:
             raise ValidationError(
                 {
-                    "device_redundancy_group_priority": "Must assign a redundancy group when defining a redundancy group priority."
+                    "device_redundancy_group_priority": _(
+                        "Must assign a redundancy group when defining a redundancy group priority."
+                    )
                 }
             )
 
@@ -907,8 +978,14 @@ class Device(PrimaryModel, ConfigContextModel):
                 raise ValidationError(
                     {
                         "software_image_files": (
-                            f"Software image file {image_file} for version '{image_file.software_version}' is not "
-                            f"valid for device type {self.device_type}."
+                            gettext(
+                                "Software image file %(image_file)s for version '%(software_version)s' is not valid for device type %(device_type)s."
+                            )
+                            % {
+                                "image_file": image_file,
+                                "software_version": image_file.software_version,
+                                "device_type": self.device_type,
+                            }
                         )
                     }
                 )
@@ -1201,8 +1278,12 @@ class Device(PrimaryModel, ConfigContextModel):
 
 @extras_features("graphql")
 class DeviceClusterAssignment(BaseModel):
-    device = models.ForeignKey("dcim.Device", on_delete=models.CASCADE, related_name="cluster_assignments")
-    cluster = models.ForeignKey("virtualization.Cluster", on_delete=models.CASCADE, related_name="device_assignments")
+    device = models.ForeignKey(
+        "dcim.Device", on_delete=models.CASCADE, related_name="cluster_assignments", verbose_name=_("device")
+    )
+    cluster = models.ForeignKey(
+        "virtualization.Cluster", on_delete=models.CASCADE, related_name="device_assignments", verbose_name=_("cluster")
+    )
     is_metadata_associable_model = False
     documentation_static_path = "docs/user-guide/core-data-model/dcim/device.html"
 
@@ -1219,7 +1300,15 @@ class DeviceClusterAssignment(BaseModel):
             if self.cluster.location not in self.device.location.ancestors(include_self=True):
                 raise ValidationError(
                     {
-                        "__all__": f"Cluster {self.cluster} belongs to a location, {self.cluster.location}, that does not include the location of device {self.device}, {self.device.location}"
+                        "__all__": gettext(
+                            "Cluster %(cluster)s belongs to a location, %(location)s, that does not include the location of device %(device)s, %(location_2)s"
+                        )
+                        % {
+                            "cluster": self.cluster,
+                            "location": self.cluster.location,
+                            "device": self.device,
+                            "location_2": self.device.location,
+                        }
                     }
                 )
 
@@ -1251,15 +1340,16 @@ class VirtualChassis(PrimaryModel):
         related_name="vc_master_for",
         blank=True,
         null=True,
+        verbose_name=_("master"),
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    domain = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    domain = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("domain"))
 
     natural_key_field_names = ["name"]
 
     class Meta:
         ordering = ["name"]
-        verbose_name_plural = "virtual chassis"
+        verbose_name_plural = _("virtual chassis")
 
     def __str__(self):
         return self.name
@@ -1276,7 +1366,10 @@ class VirtualChassis(PrimaryModel):
         # VirtualChassis.)
         if self.present_in_database and self.master and self.master not in self.members.all():
             raise ValidationError(
-                {"master": f"The selected master ({self.master}) is not assigned to this virtual chassis."}
+                {
+                    "master": gettext("The selected master (%(master)s) is not assigned to this virtual chassis.")
+                    % {"master": self.master}
+                }
             )
 
     def delete(self, *args, **kwargs):
@@ -1306,18 +1399,18 @@ class DeviceRedundancyGroup(PrimaryModel):
     A DeviceRedundancyGroup represents a logical grouping of physical hardware for the purposes of high-availability.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    status = StatusField(blank=False, null=False)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     failover_strategy = models.CharField(
         max_length=50,
         blank=True,
         choices=DeviceRedundancyGroupFailoverStrategyChoices,
-        verbose_name="Failover strategy",
+        verbose_name=_("Failover strategy"),
     )
 
-    comments = models.TextField(blank=True)
+    comments = models.TextField(blank=True, verbose_name=_("comments"))
 
     secrets_group = models.ForeignKey(
         to="extras.SecretsGroup",
@@ -1326,6 +1419,7 @@ class DeviceRedundancyGroup(PrimaryModel):
         default=None,
         blank=True,
         null=True,
+        verbose_name=_("secrets group"),
     )
 
     clone_fields = [
@@ -1402,35 +1496,36 @@ class SoftwareImageFile(PrimaryModel):
         to="SoftwareVersion",
         on_delete=models.CASCADE,
         related_name="software_image_files",
-        verbose_name="Software Version",
+        verbose_name=_("Software Version"),
     )
-    image_file_name = models.CharField(blank=False, max_length=CHARFIELD_MAX_LENGTH, verbose_name="Image File Name")
-    image_file_checksum = models.CharField(blank=True, max_length=256, verbose_name="Image File Checksum")
+    image_file_name = models.CharField(blank=False, max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("Image File Name"))
+    image_file_checksum = models.CharField(blank=True, max_length=256, verbose_name=_("Image File Checksum"))
     hashing_algorithm = models.CharField(
         choices=SoftwareImageFileHashingAlgorithmChoices,
         blank=True,
         max_length=255,
-        verbose_name="Hashing Algorithm",
-        help_text="Hashing algorithm for image file checksum",
+        verbose_name=_("Hashing Algorithm"),
+        help_text=_("Hashing algorithm for image file checksum"),
     )
     image_file_size = models.PositiveBigIntegerField(
         blank=True,
         null=True,
-        verbose_name="Image File Size",
-        help_text="Image file size in bytes",
+        verbose_name=_("Image File Size"),
+        help_text=_("Image file size in bytes"),
     )
-    download_url = LaxURLField(blank=True, verbose_name="Download URL")
+    download_url = LaxURLField(blank=True, verbose_name=_("Download URL"))
     external_integration = models.ForeignKey(
         to="extras.ExternalIntegration",
         on_delete=models.PROTECT,
         related_name="software_image_files",
         blank=True,
         null=True,
+        verbose_name=_("external integration"),
     )
     default_image = models.BooleanField(
-        verbose_name="Default Image", help_text="Is the default image for this software version", default=False
+        verbose_name=_("Default Image"), help_text=_("Is the default image for this software version"), default=False
     )
-    status = StatusField(blank=False, null=False)
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
 
     objects = BaseManager.from_queryset(SoftwareImageFileQuerySet)()
 
@@ -1497,19 +1592,24 @@ class SoftwareVersionQuerySet(RestrictedQuerySet):
 class SoftwareVersion(PrimaryModel):
     """A software version for a Device, Virtual Machine or Inventory Item."""
 
-    platform = models.ForeignKey(to="dcim.Platform", on_delete=models.CASCADE)
-    version = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
+    platform = models.ForeignKey(to="dcim.Platform", on_delete=models.CASCADE, verbose_name=_("platform"))
+    version = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("version"))
     alias = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH, blank=True, help_text="Optional alternative label for this version"
+        max_length=CHARFIELD_MAX_LENGTH,
+        blank=True,
+        help_text=_("Optional alternative label for this version"),
+        verbose_name=_("alias"),
     )
-    release_date = models.DateField(null=True, blank=True, verbose_name="Release Date")
-    end_of_support_date = models.DateField(null=True, blank=True, verbose_name="End of Support Date")
-    documentation_url = models.URLField(blank=True, verbose_name="Documentation URL")
+    release_date = models.DateField(null=True, blank=True, verbose_name=_("Release Date"))
+    end_of_support_date = models.DateField(null=True, blank=True, verbose_name=_("End of Support Date"))
+    documentation_url = models.URLField(blank=True, verbose_name=_("Documentation URL"))
     long_term_support = models.BooleanField(
-        verbose_name="Long Term Support", default=False, help_text="Is a Long Term Support version"
+        verbose_name=_("Long Term Support"), default=False, help_text=_("Is a Long Term Support version")
     )
-    pre_release = models.BooleanField(verbose_name="Pre-Release", default=False, help_text="Is a Pre-Release version")
-    status = StatusField(blank=False, null=False)
+    pre_release = models.BooleanField(
+        verbose_name=_("Pre-Release"), default=False, help_text=_("Is a Pre-Release version")
+    )
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
 
     objects = BaseManager.from_queryset(SoftwareVersionQuerySet)()
 
@@ -1546,13 +1646,11 @@ class Controller(PrimaryModel):
     A Controller can be deployed to a single device or a group of devices represented by a DeviceRedundancyGroup.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    status = StatusField(blank=False, null=False)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     location = models.ForeignKey(
-        to="dcim.Location",
-        on_delete=models.PROTECT,
-        related_name="controllers",
+        to="dcim.Location", on_delete=models.PROTECT, related_name="controllers", verbose_name=_("location")
     )
     platform = models.ForeignKey(
         to="dcim.Platform",
@@ -1560,13 +1658,17 @@ class Controller(PrimaryModel):
         related_name="controllers",
         blank=True,
         null=True,
+        verbose_name=_("platform"),
     )
-    role = RoleField(blank=True, null=True)
+    role = RoleField(blank=True, null=True, verbose_name=_("role"))
     capabilities = JSONArrayField(
         base_field=models.CharField(choices=ControllerCapabilitiesChoices),
         blank=True,
         null=True,
-        help_text="List of capabilities supported by the controller, these capabilities are used to enhance views in Nautobot.",
+        help_text=_(
+            "List of capabilities supported by the controller, these capabilities are used to enhance views in Nautobot."
+        ),
+        verbose_name=_("capabilities"),
     )
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -1574,6 +1676,7 @@ class Controller(PrimaryModel):
         related_name="controllers",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
     external_integration = models.ForeignKey(
         to="extras.ExternalIntegration",
@@ -1581,6 +1684,7 @@ class Controller(PrimaryModel):
         related_name="controllers",
         blank=True,
         null=True,
+        verbose_name=_("external integration"),
     )
     controller_device = models.ForeignKey(
         to="dcim.Device",
@@ -1588,6 +1692,7 @@ class Controller(PrimaryModel):
         related_name="controllers",
         blank=True,
         null=True,
+        verbose_name=_("controller device"),
     )
     controller_device_redundancy_group = models.ForeignKey(
         to="dcim.DeviceRedundancyGroup",
@@ -1595,6 +1700,7 @@ class Controller(PrimaryModel):
         related_name="controllers",
         blank=True,
         null=True,
+        verbose_name=_("controller device redundancy group"),
     )
 
     class Meta:
@@ -1609,13 +1715,18 @@ class Controller(PrimaryModel):
         if self.controller_device and self.controller_device_redundancy_group:
             raise ValidationError(
                 {
-                    "controller_device": ("Cannot assign both a device and a device redundancy group to a controller."),
+                    "controller_device": (
+                        _("Cannot assign both a device and a device redundancy group to a controller.")
+                    ),
                 },
             )
         if self.location:
             if ContentType.objects.get_for_model(self) not in self.location.location_type.content_types.all():
                 raise ValidationError(
-                    {"location": f'Controllers may not associate to locations of type "{self.location.location_type}".'}
+                    {
+                        "location": gettext('Controllers may not associate to locations of type "%(location_type)s".')
+                        % {"location_type": self.location.location_type}
+                    }
                 )
 
     def get_capabilities_display(self):
@@ -1649,12 +1760,14 @@ class ControllerManagedDeviceGroup(TreeModel, PrimaryModel):
     name = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         unique=True,
-        help_text="Name of the controller device group",
+        help_text=_("Name of the controller device group"),
+        verbose_name=_("name"),
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     weight = models.PositiveIntegerField(
         default=1000,
-        help_text="Weight of the controller device group, used to sort the groups within its parent group",
+        help_text=_("Weight of the controller device group, used to sort the groups within its parent group"),
+        verbose_name=_("weight"),
     )
     controller = models.ForeignKey(
         to="dcim.Controller",
@@ -1662,7 +1775,8 @@ class ControllerManagedDeviceGroup(TreeModel, PrimaryModel):
         related_name="controller_managed_device_groups",
         blank=False,
         null=False,
-        help_text="Controller that manages the devices in this group",
+        help_text=_("Controller that manages the devices in this group"),
+        verbose_name=_("controller"),
     )
     radio_profiles = models.ManyToManyField(
         to="wireless.RadioProfile",
@@ -1670,6 +1784,7 @@ class ControllerManagedDeviceGroup(TreeModel, PrimaryModel):
         through="wireless.ControllerManagedDeviceGroupRadioProfileAssignment",
         through_fields=("controller_managed_device_group", "radio_profile"),
         blank=True,
+        verbose_name=_("radio profiles"),
     )
     wireless_networks = models.ManyToManyField(
         to="wireless.WirelessNetwork",
@@ -1677,12 +1792,16 @@ class ControllerManagedDeviceGroup(TreeModel, PrimaryModel):
         through="wireless.ControllerManagedDeviceGroupWirelessNetworkAssignment",
         through_fields=("controller_managed_device_group", "wireless_network"),
         blank=True,
+        verbose_name=_("wireless networks"),
     )
     capabilities = JSONArrayField(
         base_field=models.CharField(choices=ControllerCapabilitiesChoices),
         blank=True,
         null=True,
-        help_text="List of capabilities supported by the controller device group, these capabilities are used to enhance views in Nautobot.",
+        help_text=_(
+            "List of capabilities supported by the controller device group, these capabilities are used to enhance views in Nautobot."
+        ),
+        verbose_name=_("capabilities"),
     )
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -1690,6 +1809,7 @@ class ControllerManagedDeviceGroup(TreeModel, PrimaryModel):
         related_name="controller_managed_device_groups",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
 
     class Meta:
@@ -1712,7 +1832,7 @@ class ControllerManagedDeviceGroup(TreeModel, PrimaryModel):
 
         if self.parent and self.controller and self.controller != self.parent.controller:  # pylint: disable=no-member
             raise ValidationError(
-                {"controller": "Controller device group must have the same controller as the parent group."}
+                {"controller": _("Controller device group must have the same controller as the parent group.")}
             )
 
     def get_capabilities_display(self):
@@ -1739,12 +1859,12 @@ class ModuleFamily(PrimaryModel):
     It is used to enforce compatibility between ModuleBays and Modules.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     class Meta:
         ordering = ["name"]
-        verbose_name_plural = "module families"
+        verbose_name_plural = _("module families")
 
     def __str__(self):
         return self.name
@@ -1776,21 +1896,27 @@ class ModuleType(PrimaryModel):
     objects (as defined by the ModuleType) are automatically created as well.
     """
 
-    manufacturer = models.ForeignKey(to="dcim.Manufacturer", on_delete=models.PROTECT, related_name="module_types")
+    manufacturer = models.ForeignKey(
+        to="dcim.Manufacturer", on_delete=models.PROTECT, related_name="module_types", verbose_name=_("manufacturer")
+    )
     module_family = models.ForeignKey(
         to="dcim.ModuleFamily",
         on_delete=models.PROTECT,
         related_name="module_types",
         blank=True,
         null=True,
+        verbose_name=_("module family"),
     )
-    model = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
+    model = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("model"))
     part_number = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH, blank=True, help_text="Discrete part number (optional)"
+        max_length=CHARFIELD_MAX_LENGTH,
+        blank=True,
+        help_text=_("Discrete part number (optional)"),
+        verbose_name=_("part number"),
     )
-    front_image = models.ImageField(upload_to="moduletype-images", blank=True)
-    rear_image = models.ImageField(upload_to="moduletype-images", blank=True)
-    comments = models.TextField(blank=True)
+    front_image = models.ImageField(upload_to="moduletype-images", blank=True, verbose_name=_("front image"))
+    rear_image = models.ImageField(upload_to="moduletype-images", blank=True, verbose_name=_("rear image"))
+    comments = models.TextField(blank=True, verbose_name=_("comments"))
 
     clone_fields = [
         "manufacturer",
@@ -1978,28 +2104,32 @@ class Module(PrimaryModel):
     the creation of a Module.
     """
 
-    module_type = models.ForeignKey(to="dcim.ModuleType", on_delete=models.PROTECT, related_name="modules")
+    module_type = models.ForeignKey(
+        to="dcim.ModuleType", on_delete=models.PROTECT, related_name="modules", verbose_name=_("module type")
+    )
     parent_module_bay = models.OneToOneField(
         to="dcim.ModuleBay",
         on_delete=models.CASCADE,
         related_name="installed_module",
         blank=True,
         null=True,
+        verbose_name=_("parent module bay"),
     )
-    status = StatusField()
-    role = RoleField(blank=True, null=True)
+    status = StatusField(verbose_name=_("status"))
+    role = RoleField(blank=True, null=True, verbose_name=_("role"))
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
         on_delete=models.PROTECT,
         related_name="modules",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
     serial = models.CharField(  # noqa: DJ001  # django-nullable-model-string-field -- intentional
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
         null=True,
-        verbose_name="Serial number",
+        verbose_name=_("Serial number"),
         db_index=True,
     )
     asset_tag = models.CharField(
@@ -2007,8 +2137,8 @@ class Module(PrimaryModel):
         blank=True,
         null=True,
         unique=True,
-        verbose_name="Asset tag",
-        help_text="A unique tag used to identify this module",
+        verbose_name=_("Asset tag"),
+        help_text=_("A unique tag used to identify this module"),
     )
     location = models.ForeignKey(
         to="dcim.Location",
@@ -2016,6 +2146,7 @@ class Module(PrimaryModel):
         related_name="modules",
         blank=True,
         null=True,
+        verbose_name=_("location"),
     )
     # TODO: add software support for Modules
 
@@ -2075,16 +2206,19 @@ class Module(PrimaryModel):
 
         # Validate that the Module is associated with a Location or a ModuleBay
         if self.parent_module_bay is None and self.location is None:
-            raise ValidationError("One of location or parent_module_bay must be set")
+            raise ValidationError(_("One of location or parent_module_bay must be set"))
 
         # Validate location
         if self.location is not None:
             if self.parent_module_bay is not None:
-                raise ValidationError("Only one of location or parent_module_bay must be set")
+                raise ValidationError(_("Only one of location or parent_module_bay must be set"))
 
             if ContentType.objects.get_for_model(self) not in self.location.location_type.content_types.all():
                 raise ValidationError(
-                    {"location": f'Modules may not associate to locations of type "{self.location.location_type}".'}
+                    {
+                        "location": gettext('Modules may not associate to locations of type "%(location_type)s".')
+                        % {"location_type": self.location.location_type}
+                    }
                 )
 
         # Validate module family compatibility
@@ -2097,8 +2231,10 @@ class Module(PrimaryModel):
                     module_type_family = f"in the family {self.module_type.module_family.name}"
                 raise ValidationError(
                     {
-                        "module_type": f"The selected module bay requires a module type in the family {module_family_name}, "
-                        f"but the selected module type is {module_type_family}."
+                        "module_type": gettext(
+                            "The selected module bay requires a module type in the family %(module_family_name)s, but the selected module type is %(module_type_family)s."
+                        )
+                        % {"module_family_name": module_family_name, "module_type_family": module_type_family}
                     }
                 )
 
@@ -2113,7 +2249,9 @@ class Module(PrimaryModel):
             if parent_mfr and self.module_type.manufacturer != parent_mfr:
                 raise ValidationError(
                     {
-                        "module_type": "The selected module bay requires a module type from the same manufacturer as the parent device or module"
+                        "module_type": _(
+                            "The selected module bay requires a module type from the same manufacturer as the parent device or module"
+                        )
                     }
                 )
 
@@ -2129,7 +2267,7 @@ class Module(PrimaryModel):
         parent_module = getattr(self.parent_module_bay, "parent_module", None)
         while parent_module is not None:
             if parent_module == self:
-                raise ValidationError("Creating this instance would cause an infinite loop.")
+                raise ValidationError(_("Creating this instance would cause an infinite loop."))
             parent_module = getattr(parent_module.parent_module_bay, "parent_module", None)
 
         # Keep track of whether the parent module bay has changed so we can update
@@ -2267,22 +2405,25 @@ class Module(PrimaryModel):
     "webhooks",
 )
 class VirtualDeviceContext(PrimaryModel):
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
-    device = models.ForeignKey("dcim.Device", on_delete=models.CASCADE, related_name="virtual_device_contexts")
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("name"))
+    device = models.ForeignKey(
+        "dcim.Device", on_delete=models.CASCADE, related_name="virtual_device_contexts", verbose_name=_("device")
+    )
     identifier = models.PositiveSmallIntegerField(
-        help_text="Unique identifier provided by the platform being virtualized (Example: Nexus VDC Identifier)",
+        help_text=_("Unique identifier provided by the platform being virtualized (Example: Nexus VDC Identifier)"),
         blank=True,
         null=True,
+        verbose_name=_("identifier"),
     )
-    status = StatusField(blank=False, null=False)
-    role = RoleField(blank=True, null=True)
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
+    role = RoleField(blank=True, null=True, verbose_name=_("role"))
     primary_ip4 = models.ForeignKey(
         to="ipam.IPAddress",
         on_delete=models.SET_NULL,
         related_name="ip4_vdcs",
         blank=True,
         null=True,
-        verbose_name="Primary IPv4",
+        verbose_name=_("Primary IPv4"),
     )
     primary_ip6 = models.ForeignKey(
         to="ipam.IPAddress",
@@ -2290,18 +2431,24 @@ class VirtualDeviceContext(PrimaryModel):
         related_name="ip6_vdcs",
         blank=True,
         null=True,
-        verbose_name="Primary IPv6",
+        verbose_name=_("Primary IPv6"),
     )
     tenant = models.ForeignKey(
-        "tenancy.Tenant", on_delete=models.CASCADE, related_name="virtual_device_contexts", blank=True, null=True
+        "tenancy.Tenant",
+        on_delete=models.CASCADE,
+        related_name="virtual_device_contexts",
+        blank=True,
+        null=True,
+        verbose_name=_("tenant"),
     )
     interfaces = models.ManyToManyField(
         blank=True,
         related_name="virtual_device_contexts",
         to="dcim.Interface",
         through="dcim.InterfaceVDCAssignment",
+        verbose_name=_("interfaces"),
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     controller_managed_device_group = models.ForeignKey(
         to="dcim.ControllerManagedDeviceGroup",
@@ -2309,6 +2456,7 @@ class VirtualDeviceContext(PrimaryModel):
         related_name="virtual_device_contexts",
         blank=True,
         null=True,
+        verbose_name=_("controller managed device group"),
     )
 
     class Meta:
@@ -2334,12 +2482,15 @@ class VirtualDeviceContext(PrimaryModel):
             ip = getattr(self, field)
             if ip is not None:
                 if field == "primary_ip4" and ip.ip_version != 4:
-                    raise ValidationError({f"{field}": f"{ip} is not an IPv4 address."})
+                    raise ValidationError({f"{field}": gettext("%(ip)s is not an IPv4 address.") % {"ip": ip}})
                 if field == "primary_ip6" and ip.ip_version != 6:
-                    raise ValidationError({f"{field}": f"{ip} is not an IPv6 address."})
+                    raise ValidationError({f"{field}": gettext("%(ip)s is not an IPv6 address.") % {"ip": ip}})
                 if not ip.interfaces.filter(device=self.device).exists():
                     raise ValidationError(
-                        {f"{field}": f"{ip} is not part of an interface that belongs to this VDC's device."}
+                        {
+                            f"{field}": gettext("%(ip)s is not part of an interface that belongs to this VDC's device.")
+                            % {"ip": ip}
+                        }
                     )
 
     def clean(self):
@@ -2350,7 +2501,7 @@ class VirtualDeviceContext(PrimaryModel):
         if self.present_in_database:
             vdc = VirtualDeviceContext.objects.get(id=self.id)
             if vdc.device != self.device:
-                raise ValidationError({"device": "Virtual Device Context's device cannot be changed once created"})
+                raise ValidationError({"device": _("Virtual Device Context's device cannot be changed once created")})
 
 
 @extras_features(
@@ -2361,10 +2512,16 @@ class VirtualDeviceContext(PrimaryModel):
 )
 class InterfaceVDCAssignment(BaseModel):
     virtual_device_context = models.ForeignKey(
-        VirtualDeviceContext, on_delete=models.CASCADE, related_name="interface_assignments"
+        VirtualDeviceContext,
+        on_delete=models.CASCADE,
+        related_name="interface_assignments",
+        verbose_name=_("virtual device context"),
     )
     interface = models.ForeignKey(
-        Interface, on_delete=models.CASCADE, related_name="virtual_device_context_assignments"
+        Interface,
+        on_delete=models.CASCADE,
+        related_name="virtual_device_context_assignments",
+        verbose_name=_("interface"),
     )
 
     class Meta:

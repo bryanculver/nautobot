@@ -2,6 +2,7 @@ import logging
 
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
+from django.utils.translation import gettext, gettext_lazy as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework.fields import JSONField
 from rest_framework.reverse import reverse
@@ -205,7 +206,8 @@ class RelationshipsDataField(WritableSerializerMixin, JSONField):
         for relationship_key in data:
             if relationship_key not in relationship_keys:
                 raise ValidationError(
-                    f'"{relationship_key}" is not a relationship on {self.parent.Meta.model._meta.label}'
+                    _('"%(key)s" is not a relationship on %(model)s')
+                    % {"key": relationship_key, "model": self.parent.Meta.model._meta.label}
                 )
 
         for relationship in relationships:
@@ -226,18 +228,23 @@ class RelationshipsDataField(WritableSerializerMixin, JSONField):
                 # Input validation - prevent referencing a side of the relationship that isn't relevant to this model
                 if other_side not in output_data[relationship]:
                     raise ValidationError(
-                        f'"{other_side}" is not a valid side for "{relationship}" '
-                        f"on {self.parent.Meta.model._meta.label}"
+                        _('"%(side)s" is not a valid side for "%(relationship)s" on %(model)s')
+                        % {
+                            "side": other_side,
+                            "relationship": relationship,
+                            "model": self.parent.Meta.model._meta.label,
+                        }
                     )
 
                 # Don't allow omitting 'objects' altogether as a shorthand for deleting all associations
                 if "objects" not in relationship_data[other_side]:
                     raise ValidationError(
-                        f'"objects" must be specified under ["{relationship.key}"]["{other_side}"] when present'
+                        _('"objects" must be specified under ["%(key)s"]["%(side)s"] when present')
+                        % {"key": relationship.key, "side": other_side}
                     )
                 objects_data = relationship_data[other_side]["objects"]
                 if not isinstance(objects_data, (list, tuple)):
-                    raise ValidationError('"objects" must be a list, not a single value')
+                    raise ValidationError(_('"objects" must be a list, not a single value'))
 
                 if not objects_data:
                     # Empty list -- delete all associations for this relationship, nothing further to handle below
@@ -246,7 +253,8 @@ class RelationshipsDataField(WritableSerializerMixin, JSONField):
                 # Don't allow multiple objects for a one-to-* relationship!
                 if len(objects_data) > 1 and not relationship.has_many(other_side):
                     raise ValidationError(
-                        f'For "{relationship}", "{other_side}" objects must include at most a single object'
+                        _('For "%(relationship)s", "%(side)s" objects must include at most a single object')
+                        % {"relationship": relationship, "side": other_side}
                     )
 
                 # Object lookup time!
@@ -255,12 +263,16 @@ class RelationshipsDataField(WritableSerializerMixin, JSONField):
                 self.queryset = other_side_model.objects
                 other_side_serializer = None
                 if other_side_model is None:
-                    raise ValidationError(f"Model {other_type} is not currently installed, cannot look it up")
+                    raise ValidationError(
+                        gettext("Model %(other_type)s is not currently installed, cannot look it up")
+                        % {"other_type": other_type}
+                    )
                 try:
                     other_side_serializer = get_serializer_for_model(other_side_model)
                 except SerializerNotFound as exc:
                     raise ValidationError(
-                        f"No Nested{other_side_model}Serializer found, cannot deserialize it"
+                        gettext("No Nested%(other_side_model)sSerializer found, cannot deserialize it")
+                        % {"other_side_model": other_side_model}
                     ) from exc
 
                 depth = int(self.context.get("depth", 0))

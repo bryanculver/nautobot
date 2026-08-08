@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load helpers %}
 
 <div id="{{ paginator_id|default:'paginator' }}"
@@ -13,7 +14,7 @@
 >
     {% if page %}
         <div class="nb-paginator-info">
-            Showing {{ page.start_index }}-{{ page.end_index }} of {{ page.paginator.count }}
+            {% blocktrans with start=page.start_index end=page.end_index total=page.paginator.count %}Showing {{ start }}-{{ end }} of {{ total }}{% endblocktrans %}
         </div>
         {% if not exclude_controls %}
             <div class="vr border-start my-8 nb-paginator-divider"></div>
@@ -49,7 +50,7 @@
                     </option>
                 {% endfor %}
             </select>
-            per page
+            {% trans "per page" %}
         </form>
     {% endif %}
     {% if paginator.num_pages > 1 and not exclude_controls %}
@@ -58,7 +59,7 @@
             <ul class="pagination mb-0">
                 {% if page.has_previous %}
                     <li class="page-item">
-                        <a aria-label="Previous" class="page-link" href="{% django_querystring page=page.previous_page_number %}"
+                        <a aria-label="{% trans "Previous" %}" class="page-link" href="{% django_querystring page=page.previous_page_number %}"
                            {% if htmx_enabled|default:False %}
                                hx-get="{% django_querystring page=page.previous_page_number %}"
                            {% endif %}
@@ -84,7 +85,7 @@
                 {% endfor %}
                 {% if page.has_next %}
                     <li class="page-item">
-                        <a aria-label="Next" class="page-link" href="{% django_querystring page=page.next_page_number %}"
+                        <a aria-label="{% trans "Next" %}" class="page-link" href="{% django_querystring page=page.next_page_number %}"
                            {% if htmx_enabled|default:False %}
                                hx-get="{% django_querystring page=page.next_page_number %}"
                            {% endif %}
@@ -96,16 +97,16 @@
             </ul>
         </nav>
         <div class="pagination mb-0 d-flex align-items-center gap-4">
-            <label for="paginator-go-to">Go to page</label>
+            <label for="paginator-go-to">{% trans "Go to page" %}</label>
             <div class="input-group" id="nb-paginator-go-to">
                 <input type="number" name="page" id="paginator-go-to" value="{{ page.number }}" class="form-control"
-                       min="1" max="{{ paginator.num_pages }}" aria-label="Go to page"
+                       min="1" max="{{ paginator.num_pages }}" aria-label="{% trans "Go to page" %}"
                        {% if htmx_enabled|default:False %}
                            hx-get="{% django_querystring page=None %}"
                            hx-trigger="keydown[key=='Enter']"
                        {% endif %}>
                 <span class="page-item">
-                    <a class="page-link px-6" href="#" aria-label="Go to page" title="Go to page" id="paginator-go-to-link"
+                    <a class="page-link px-6" href="#" aria-label="{% trans "Go to page" %}" title="{% trans "Go to page" %}" id="paginator-go-to-link"
                        {% if htmx_enabled|default:False %}
                            hx-get="{% django_querystring page=None %}"
                            hx-include="#paginator-go-to"

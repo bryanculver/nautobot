@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import django_filters
 
 from nautobot.circuits.models import Circuit
@@ -26,26 +27,26 @@ __all__ = (
 class TenantGroupFilterSet(NautobotFilterSet, NameSearchFilterSet):
     parent = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=TenantGroup.objects.all(),
-        label="Parent tenant group (name or ID)",
+        label=_("Parent tenant group (name or ID)"),
         to_field_name="name",
     )
     children = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=TenantGroup.objects.all(),
-        label="Children (name or ID)",
+        label=_("Children (name or ID)"),
         to_field_name="name",
     )
     has_children = RelatedMembershipBooleanFilter(
         field_name="children",
-        label="Has children",
+        label=_("Has children"),
     )
     tenants = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Tenant.objects.all(),
-        label="Tenants (name or ID)",
+        label=_("Tenants (name or ID)"),
         to_field_name="name",
     )
     has_tenants = RelatedMembershipBooleanFilter(
         field_name="tenants",
-        label="Has tenants",
+        label=_("Has tenants"),
     )
 
     class Meta:
@@ -64,109 +65,109 @@ class TenantFilterSet(NautobotFilterSet):
     tenant_group = TreeNodeMultipleChoiceFilter(
         queryset=TenantGroup.objects.all(),
         field_name="tenant_group",
-        label="Tenant group (name or ID)",
+        label=_("Tenant group (name or ID)"),
         to_field_name="name",
     )
     circuits = django_filters.ModelMultipleChoiceFilter(
         queryset=Circuit.objects.all(),
-        label="Circuits (ID)",
+        label=_("Circuits (ID)"),
     )
     has_circuits = RelatedMembershipBooleanFilter(
         field_name="circuits",
-        label="Has circuits",
+        label=_("Has circuits"),
     )
     clusters = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Cluster.objects.all(),
         to_field_name="name",
-        label="Clusters (name or ID)",
+        label=_("Clusters (name or ID)"),
     )
     has_clusters = RelatedMembershipBooleanFilter(
         field_name="clusters",
-        label="Has clusters",
+        label=_("Has clusters"),
     )
     devices = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Device.objects.all(),
         to_field_name="name",
-        label="Devices (name or ID)",
+        label=_("Devices (name or ID)"),
     )
     has_devices = RelatedMembershipBooleanFilter(
         field_name="devices",
-        label="Has devices",
+        label=_("Has devices"),
     )
     ip_addresses = django_filters.ModelMultipleChoiceFilter(
         queryset=IPAddress.objects.all(),
-        label="IP addresses (ID)",
+        label=_("IP addresses (ID)"),
     )
     has_ip_addresses = RelatedMembershipBooleanFilter(
         field_name="ip_addresses",
-        label="Has IP addresses",
+        label=_("Has IP addresses"),
     )
     locations = TreeNodeMultipleChoiceFilter(
         prefers_id=True,
         queryset=Location.objects.all(),
         to_field_name="name",
-        label="Locations (names and/or IDs)",
+        label=_("Locations (names and/or IDs)"),
     )
     has_locations = RelatedMembershipBooleanFilter(
         field_name="locations",
-        label="Has locations",
+        label=_("Has locations"),
     )
     prefixes = PrefixFilter()
     has_prefixes = RelatedMembershipBooleanFilter(
         field_name="prefixes",
-        label="Has prefixes",
+        label=_("Has prefixes"),
     )
     rack_reservations = django_filters.ModelMultipleChoiceFilter(
         queryset=RackReservation.objects.all(),
-        label="Rack reservations (ID)",
+        label=_("Rack reservations (ID)"),
     )
     has_rack_reservations = RelatedMembershipBooleanFilter(
         field_name="rack_reservations",
-        label="Has rack reservations",
+        label=_("Has rack reservations"),
     )
     racks = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=Rack.objects.all(),
         to_field_name="name",
-        label="Racks (name or ID)",
+        label=_("Racks (name or ID)"),
     )
     has_racks = RelatedMembershipBooleanFilter(
         field_name="racks",
-        label="Has racks",
+        label=_("Has racks"),
     )
     route_targets = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=RouteTarget.objects.all(),
         to_field_name="name",
-        label="Route targets (name or ID)",
+        label=_("Route targets (name or ID)"),
     )
     has_route_targets = RelatedMembershipBooleanFilter(
         field_name="route_targets",
-        label="Has route targets",
+        label=_("Has route targets"),
     )
     virtual_machines = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=VirtualMachine.objects.all(),
         to_field_name="name",
-        label="Virtual machines (name or ID)",
+        label=_("Virtual machines (name or ID)"),
     )
     has_virtual_machines = RelatedMembershipBooleanFilter(
         field_name="virtual_machines",
-        label="Has virtual machines",
+        label=_("Has virtual machines"),
     )
     vlans = django_filters.ModelMultipleChoiceFilter(
         queryset=VLAN.objects.all(),
-        label="VLANs (ID)",
+        label=_("VLANs (ID)"),
     )
     has_vlans = RelatedMembershipBooleanFilter(
         field_name="vlans",
-        label="Has VLANs",
+        label=_("Has VLANs"),
     )
     vrfs = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=VRF.objects.all(),
         to_field_name="name",
-        label="VRFs (name or ID)",
+        label=_("VRFs (name or ID)"),
     )
     has_vrfs = RelatedMembershipBooleanFilter(
         field_name="vrfs",
-        label="Has VRFs",
+        label=_("Has VRFs"),
     )
 
     class Meta:

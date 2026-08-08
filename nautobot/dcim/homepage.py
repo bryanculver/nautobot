@@ -1,5 +1,6 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import F
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.apps import HomePageGroup, HomePageItem, HomePagePanel
 from nautobot.dcim import models
@@ -35,13 +36,15 @@ def _connected_power_ports_count(request):
 layout = (
     HomePagePanel(
         name="Organization",
+        label=_("Organization"),
         weight=100,
         items=(
             HomePageItem(
                 name="Locations",
+                label=_("Locations"),
                 link="dcim:location_list",
                 model=models.Location,
-                description="Hierarchical geographic locations",
+                description=_("Hierarchical geographic locations"),
                 permissions=["dcim.view_location"],
                 weight=100,
             ),
@@ -49,70 +52,80 @@ layout = (
     ),
     HomePagePanel(
         name="DCIM",
+        label=_("DCIM"),
         weight=200,
         items=(
             HomePageItem(
                 name="Racks",
+                label=_("Racks"),
                 link="dcim:rack_list",
                 model=models.Rack,
-                description="Equipment racks, optionally organized by group",
+                description=_("Equipment racks, optionally organized by group"),
                 permissions=["dcim.view_rack"],
                 weight=100,
             ),
             HomePageItem(
                 name="Device Types",
+                label=_("Device Types"),
                 link="dcim:devicetype_list",
                 model=models.DeviceType,
-                description="Physical hardware models by manufacturer",
+                description=_("Physical hardware models by manufacturer"),
                 permissions=["dcim.view_devicetype"],
                 weight=200,
             ),
             HomePageItem(
                 name="Devices",
+                label=_("Devices"),
                 link="dcim:device_list",
                 model=models.Device,
-                description="Rack-mounted network equipment, servers, and other devices",
+                description=_("Rack-mounted network equipment, servers, and other devices"),
                 permissions=["dcim.view_device"],
                 weight=300,
             ),
             HomePageItem(
                 name="Virtual Chassis",
+                label=_("Virtual Chassis"),
                 link="dcim:virtualchassis_list",
                 model=models.VirtualChassis,
                 permissions=["dcim.view_virtualchassis"],
-                description="Represents a set of devices which share a common control plane",
+                description=_("Represents a set of devices which share a common control plane"),
                 weight=400,
             ),
             HomePageItem(
                 name="Controllers",
+                label=_("Controllers"),
                 link="dcim:controller_list",
                 model=models.Controller,
                 permissions=["dcim.view_controller"],
-                description="Represents a network or SDN (Software-Defined Networking) controllers",
+                description=_("Represents a network or SDN (Software-Defined Networking) controllers"),
                 weight=500,
             ),
             HomePageItem(
                 name="Device Redundancy Groups",
+                label=_("Device Redundancy Groups"),
                 link="dcim:deviceredundancygroup_list",
                 model=models.DeviceRedundancyGroup,
                 permissions=["dcim.view_deviceredundancygroup"],
-                description="Represents a set of devices which operate in a failover/HA group",
+                description=_("Represents a set of devices which operate in a failover/HA group"),
                 weight=600,
             ),
             HomePageItem(
                 name="Interface Redundancy Groups",
+                label=_("Interface Redundancy Groups"),
                 link="dcim:interfaceredundancygroup_list",
                 model=models.InterfaceRedundancyGroup,
                 permissions=["dcim.view_interfaceredundancygroup"],
-                description="Represents a set of interfaces which operate in a failover/HA group",
+                description=_("Represents a set of interfaces which operate in a failover/HA group"),
                 weight=700,
             ),
             HomePageGroup(
                 name="Connections",
+                label=_("Connections"),
                 weight=800,
                 items=(
                     HomePageItem(
                         name="Cables",
+                        label=_("Cables"),
                         link="dcim:cable_list",
                         model=models.Cable,
                         permissions=["dcim.view_cable"],
@@ -120,6 +133,7 @@ layout = (
                     ),
                     HomePageItem(
                         name="Interfaces",
+                        label=_("Interfaces"),
                         custom_template="homepage_connections.html",
                         custom_data={
                             "connections_count": _connected_interfaces_count,
@@ -131,6 +145,7 @@ layout = (
                     ),
                     HomePageItem(
                         name="Console",
+                        label=_("Console"),
                         custom_template="homepage_connections.html",
                         custom_data={
                             "connections_count": _connected_console_ports_count,
@@ -142,6 +157,7 @@ layout = (
                     ),
                     HomePageItem(
                         name="Power",
+                        label=_("Power"),
                         custom_template="homepage_connections.html",
                         custom_data={
                             "connections_count": _connected_power_ports_count,
@@ -157,21 +173,24 @@ layout = (
     ),
     HomePagePanel(
         name="Power",
+        label=_("Power"),
         weight=300,
         items=(
             HomePageItem(
                 name="Power Feeds",
+                label=_("Power Feeds"),
                 link="dcim:powerfeed_list",
                 model=models.PowerFeed,
-                description="Electrical circuits delivering power from panels",
+                description=_("Electrical circuits delivering power from panels"),
                 permissions=["dcim.view_powerfeed"],
                 weight=100,
             ),
             HomePageItem(
                 name="Power Panels",
+                label=_("Power Panels"),
                 link="dcim:powerpanel_list",
                 model=models.PowerPanel,
-                description="Electrical panels receiving utility power",
+                description=_("Electrical panels receiving utility power"),
                 permissions=["dcim.view_powerpanel"],
                 weight=200,
             ),

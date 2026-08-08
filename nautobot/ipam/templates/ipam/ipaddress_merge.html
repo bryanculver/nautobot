@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load buttons %}
 {% load helpers %}
 {% load static %}
@@ -19,9 +20,9 @@
         <div class="row justify-content-center align-content-start flex-fill">
             <div class="col-lg-10">
                 <div class="card border-info">
-                    <div class="card-header bg-info-subtle border-info fw-medium text-body"><strong>Confirm Merging IP Addresses</strong></div>
+                    <div class="card-header bg-info-subtle border-info fw-medium text-body"><strong>{% trans "Confirm Merging IP Addresses" %}</strong></div>
                     <div class="card-body">
-                        <p><strong>Warning:</strong> The following operation will merge some or all of these {{ queryset.count }} IP Address records. Please select the record(s) you wish to merge and the attribute values you want to carry forward to the merged record.</p>
+                        <p>{% blocktrans with count=queryset.count %}<strong>Warning:</strong> The following operation will merge some or all of these {{ count }} IP Address records. Please select the record(s) you wish to merge and the attribute values you want to carry forward to the merged record.{% endblocktrans %}</p>
                         {% block message_extra %}{% endblock %}
                     </div>
                 </div>
@@ -32,40 +33,40 @@
                         <table class="table table-hover nb-table-headings">
                             <thead>
                                 <th>
-                                    Merging IP Addresses
+                                    {% trans "Merging IP Addresses" %}
                                 </th>
                                 <th>
-                                    Host
+                                    {% trans "Host" %}
                                 </th>
                                 <th>
-                                    Mask Length
+                                    {% trans "Mask Length" %}
                                 </th>
                                 <th>
-                                    Namespace
+                                    {% trans "Namespace" %}
                                 </th>
                                 <th>
-                                    Type
+                                    {% trans "Type" %}
                                 </th>
                                 <th>
-                                    Status
+                                    {% trans "Status" %}
                                 </th>
                                 <th>
-                                    Role
+                                    {% trans "Role" %}
                                 </th>
                                 <th>
-                                    DNS Name
+                                    {% trans "DNS Name" %}
                                 </th>
                                 <th>
-                                    Description
+                                    {% trans "Description" %}
                                 </th>
                                 <th>
-                                    Tenant
+                                    {% trans "Tenant" %}
                                 </th>
                                 <th>
-                                    NAT IP (Inside)
+                                    {% trans "NAT IP (Inside)" %}
                                 </th>
                                 <th>
-                                    Tags
+                                    {% trans "Tags" %}
                                 </th>
                                 {% for field, value in queryset.first.get_custom_fields.items %}
                                     <th>
@@ -214,15 +215,15 @@
             {% block buttons %}
                 <button type="submit" name="_merge" class="btn btn-primary">
                     <span aria-hidden="true" class="mdi mdi-set-merge me-4"></span><!--
-                    -->Merge and Go to the Next Duplicate
+                    -->{% trans "Merge and Go to the Next Duplicate" %}
                 </button>
                 <button type="submit" name="_skip" class="btn btn-warning">
                     <span aria-hidden="true" class="mdi mdi-debug-step-over me-4"></span><!--
-                    -->Skip and Go to the Next Duplicate
+                    -->{% trans "Skip and Go to the Next Duplicate" %}
                 </button>
                 <a href="{{ return_url }}" class="btn btn-secondary">
                     <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-                    -->Cancel
+                    -->{% trans "Cancel" %}
                 </a>
             {% endblock %}
         </div>

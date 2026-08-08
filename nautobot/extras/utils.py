@@ -21,6 +21,7 @@ from django.db.models import Model, Q
 from django.db.models.deletion import Collector
 from django.template.loader import get_template, TemplateDoesNotExist
 from django.utils.deconstruct import deconstructible
+from django.utils.translation import gettext
 import kubernetes.client
 import redis.exceptions
 
@@ -816,7 +817,10 @@ def check_if_key_is_graphql_safe(model_name, key, field_name="key"):
     if not graphql_safe_pattern.fullmatch(key):
         raise ValidationError(
             {
-                f"{field_name}": f"This {field_name} is not Python/GraphQL safe. Please do not start the {field_name} with a digit and do not use hyphens or whitespace"
+                f"{field_name}": gettext(
+                    "This %(field_name)s is not Python/GraphQL safe. Please do not start the %(field_name_2)s with a digit and do not use hyphens or whitespace"
+                )
+                % {"field_name": field_name, "field_name_2": field_name}
             }
         )
 

@@ -1,4 +1,5 @@
 import get from 'lodash.get';
+import { gettext } from './i18n.js';
 
 /**
  * Get HTML `element`. This function accepts input as native `Document` and `Element` object and `jQuery` collection.
@@ -299,7 +300,7 @@ const initializeDynamicChoiceSelection = (context, dropdownParent = null) => {
 const initializeMultiValueChar = (context, dropdownParent = null) => {
   initializeSelect2(context, '.nautobot-select2-multi-value-char', {
     dropdownParent,
-    language: { noResults: () => 'Type something to add it as an option' },
+    language: { noResults: () => gettext('Type something to add it as an option') },
     multiple: true,
     tags: true,
     tokenSeparators: [','],

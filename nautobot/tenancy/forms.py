@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.forms import (
@@ -45,9 +46,11 @@ class TenantGroupForm(NautobotModelForm):
 
 class TenantGroupFilterForm(NautobotFilterForm):
     model = TenantGroup
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     parent = DynamicModelMultipleChoiceField(queryset=TenantGroup.objects.all(), to_field_name="name", required=False)
-    has_tenants = forms.NullBooleanField(required="False", widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES))
+    has_tenants = forms.NullBooleanField(
+        required="False", widget=StaticSelect2(choices=BOOLEAN_WITH_BLANK_CHOICES), label=_("Has tenants")
+    )
 
 
 #
@@ -56,7 +59,7 @@ class TenantGroupFilterForm(NautobotFilterForm):
 
 
 class TenantForm(NautobotModelForm):
-    tenant_group = DynamicModelChoiceField(queryset=TenantGroup.objects.all(), required=False)
+    tenant_group = DynamicModelChoiceField(queryset=TenantGroup.objects.all(), required=False, label=_("Tenant group"))
     comments = CommentField()
 
     class Meta:
@@ -72,7 +75,7 @@ class TenantForm(NautobotModelForm):
 
 class TenantBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
     pk = forms.ModelMultipleChoiceField(queryset=Tenant.objects.all(), widget=forms.MultipleHiddenInput())
-    tenant_group = DynamicModelChoiceField(queryset=TenantGroup.objects.all(), required=False)
+    tenant_group = DynamicModelChoiceField(queryset=TenantGroup.objects.all(), required=False, label=_("Tenant group"))
 
     class Meta:
         nullable_fields = [
@@ -82,12 +85,13 @@ class TenantBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
 
 class TenantFilterForm(NautobotFilterForm):
     model = Tenant
-    q = forms.CharField(required=False, label="Search")
+    q = forms.CharField(required=False, label=_("Search"))
     tenant_group = DynamicModelMultipleChoiceField(
         queryset=TenantGroup.objects.all(),
         to_field_name="name",
         required=False,
         null_option="None",
+        label=_("Tenant group"),
     )
     tags = TagFilterField(model)
 
@@ -103,11 +107,10 @@ class TenancyForm(forms.Form):
         required=False,
         null_option="None",
         initial_params={"tenants": "$tenant"},
+        label=_("Tenant group"),
     )
     tenant = DynamicModelChoiceField(
-        queryset=Tenant.objects.all(),
-        required=False,
-        query_params={"tenant_group": "$tenant_group"},
+        queryset=Tenant.objects.all(), required=False, query_params={"tenant_group": "$tenant_group"}, label=_("Tenant")
     )
 
 
@@ -117,6 +120,7 @@ class TenancyFilterForm(forms.Form):
         to_field_name="name",
         required=False,
         null_option="None",
+        label=_("Tenant group"),
     )
     tenant = DynamicModelMultipleChoiceField(
         queryset=Tenant.objects.all(),
@@ -124,4 +128,5 @@ class TenancyFilterForm(forms.Form):
         required=False,
         null_option="None",
         query_params={"tenant_group": "$tenant_group"},
+        label=_("Tenant"),
     )

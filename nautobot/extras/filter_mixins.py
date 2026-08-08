@@ -2,6 +2,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Model, Q
 from django.utils.encoding import force_str
 from django.utils.text import capfirst
+from django.utils.translation import gettext_lazy as _
 import django_filters
 from django_filters.constants import EMPTY_VALUES
 from django_filters.utils import verbose_lookup_expr
@@ -176,16 +177,16 @@ class CreatedUpdatedModelFilterSetMixin(django_filters.FilterSet):
 class LocalContextModelFilterSetMixin(django_filters.FilterSet):
     local_config_context_data = django_filters.BooleanFilter(
         method="_local_config_context_data",
-        label="Has local config context data",
+        label=_("Has local config context data"),
     )
     local_config_context_schema_id = ModelMultipleChoiceFilter(
         queryset=ConfigContextSchema.objects.all(),
-        label="Schema (ID) - Deprecated (use local_context_schema filter)",
+        label=_("Schema (ID) - Deprecated (use local_context_schema filter)"),
     )
     local_config_context_schema = NaturalKeyOrPKMultipleChoiceFilter(
         queryset=ConfigContextSchema.objects.all(),
         to_field_name="name",
-        label="Schema (ID or name)",
+        label=_("Schema (ID or name)"),
     )
 
     def _local_config_context_data(self, queryset, name, value):

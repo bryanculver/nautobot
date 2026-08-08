@@ -1,5 +1,6 @@
 """Tables for nautobot_load_balancer_models."""
 
+from django.utils.translation import gettext_lazy as _
 import django_tables2 as tables
 
 from nautobot.core.tables import (
@@ -34,7 +35,7 @@ class VirtualServerTable(BaseTable):
     health_check_monitor = tables.Column(linkify=True)
     certificate_profiles_count = LinkedCountColumn(
         viewname="load_balancers:certificateprofile_list",
-        verbose_name="Certificate Profiles",
+        verbose_name=_("Certificate Profiles"),
         url_params={"virtual_servers": "pk"},
     )
     actions = ButtonsColumn(models.VirtualServer)
@@ -90,7 +91,7 @@ class LoadBalancerPoolTable(BaseTable):
     load_balancer_pool_member_count = LinkedCountColumn(
         viewname="load_balancers:loadbalancerpoolmember_list",
         url_params={"load_balancer_pool": "name"},
-        verbose_name="Load Balancer Pool Members",
+        verbose_name=_("Load Balancer Pool Members"),
     )
     tenant = TenantColumn()
     actions = ButtonsColumn(models.LoadBalancerPool)
@@ -123,14 +124,14 @@ class LoadBalancerPoolMemberTable(StatusTableMixin, BaseTable):
     """Table for LoadBalancerPoolMember list view."""
 
     pk = ToggleColumn()
-    display = tables.Column(linkify=True, verbose_name="Load Balancer Pool Member", order_by=["ip_address", "port"])
-    ip_address = tables.Column(linkify=True, verbose_name="IP Address")
-    load_balancer_pool = tables.Column(linkify=True, verbose_name="Load Balancer Pool")
+    display = tables.Column(linkify=True, verbose_name=_("Load Balancer Pool Member"), order_by=["ip_address", "port"])
+    ip_address = tables.Column(linkify=True, verbose_name=_("IP Address"))
+    load_balancer_pool = tables.Column(linkify=True, verbose_name=_("Load Balancer Pool"))
     health_check_monitor = tables.Column(linkify=True)
     ssl_offload = BooleanColumn()
     certificate_profiles_count = LinkedCountColumn(
         viewname="load_balancers:certificateprofile_list",
-        verbose_name="Certificate Profiles",
+        verbose_name=_("Certificate Profiles"),
         url_params={"load_balancer_pool_members": "pk"},
     )
     tenant = TenantColumn()
@@ -175,17 +176,17 @@ class HealthCheckMonitorTable(BaseTable):
     virtual_server_count = LinkedCountColumn(
         viewname="load_balancers:virtualserver_list",
         url_params={"health_check_monitor": "name"},
-        verbose_name="Virtual Servers",
+        verbose_name=_("Virtual Servers"),
     )
     load_balancer_pool_count = LinkedCountColumn(
         viewname="load_balancers:loadbalancerpool_list",
         url_params={"health_check_monitor": "name"},
-        verbose_name="Pools",
+        verbose_name=_("Pools"),
     )
     load_balancer_pool_member_count = LinkedCountColumn(
         viewname="load_balancers:loadbalancerpoolmember_list",
         url_params={"health_check_monitor": "name"},
-        verbose_name="Load Balancer Pool Members",
+        verbose_name=_("Load Balancer Pool Members"),
     )
     actions = ButtonsColumn(models.HealthCheckMonitor)
     tags = TagColumn(url_name="load_balancers:healthcheckmonitor_list")

@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load helpers %}
 <table class="table table-hover card-body attr-table">
     {% if termination.device or termination.module %}
@@ -7,33 +8,33 @@
             <td>{{ termination.parent|hyperlinked_object }}</td>
         </tr>
         <tr>
-            <td>Type</td>
+            <td>{% trans "Type" %}</td>
             <td>
                 {{ termination|meta:"verbose_name"|capfirst }}
             </td>
         </tr>
         <tr>
-            <td>Component</td>
+            <td>{% trans "Component" %}</td>
             <td>{{ termination|hyperlinked_object }}</td>
         </tr>
     {% elif termination.power_panel %}
         {# Power panel #}
         <tr>
-            <td>Power Panel</td>
+            <td>{% trans "Power Panel" %}</td>
             <td>{{ termination.power_panel|hyperlinked_object }}</td>
         </tr>
         <tr>
-            <td>Power Feed</td>
+            <td>{% trans "Power Feed" %}</td>
             <td>{{ termination|hyperlinked_object }}</td>
         </tr>
     {% else %}
         {# Circuit termination #}
         <tr>
-            <td>Provider</td>
+            <td>{% trans "Provider" %}</td>
             <td>{{ termination.circuit.provider|hyperlinked_object }}</td>
         </tr>
         <tr>
-            <td>Circuit</td>
+            <td>{% trans "Circuit" %}</td>
             <td>
                 {{ termination.circuit|hyperlinked_object }} ({{ termination }})
             </td>

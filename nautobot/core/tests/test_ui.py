@@ -10,7 +10,8 @@ from django.db.models import DateField, DateTimeField, Sum
 from django.template import Context
 from django.test import override_settings, RequestFactory
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, translation
+from django.utils.translation import gettext_lazy
 
 from nautobot.cloud.models import CloudNetwork, CloudResourceType, CloudService
 from nautobot.cloud.tables import CloudServiceTable
@@ -1056,3 +1057,51 @@ class PostButtonTest(TestCase):
         html = button.render(Context({"request": request}))
 
         self.assertIn('name="csrfmiddlewaretoken"', html)
+
+
+class LazyLabelSafetyTest(TestCase):
+    """
+    Lazy translation proxies must survive the UI framework's identity and DOM-id machinery.
+
+    These are prerequisites for wrapping UI-framework `label=` values in `gettext_lazy`: without
+    them, translating a label either silently collides component ids or produces language-dependent
+    (and for non-Latin scripts, empty) DOM ids.
+    """
+
+    def test_lazy_labels_contribute_to_component_id(self):
+        """Two panels differing only by a lazy label must not collapse to the same component_id."""
+        lazy = Panel(weight=100, label=gettext_lazy("Interfaces"), section=SectionChoices.LEFT_HALF)
+        other_lazy = Panel(weight=100, label=gettext_lazy("Comments"), section=SectionChoices.LEFT_HALF)
+        self.assertNotEqual(lazy.component_id, other_lazy.component_id)
+
+    def test_lazy_label_matches_equivalent_plain_label(self):
+        """Wrapping an existing label in `gettext_lazy` must not change its component_id."""
+        lazy = Panel(weight=100, label=gettext_lazy("Interfaces"), section=SectionChoices.LEFT_HALF)
+        plain = Panel(weight=100, label="Interfaces", section=SectionChoices.LEFT_HALF)
+        self.assertEqual(lazy.component_id, plain.component_id)
+
+    def test_component_id_is_language_independent(self):
+        """component_id round-trips through a GET parameter, so it must not vary by viewer language."""
+        with translation.override("en"):
+            english = Panel(weight=100, label=gettext_lazy("Yes"), section=SectionChoices.LEFT_HALF).component_id
+        with translation.override("de"):
+            german = Panel(weight=100, label=gettext_lazy("Yes"), section=SectionChoices.LEFT_HALF).component_id
+        self.assertEqual(english, german)
+
+    def test_body_id_is_language_independent(self):
+        """body_id keys each user's stored collapse state, so it must not vary by viewer language."""
+        context = Context({})
+        with translation.override("de"):
+            # "Yes" is translated by Django's own bundled catalogs, so this needs no Nautobot catalog.
+            self.assertEqual(str(gettext_lazy("Yes")), "Ja")
+            german = Panel(weight=100, label=gettext_lazy("Yes"), section=SectionChoices.LEFT_HALF)._get_body_id(
+                context
+            )
+        self.assertEqual(german, "yes")
+
+    def test_body_id_falls_back_when_label_does_not_slugify(self):
+        """A CJK label slugifies to the empty string; emit the component_id rather than `id=""`."""
+        panel = Panel(weight=100, label="設備名稱", section=SectionChoices.LEFT_HALF)
+        body_id = panel._get_body_id(Context({}))
+        self.assertTrue(body_id)
+        self.assertEqual(body_id, panel.component_id)

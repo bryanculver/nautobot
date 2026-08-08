@@ -20,8 +20,8 @@ from typing import Optional
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
-from django.template.defaultfilters import pluralize
 from django.utils import timezone
+from django.utils.translation import ngettext
 
 from nautobot.core.utils.data import render_jinja2
 from nautobot.core.utils.module_loading import import_modules_privately
@@ -147,7 +147,12 @@ class BaseValidator(CustomValidator):
                     self.validation_error(
                         {
                             rule.field: rule.error_message
-                            or f"There can only be {rule.max_instances} instance{pluralize(rule.max_instances)} with this value."
+                            or ngettext(
+                                "There can only be %(count)d instance with this value.",
+                                "There can only be %(count)d instances with this value.",
+                                rule.max_instances,
+                            )
+                            % {"count": rule.max_instances}
                         }
                     )
 

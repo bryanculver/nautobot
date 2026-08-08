@@ -191,3 +191,67 @@ class PreferenceTestCase(TestCase):
         self.assertEqual(timezone.get_current_timezone_name(), new_timezone_name)
         self.assertNotEqual(timezone_name, new_timezone_name)
         self.assertHttpStatus(response, 200)
+
+    def test_language_change(self):
+        """Selecting a language persists it and takes effect on subsequent requests."""
+        self.user.is_superuser = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+        url = reverse("user:preferences")
+        form_data = {"language": "zh-hans", "_update_preference_form": [""]}
+        response = self.client.post(path=url, data=post_data(form_data), follow=True)
+        self.assertHttpStatus(response, 200)
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.get_config("language"), "zh-hans")
+
+        response = self.client.get(url)
+        content = response.content.decode(response.charset)
+        # The date in the footer should now be rendered using Simplified Chinese conventions.
+        self.assertIn("年", content)
+        self.assertIn("月", content)
+        self.assertIn("日", content)
+
+    def test_language_can_be_reset_to_instance_default(self):
+        """The blank choice clears the preference, so a user can always get back to English."""
+        self.user.is_superuser = True
+        self.user.save()
+        self.user.set_config("language", "zh-hans", commit=True)
+        self.client.force_login(self.user)
+
+        url = reverse("user:preferences")
+        form_data = {"language": "", "_update_preference_form": [""]}
+        response = self.client.post(path=url, data=post_data(form_data), follow=True)
+        self.assertHttpStatus(response, 200)
+
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.get_config("language"))
+
+        response = self.client.get(url)
+        self.assertNotIn("年", response.content.decode(response.charset))
+
+    def test_language_choices_follow_the_languages_setting(self):
+        """An operator narrowing `LANGUAGES` narrows what users can select."""
+        self.client.force_login(self.user)
+        url = reverse("user:preferences")
+
+        with override_settings(LANGUAGES=[("en", "English")]):
+            response = self.client.get(url)
+            choices = dict(response.context["form"].fields["language"].choices)
+        self.assertEqual(sorted(choices), ["", "en"])
+
+        response = self.client.get(url)
+        choices = dict(response.context["form"].fields["language"].choices)
+        self.assertEqual(sorted(choices), sorted(["", *dict(settings.LANGUAGES)]))
+
+    def test_language_rejects_unsupported_value(self):
+        """A language outside `LANGUAGES` is a form validation error, not a silently stored value."""
+        self.client.force_login(self.user)
+        form_data = {"language": "xx", "_update_preference_form": [""]}
+        response = self.client.post(path=reverse("user:preferences"), data=post_data(form_data))
+
+        self.assertHttpStatus(response, 200)
+        self.assertIn("language", response.context["form"].errors)
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.get_config("language"))

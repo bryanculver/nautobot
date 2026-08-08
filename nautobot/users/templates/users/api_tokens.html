@@ -1,4 +1,5 @@
 {% extends 'users/base.html' %}
+{% load i18n %}
 {% load helpers %}
 
 {% block usercontent %}
@@ -11,46 +12,46 @@
                             <div class="d-print-none float-end">
                                 <a class="btn btn-sm btn-success" data-clipboard-target="#token_{{ token.pk }}">
                                     <span class="mdi mdi-content-copy me-4" aria-hidden="true"></span><!--
-                                    -->Copy</a>
+                                    -->{% trans "Copy" %}</a>
                                 {% if perms.users.change_token %}
                                     <a href="{% url 'user:token_edit' pk=token.pk %}" class="btn btn-sm btn-warning">
                                         <span class="mdi mdi-pencil me-4" aria-hidden="true"></span><!--
-                                        -->Edit
+                                        -->{% trans "Edit" %}
                                     </a>
                                 {% endif %}
                                 {% if perms.users.delete_token %}
                                     <a href="{% url 'user:token_delete' pk=token.pk %}" class="btn btn-sm btn-danger">
                                         <span class="mdi mdi-trash-can-outline me-4" aria-hidden="true"></span><!--
-                                        -->Delete
+                                        -->{% trans "Delete" %}
                                     </a>
                                 {% endif %}
                             </div>
                             <span aria-hidden="true" class="mdi mdi-key"></span>
                             <samp><span id="token_{{ token.pk }}">{{ token.key }}</span></samp>
                             {% if token.is_expired %}
-                                <span class="badge bg-danger">Expired</span>
+                                <span class="badge bg-danger">{% trans "Expired" %}</span>
                             {% endif %}
                         </div>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-4 gap-4 vstack">
-                                    <small class="text-secondary">Created</small>
+                                    <small class="text-secondary">{% trans "Created" %}</small>
                                     <span title="{{ token.created }}">{{ token.created|date }}</span>
                                 </div>
                                 <div class="col-md-4 gap-4 vstack">
-                                    <small class="text-secondary">Expires</small>
+                                    <small class="text-secondary">{% trans "Expires" %}</small>
                                     {% if token.expires %}
                                         <span title="{{ token.expires }}">{{ token.expires|date }}</span>
                                     {% else %}
-                                        <span>Never</span>
+                                        <span>{% trans "Never" %}</span>
                                     {% endif %}
                                 </div>
                                 <div class="col-md-4 gap-4 vstack align-items-start">
-                                    <small class="text-secondary">Create/edit/delete operations</small>
+                                    <small class="text-secondary">{% trans "Create/edit/delete operations" %}</small>
                                     {% if token.write_enabled %}
-                                        <span class="badge bg-success">Enabled</span>
+                                        <span class="badge bg-success">{% trans "Enabled" %}</span>
                                     {% else %}
-                                        <span class="badge bg-danger">Disabled</span>
+                                        <span class="badge bg-danger">{% trans "Disabled" %}</span>
                                     {% endif %}
                                 </div>
                             </div>
@@ -60,7 +61,7 @@
                         </div>
                     </div>
                 {% empty %}
-                    <p>You do not have any API tokens.</p>
+                    <p>{% trans "You do not have any API tokens." %}</p>
                 {% endfor %}
             </div>
         </div>
@@ -68,11 +69,11 @@
             {% if perms.users.add_token %}
                 <a href="{% url 'user:token_add' %}" class="btn btn-primary">
                     <span class="mdi mdi-plus-thick me-4" aria-hidden="true"></span><!--
-                    -->Add a token
+                    -->{% trans "Add a token" %}
                 </a>
             {% else %}
                 <div class="alert alert-info mb-0 text-center" role="alert">
-                    You do not have permission to create new API tokens. If needed, ask an administrator to enable token creation for your account or an assigned group.
+                    {% trans "You do not have permission to create new API tokens. If needed, ask an administrator to enable token creation for your account or an assigned group." %}
                 </div>
             {% endif %}
         </div>

@@ -27,6 +27,7 @@ from django.urls import reverse
 from django.utils.encoding import iri_to_uri
 from django.utils.html import format_html, format_html_join, mark_safe
 from django.utils.http import url_has_allowed_host_and_scheme, urlencode
+from django.utils.translation import gettext, gettext_lazy as _, gettext_noop
 from django.views.generic import View
 from django_tables2 import RequestConfig
 from rest_framework.decorators import action
@@ -177,6 +178,15 @@ from .utils import disconnect_termination
 logger = logging.getLogger(__name__)
 
 
+# The view titles below are Django template strings held in Python literals, so
+# `makemessages` cannot see their translation tags. Declaring the msgids here is what makes
+# them extractable; `nautobot.core.ui.titles` documents the same pattern for the defaults.
+TRANSLATABLE_VIEW_TITLES = (
+    gettext_noop("Rack Elevation"),
+    gettext_noop("Cable Trace for %(object)s"),
+)
+
+
 class BulkDisconnectView(GetReturnURLMixin, ObjectPermissionRequiredMixin, View):
     """
     An extendable view for disconnection console/power/interface components in bulk.
@@ -221,7 +231,8 @@ class BulkDisconnectView(GetReturnURLMixin, ObjectPermissionRequiredMixin, View)
 
                 messages.success(
                     request,
-                    f"Disconnected {count} {self.queryset.model._meta.verbose_name_plural}",
+                    gettext("Disconnected %(count)s %(object_name)s")
+                    % {"count": count, "object_name": self.queryset.model._meta.verbose_name_plural},
                 )
                 # Inform the user that the surviving cables can still be cleaned up. One
                 # aggregated message with a bullet list, not one toast per cable.
@@ -234,8 +245,11 @@ class BulkDisconnectView(GetReturnURLMixin, ObjectPermissionRequiredMixin, View)
                     messages.info(
                         request,
                         format_html(
-                            "The following cables still exist — delete any that are no longer needed:<ul>{}</ul>",
-                            cable_items,
+                            gettext(
+                                "The following cables still exist — delete any that are no longer "
+                                "needed:<ul>{items}</ul>"
+                            ),
+                            items=cable_items,
                         ),
                     )
 
@@ -310,12 +324,12 @@ class LocationTypeUIViewSet(NautobotUIViewSet):
                 weight=100,
                 table_class=tables.LocationTypeTable,
                 table_filter="parent",
-                table_title="Child Location Type(s)",
+                table_title=_("Child Location Type(s)"),
             ),
             object_detail.ObjectsTablePanel(
                 weight=200,
                 table_class=tables.LocationTable,
-                table_title="Location(s) of this Type",
+                table_title=_("Location(s) of this Type"),
                 table_filter="location_type",
                 exclude_columns=["location_type"],
             ),
@@ -328,20 +342,24 @@ class LocationTypeUIViewSet(NautobotUIViewSet):
 #
 
 
+# Both the display label and the key `render_value` dispatches on -- must be a single object.
+GPS_COORDINATES = _("GPS Coordinates")
+
+
 class LocationGeographicalInfoFieldsPanel(object_detail.ObjectFieldsPanel):
     def get_data(self, context):
         data = super().get_data(context)
         obj = get_obj_from_context(context, self.context_object_key)
 
         if obj and obj.latitude is not None and obj.longitude is not None:
-            data["GPS Coordinates"] = f"{obj.latitude}, {obj.longitude}"
+            data[GPS_COORDINATES] = f"{obj.latitude}, {obj.longitude}"
         else:
-            data["GPS Coordinates"] = None
+            data[GPS_COORDINATES] = None
 
         return data
 
     def render_value(self, key, value, context):
-        if key == "GPS Coordinates":
+        if key == GPS_COORDINATES:
             if value is not None:
                 return helpers.render_address(value)
             return helpers.HTML_NONE
@@ -361,7 +379,7 @@ class LocationRackGroupsPanel(object_detail.Panel):
                 </td>
                 <td>{}</td>
                 <td class="float-end d-print-none">
-                    <a href="{}" class="btn btn-sm btn-primary" title="View elevations">
+                    <a href="{}" class="btn btn-sm btn-primary" title="{}">
                         <span class="mdi mdi-server"></span>
                     </a>
                 </td>
@@ -372,6 +390,7 @@ class LocationRackGroupsPanel(object_detail.Panel):
             name,
             count,
             elevation_url,
+            _("View elevations"),
         )
 
     def render_body_content(self, context):
@@ -402,7 +421,7 @@ class LocationRackGroupsPanel(object_detail.Panel):
             self.render_rack_row(
                 10,
                 "#",
-                "All racks",
+                _("All racks"),
                 rack_count,
                 f"{reverse('dcim:rack_elevation_list')}?location={obj.pk}",
             )
@@ -480,13 +499,13 @@ class LocationUIViewSet(NautobotUIViewSet):
                     "time_zone": [helpers.format_timezone],
                 },
                 key_transforms={
-                    "asn": "AS Number",
+                    "asn": _("AS Number"),
                 },
             ),
             LocationGeographicalInfoFieldsPanel(
                 weight=110,
                 section=SectionChoices.LEFT_HALF,
-                label="Geographical Info",
+                label=_("Geographical Info"),
                 fields=[
                     "physical_address",
                     "shipping_address",
@@ -499,7 +518,7 @@ class LocationUIViewSet(NautobotUIViewSet):
             object_detail.ObjectFieldsPanel(
                 weight=120,
                 section=SectionChoices.LEFT_HALF,
-                label="Contact Info",
+                label=_("Contact Info"),
                 fields=["contact_name", "contact_phone", "contact_email"],
                 value_transforms={
                     "contact_phone": [helpers.hyperlinked_phone_number],
@@ -509,14 +528,14 @@ class LocationUIViewSet(NautobotUIViewSet):
             ),
             object_detail.AsyncStatsPanel(
                 weight=100,
-                label="Stats",
+                label=_("Stats"),
                 section=SectionChoices.RIGHT_HALF,
                 api_url_name="dcim-api:location-stats",
             ),
             LocationSiblingsTablePanel(
                 section=SectionChoices.RIGHT_HALF,
                 weight=150,
-                table_title="Sibling Locations",
+                table_title=_("Sibling Locations"),
                 table_class=tables.LocationTable,
                 table_attribute="siblings",
                 related_field_name="parent",
@@ -526,7 +545,7 @@ class LocationUIViewSet(NautobotUIViewSet):
                 max_display_count=10,
             ),
             LocationRackGroupsPanel(
-                label="Rack Groups",
+                label=_("Rack Groups"),
                 section=SectionChoices.RIGHT_HALF,
                 weight=200,
                 body_wrapper_template_path="components/panel/body_wrapper_generic_table.html",
@@ -534,7 +553,7 @@ class LocationUIViewSet(NautobotUIViewSet):
             LocationImageAttachmentsTablePanel(
                 weight=300,
                 section=SectionChoices.RIGHT_HALF,
-                table_title="Images",
+                table_title=_("Images"),
                 table_class=ImageAttachmentTable,
                 table_attribute="images",
                 related_field_name="location",
@@ -544,7 +563,7 @@ class LocationUIViewSet(NautobotUIViewSet):
             object_detail.ObjectsTablePanel(
                 section=SectionChoices.FULL_WIDTH,
                 weight=100,
-                table_title="Child Locations",
+                table_title=_("Child Locations"),
                 table_class=tables.LocationTable,
                 table_attribute="children",
                 related_field_name="parent",
@@ -708,13 +727,17 @@ class MigrateLocationDataToContactView(generic.ObjectEditView):
             with transaction.atomic():
                 if not helpers.has_perms(request.user, ["extras.add_contactassociation"]):
                     raise PermissionDenied(
-                        "ObjectPermission extras.add_contactassociation is needed to perform this action"
+                        _("ObjectPermission %(permission)s is needed to perform this action")
+                        % {"permission": "extras.add_contactassociation"}
                     )
                 contact = None
                 team = None
                 if migrate_action == LocationDataToContactActionChoices.CREATE_AND_ASSIGN_NEW_CONTACT:
                     if not helpers.has_perms(request.user, ["extras.add_contact"]):
-                        raise PermissionDenied("ObjectPermission extras.add_contact is needed to perform this action")
+                        raise PermissionDenied(
+                            _("ObjectPermission %(permission)s is needed to perform this action")
+                            % {"permission": "extras.add_contact"}
+                        )
                     contact = Contact(
                         name=request.POST.get("name"),
                         phone=request.POST.get("phone"),
@@ -725,7 +748,10 @@ class MigrateLocationDataToContactView(generic.ObjectEditView):
                     Contact.objects.restrict(request.user, "view").get(pk=contact.pk)
                 elif migrate_action == LocationDataToContactActionChoices.CREATE_AND_ASSIGN_NEW_TEAM:
                     if not helpers.has_perms(request.user, ["extras.add_team"]):
-                        raise PermissionDenied("ObjectPermission extras.add_team is needed to perform this action")
+                        raise PermissionDenied(
+                            _("ObjectPermission %(permission)s is needed to perform this action")
+                            % {"permission": "extras.add_team"}
+                        )
                     team = Team(
                         name=request.POST.get("name"),
                         phone=request.POST.get("phone"),
@@ -822,7 +848,7 @@ class RackGroupUIViewSet(NautobotUIViewSet):
     object_detail_content = object_detail.ObjectDetailContent(
         panels=[
             object_detail.ObjectFieldsPanel(
-                label="Rack Group",
+                label=_("Rack Group"),
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
                 fields=["description", "parent", "location"],
@@ -1009,7 +1035,7 @@ class RackUIViewSet(NautobotUIViewSet):
             RackObjectFieldsPanel(
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
-                label="Rack",
+                label=_("Rack"),
                 fields=[
                     "location",
                     "rack_group",
@@ -1027,7 +1053,7 @@ class RackUIViewSet(NautobotUIViewSet):
             DimensionsObjectFieldsPanel(
                 section=SectionChoices.LEFT_HALF,
                 weight=200,
-                label="Dimensions",
+                label=_("Dimensions"),
                 fields=[
                     "type",
                     "width",
@@ -1058,7 +1084,7 @@ class RackUIViewSet(NautobotUIViewSet):
                 ],
             ),
             ImageAttachmentObjectsTablePanel(
-                table_title="Images",
+                table_title=_("Images"),
                 section=SectionChoices.LEFT_HALF,
                 table_class=ImageAttachmentTable,
                 table_attribute="images",
@@ -1093,7 +1119,7 @@ class RackUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.RIGHT_HALF,
                 context_table_key="nonracked_devices_table",
                 related_field_name="rack",
-                table_title="Non-Racked Devices",
+                table_title=_("Non-Racked Devices"),
                 exclude_columns=[
                     "status",
                     "tenant",
@@ -1114,13 +1140,13 @@ class RackUIViewSet(NautobotUIViewSet):
             RackNavigationButton(direction="prev", weight=20),
             RackNavigationButton(direction="next", weight=30),
             RackToggleButton(
-                label="Show Device Full Name",
+                label=_("Show Device Full Name"),
                 icon="mdi mdi-checkbox-marked-circle-outline",
                 extra_classes="toggle-fullname",
                 weight=40,
             ),
             RackToggleButton(
-                label="Show Images",
+                label=_("Show Images"),
                 icon="mdi mdi-checkbox-marked-circle-outline",
                 extra_classes="toggle-images",
                 weight=50,
@@ -1170,7 +1196,7 @@ class RackElevationListView(generic.ObjectListView):
     filterset_form = forms.RackFilterForm
     action_buttons = []
     template_name = "dcim/rack_elevation_list.html"
-    view_titles = Titles(titles={"list": "Rack Elevation"})
+    view_titles = Titles(titles={"list": '{% trans "Rack Elevation" %}'})
 
     def extra_context(self):
         racks = self.queryset
@@ -1236,7 +1262,7 @@ class RackReservationUIViewSet(NautobotUIViewSet):
             object_detail.ObjectFieldsPanel(
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
-                label="Rack",
+                label=_("Rack"),
                 fields=["rack__location", "rack__rack_group", "rack"],
                 key_transforms={
                     "rack__location": "Location",
@@ -1246,7 +1272,7 @@ class RackReservationUIViewSet(NautobotUIViewSet):
             object_detail.ObjectFieldsPanel(
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
-                label="Reservation Details",
+                label=_("Reservation Details"),
                 fields=["unit_list", "tenant", "user", "description"],
             ),
             object_detail.Panel(
@@ -1400,7 +1426,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
                 table_class=tables.DeviceTable,
                 table_filter="device_type",
                 related_field_name="device_type",
-                table_title="Device Instances",
+                table_title=_("Device Instances"),
                 exclude_columns=["actions", "tags"],
             ),
         ),
@@ -1408,7 +1434,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=100,
                 tab_id="interfaces",
-                label="Interfaces",
+                label=_("Interfaces"),
                 url_name="dcim:devicetype_interfaces",
                 related_object_attribute="interface_templates",
                 hide_if_empty=True,
@@ -1416,7 +1442,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         section=SectionChoices.FULL_WIDTH,
                         weight=100,
-                        table_title="Interfaces",
+                        table_title=_("Interfaces"),
                         table_class=tables.InterfaceTemplateTable,
                         table_filter="device_type",
                         tab_id="interfaces",
@@ -1434,7 +1460,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=200,
                 tab_id="frontports",
-                label="Front Ports",
+                label=_("Front Ports"),
                 url_name="dcim:devicetype_frontports",
                 related_object_attribute="front_port_templates",
                 hide_if_empty=True,
@@ -1442,7 +1468,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         section=SectionChoices.FULL_WIDTH,
                         weight=100,
-                        table_title="Front Ports",
+                        table_title=_("Front Ports"),
                         table_class=tables.FrontPortTemplateTable,
                         table_filter="device_type",
                         tab_id="frontports",
@@ -1460,7 +1486,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=300,
                 tab_id="rearports",
-                label="Rear Ports",
+                label=_("Rear Ports"),
                 url_name="dcim:devicetype_rearports",
                 related_object_attribute="rear_port_templates",
                 hide_if_empty=True,
@@ -1468,7 +1494,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         section=SectionChoices.FULL_WIDTH,
                         weight=100,
-                        table_title="Rear Ports",
+                        table_title=_("Rear Ports"),
                         table_class=tables.RearPortTemplateTable,
                         table_filter="device_type",
                         tab_id="rearports",
@@ -1486,7 +1512,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=400,
                 tab_id="consoleports",
-                label="Console Ports",
+                label=_("Console Ports"),
                 url_name="dcim:devicetype_consoleports",
                 related_object_attribute="console_port_templates",
                 hide_if_empty=True,
@@ -1494,7 +1520,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         section=SectionChoices.FULL_WIDTH,
                         weight=100,
-                        table_title="Console Ports",
+                        table_title=_("Console Ports"),
                         table_class=tables.ConsolePortTemplateTable,
                         table_filter="device_type",
                         tab_id="consoleports",
@@ -1512,7 +1538,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=500,
                 tab_id="consoleserverports",
-                label="Console Server Ports",
+                label=_("Console Server Ports"),
                 url_name="dcim:devicetype_consoleserverports",
                 related_object_attribute="console_server_port_templates",
                 hide_if_empty=True,
@@ -1520,7 +1546,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         section=SectionChoices.FULL_WIDTH,
                         weight=100,
-                        table_title="Console Server Ports",
+                        table_title=_("Console Server Ports"),
                         table_class=tables.ConsoleServerPortTemplateTable,
                         table_filter="device_type",
                         tab_id="consoleserverports",
@@ -1538,7 +1564,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=600,
                 tab_id="powerports",
-                label="Power Ports",
+                label=_("Power Ports"),
                 url_name="dcim:devicetype_powerports",
                 related_object_attribute="power_port_templates",
                 hide_if_empty=True,
@@ -1546,7 +1572,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         section=SectionChoices.FULL_WIDTH,
                         weight=100,
-                        table_title="Power Ports",
+                        table_title=_("Power Ports"),
                         table_class=tables.PowerPortTemplateTable,
                         table_filter="device_type",
                         tab_id="powerports",
@@ -1564,7 +1590,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=700,
                 tab_id="poweroutlets",
-                label="Power Outlets",
+                label=_("Power Outlets"),
                 url_name="dcim:devicetype_poweroutlets",
                 related_object_attribute="power_outlet_templates",
                 hide_if_empty=True,
@@ -1572,7 +1598,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         section=SectionChoices.FULL_WIDTH,
                         weight=100,
-                        table_title="Power Outlets",
+                        table_title=_("Power Outlets"),
                         table_class=tables.PowerOutletTemplateTable,
                         table_filter="device_type",
                         tab_id="poweroutlets",
@@ -1590,7 +1616,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=800,
                 tab_id="devicebays",
-                label="Device Bays",
+                label=_("Device Bays"),
                 url_name="dcim:devicetype_devicebays",
                 related_object_attribute="device_bay_templates",
                 hide_if_empty=True,
@@ -1598,7 +1624,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         section=SectionChoices.FULL_WIDTH,
                         weight=100,
-                        table_title="Device Bays",
+                        table_title=_("Device Bays"),
                         table_class=tables.DeviceBayTemplateTable,
                         table_filter="device_type",
                         tab_id="devicebays",
@@ -1616,7 +1642,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=900,
                 tab_id="modulebays",
-                label="Module Bays",
+                label=_("Module Bays"),
                 url_name="dcim:devicetype_modulebays",
                 related_object_attribute="module_bay_templates",
                 hide_if_empty=True,
@@ -1624,7 +1650,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         section=SectionChoices.FULL_WIDTH,
                         weight=100,
-                        table_title="Module Bays",
+                        table_title=_("Module Bays"),
                         table_class=tables.ModuleBayTemplateTable,
                         table_filter="device_type",
                         tab_id="modulebays",
@@ -1644,7 +1670,7 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
             object_detail.DropdownButton(
                 weight=100,
                 color=ButtonActionColorChoices.ADD,
-                label="Add Components",
+                label=_("Add Components"),
                 attributes={"id": "device-type-add-components-button"},
                 icon="mdi-plus-thick",
                 required_permissions=["dcim.change_devicetype"],
@@ -1652,63 +1678,63 @@ class DeviceTypeUIViewSet(NautobotUIViewSet):
                     object_detail.Button(
                         weight=100,
                         link_name="dcim:devicetype_consoleporttemplate_add",
-                        label="Console Ports",
+                        label=_("Console Ports"),
                         icon=DEVICE_COMPONENT_ICONS["consoleporttemplate"],
                         required_permissions=["dcim.add_consoleporttemplate"],
                     ),
                     object_detail.Button(
                         weight=200,
                         link_name="dcim:devicetype_consoleserverporttemplate_add",
-                        label="Console Server Ports",
+                        label=_("Console Server Ports"),
                         icon=DEVICE_COMPONENT_ICONS["consoleserverporttemplate"],
                         required_permissions=["dcim.add_consoleserverporttemplate"],
                     ),
                     object_detail.Button(
                         weight=300,
                         link_name="dcim:devicetype_powerporttemplate_add",
-                        label="Power Ports",
+                        label=_("Power Ports"),
                         icon=DEVICE_COMPONENT_ICONS["powerporttemplate"],
                         required_permissions=["dcim.add_powerporttemplate"],
                     ),
                     object_detail.Button(
                         weight=400,
                         link_name="dcim:devicetype_poweroutlettemplate_add",
-                        label="Power Outlets",
+                        label=_("Power Outlets"),
                         icon=DEVICE_COMPONENT_ICONS["poweroutlettemplate"],
                         required_permissions=["dcim.add_poweroutlettemplate"],
                     ),
                     object_detail.Button(
                         weight=500,
                         link_name="dcim:devicetype_interfacetemplate_add",
-                        label="Interfaces",
+                        label=_("Interfaces"),
                         icon=DEVICE_COMPONENT_ICONS["interfacetemplate"],
                         required_permissions=["dcim.add_interfacetemplate"],
                     ),
                     object_detail.Button(
                         weight=600,
                         link_name="dcim:devicetype_frontporttemplate_add",
-                        label="Front Ports",
+                        label=_("Front Ports"),
                         icon=DEVICE_COMPONENT_ICONS["frontporttemplate"],
                         required_permissions=["dcim.add_frontporttemplate"],
                     ),
                     object_detail.Button(
                         weight=700,
                         link_name="dcim:devicetype_rearporttemplate_add",
-                        label="Rear Ports",
+                        label=_("Rear Ports"),
                         icon=DEVICE_COMPONENT_ICONS["rearporttemplate"],
                         required_permissions=["dcim.add_rearporttemplate"],
                     ),
                     object_detail.Button(
                         weight=800,
                         link_name="dcim:devicetype_devicebaytemplate_add",
-                        label="Device Bays",
+                        label=_("Device Bays"),
                         icon=DEVICE_COMPONENT_ICONS["devicebaytemplate"],
                         required_permissions=["dcim.add_devicebaytemplate"],
                     ),
                     object_detail.Button(
                         weight=900,
                         link_name="dcim:devicetype_modulebaytemplate_add",
-                        label="Module Bays",
+                        label=_("Module Bays"),
                         icon=DEVICE_COMPONENT_ICONS["modulebaytemplate"],
                         required_permissions=["dcim.add_modulebaytemplate"],
                     ),
@@ -1933,7 +1959,7 @@ class ModuleTypeUIViewSet(
                 section=SectionChoices.RIGHT_HALF,
                 weight=100,
                 fields=["front_image", "rear_image"],
-                label="Images",
+                label=_("Images"),
             ),
             object_detail.ObjectsTablePanel(
                 weight=200,
@@ -1941,7 +1967,7 @@ class ModuleTypeUIViewSet(
                 table_class=tables.ModuleTable,
                 table_filter="module_type",
                 related_field_name="module_type",
-                table_title="Module Instances",
+                table_title=_("Module Instances"),
                 exclude_columns=["actions", "tags"],
             ),
         ),
@@ -1949,7 +1975,7 @@ class ModuleTypeUIViewSet(
             object_detail.DropdownButton(
                 weight=100,
                 color=ButtonActionColorChoices.ADD,
-                label="Add Components",
+                label=_("Add Components"),
                 attributes={"id": "module-type-add-components-button"},
                 icon="mdi-plus-thick",
                 required_permissions=["dcim.change_moduletype"],
@@ -1958,7 +1984,7 @@ class ModuleTypeUIViewSet(
                         weight=100,
                         link_name="dcim:consoleporttemplate_add",
                         tab="consoleports",
-                        label="Console Ports",
+                        label=_("Console Ports"),
                         icon=DEVICE_COMPONENT_ICONS["consoleporttemplate"],
                         required_permissions=["dcim.add_consoleporttemplate"],
                     ),
@@ -1966,7 +1992,7 @@ class ModuleTypeUIViewSet(
                         weight=200,
                         link_name="dcim:consoleserverporttemplate_add",
                         tab="consoleserverports",
-                        label="Console Server Ports",
+                        label=_("Console Server Ports"),
                         icon=DEVICE_COMPONENT_ICONS["consoleserverporttemplate"],
                         required_permissions=["dcim.add_consoleserverporttemplate"],
                     ),
@@ -1974,7 +2000,7 @@ class ModuleTypeUIViewSet(
                         weight=300,
                         link_name="dcim:powerporttemplate_add",
                         tab="powerports",
-                        label="Power Ports",
+                        label=_("Power Ports"),
                         icon=DEVICE_COMPONENT_ICONS["powerporttemplate"],
                         required_permissions=["dcim.add_powerporttemplate"],
                     ),
@@ -1982,7 +2008,7 @@ class ModuleTypeUIViewSet(
                         weight=400,
                         link_name="dcim:poweroutlettemplate_add",
                         tab="poweroutlets",
-                        label="Power Outlets",
+                        label=_("Power Outlets"),
                         icon=DEVICE_COMPONENT_ICONS["poweroutlettemplate"],
                         required_permissions=["dcim.add_poweroutlettemplate"],
                     ),
@@ -1990,7 +2016,7 @@ class ModuleTypeUIViewSet(
                         weight=500,
                         link_name="dcim:interfacetemplate_add",
                         tab="interfaces",
-                        label="Interfaces",
+                        label=_("Interfaces"),
                         icon=DEVICE_COMPONENT_ICONS["interfacetemplate"],
                         required_permissions=["dcim.add_interfacetemplate"],
                     ),
@@ -1998,7 +2024,7 @@ class ModuleTypeUIViewSet(
                         weight=600,
                         link_name="dcim:frontporttemplate_add",
                         tab="frontports",
-                        label="Front Ports",
+                        label=_("Front Ports"),
                         icon=DEVICE_COMPONENT_ICONS["frontporttemplate"],
                         required_permissions=["dcim.add_frontporttemplate"],
                     ),
@@ -2006,7 +2032,7 @@ class ModuleTypeUIViewSet(
                         weight=700,
                         link_name="dcim:rearporttemplate_add",
                         tab="rearports",
-                        label="Rear Ports",
+                        label=_("Rear Ports"),
                         icon=DEVICE_COMPONENT_ICONS["rearporttemplate"],
                         required_permissions=["dcim.add_rearporttemplate"],
                     ),
@@ -2014,7 +2040,7 @@ class ModuleTypeUIViewSet(
                         weight=800,
                         link_name="dcim:modulebaytemplate_add",
                         tab="modulebays",
-                        label="Module Bays",
+                        label=_("Module Bays"),
                         icon=DEVICE_COMPONENT_ICONS["modulebaytemplate"],
                         required_permissions=["dcim.add_modulebaytemplate"],
                     ),
@@ -2183,7 +2209,11 @@ class ModuleTypeUIViewSet(
                     self.logger.info(f"Import object {obj} (PK: {obj.pk})")
                     messages.success(
                         request,
-                        format_html('Imported object: <a href="{}">{}</a>', obj.get_absolute_url(), obj),
+                        format_html(
+                            gettext('Imported object: <a href="{url}">{obj}</a>'),
+                            url=obj.get_absolute_url(),
+                            obj=obj,
+                        ),
                     )
 
                     if "_addanother" in request.POST:
@@ -2348,7 +2378,8 @@ class ComponentCreateViewMixin(ObjectEditViewMixin):
 
             messages.success(
                 request,
-                f"Added {len(new_components)} {self.queryset.model._meta.verbose_name_plural}",
+                gettext("Added %(count)s %(object_name)s")
+                % {"count": len(new_components), "object_name": self.queryset.model._meta.verbose_name_plural},
             )
 
             if "_addanother" in request.POST:
@@ -2626,7 +2657,8 @@ class ModuleBayCommonViewSetMixin:
 
                     messages.success(
                         request,
-                        f"Added {len(new_components)} {self.queryset.model._meta.verbose_name_plural}",
+                        gettext("Added %(count)s %(object_name)s")
+                        % {"count": len(new_components), "object_name": self.queryset.model._meta.verbose_name_plural},
                     )
                     if "_addanother" in request.POST:
                         return redirect(request.get_full_path())
@@ -2714,7 +2746,7 @@ class PlatformUIViewSet(NautobotUIViewSet):
                 weight=100,
                 section=SectionChoices.RIGHT_HALF,
                 context_data_key="network_driver_tool_names",
-                label="Network Driver Mappings",
+                label=_("Network Driver Mappings"),
             ),
             object_detail.ObjectsTablePanel(
                 weight=100,
@@ -2864,7 +2896,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                 object_detail.DistinctViewTab(
                     weight=object_detail.Tab.WEIGHT_GROUPS_TAB,
                     tab_id="dynamic_groups",
-                    label="Dynamic Groups",
+                    label=_("Dynamic Groups"),
                     url_name="dcim:device_dynamicgroups",
                     related_object_attribute="dynamic_groups",
                     panels=(
@@ -2951,7 +2983,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                 if instance.rack is not None and value is not None:
                     return format_html("U{} / {}", value, instance.get_face_display())
                 if instance.rack is not None and instance.device_type.u_height:
-                    return mark_safe('<span class="badge bg-warning">Not racked</span>')
+                    return format_html('<span class="badge bg-warning">{}</span>', _("Not racked"))
                 return helpers.HTML_NONE
             if key == "device_redundancy_group" and value is not None:
                 instance = get_obj_from_context(context, self.context_object_key)
@@ -2995,8 +3027,13 @@ class DeviceUIViewSet(NautobotUIViewSet):
         def render_body_content(self, context):
             """Render a table with one row per power-port and additional rows per leg for three-phase power."""
             instance = get_obj_from_context(context)
-            header = mark_safe(
-                "<tr><th>Input</th><th>Outlets</th><th>Allocated</th><th>Available</th><th>Utilization</th></tr>"
+            header = format_html(
+                "<tr><th>{}</th><th>{}</th><th>{}</th><th>{}</th><th>{}</th></tr>",
+                _("Input"),
+                _("Outlets"),
+                _("Allocated"),
+                _("Available"),
+                _("Utilization"),
             )
             body = mark_safe("")
             for powerport in instance.all_power_ports.all():
@@ -3206,10 +3243,10 @@ class DeviceUIViewSet(NautobotUIViewSet):
         def render_label_wrapper(self, context):
             obj = get_obj_from_context(context)
             if obj.platform is None:
-                with context.update({"disabled_message": "No platform assigned to this device"}):
+                with context.update({"disabled_message": _("No platform assigned to this device")}):
                     return super().render_label_wrapper(context)
             if not obj.platform.napalm_driver:
-                with context.update({"disabled_message": "No NAPALM driver assigned for this platform"}):
+                with context.update({"disabled_message": _("No NAPALM driver assigned for this platform")}):
                     return super().render_label_wrapper(context)
             return super().render_label_wrapper(context)
 
@@ -3218,7 +3255,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             object_detail.DropdownButton(
                 weight=100,
                 color=ButtonActionColorChoices.ADD,
-                label="Add Components",
+                label=_("Add Components"),
                 attributes={"id": "device-add-components-button"},
                 icon="mdi-plus-thick",
                 required_permissions=["dcim.change_device"],
@@ -3226,70 +3263,70 @@ class DeviceUIViewSet(NautobotUIViewSet):
                     object_detail.Button(
                         weight=100,
                         link_name="dcim:device_consoleports_add",
-                        label="Console Ports",
+                        label=_("Console Ports"),
                         icon=DEVICE_COMPONENT_ICONS["consoleport"],
                         required_permissions=["dcim.add_consoleport"],
                     ),
                     object_detail.Button(
                         weight=200,
                         link_name="dcim:device_consoleserverports_add",
-                        label="Console Server Ports",
+                        label=_("Console Server Ports"),
                         icon=DEVICE_COMPONENT_ICONS["consoleserverport"],
                         required_permissions=["dcim.add_consoleserverport"],
                     ),
                     object_detail.Button(
                         weight=300,
                         link_name="dcim:device_powerports_add",
-                        label="Power Ports",
+                        label=_("Power Ports"),
                         icon=DEVICE_COMPONENT_ICONS["powerport"],
                         required_permissions=["dcim.add_powerport"],
                     ),
                     object_detail.Button(
                         weight=400,
                         link_name="dcim:device_poweroutlets_add",
-                        label="Power Outlets",
+                        label=_("Power Outlets"),
                         icon=DEVICE_COMPONENT_ICONS["poweroutlet"],
                         required_permissions=["dcim.add_poweroutlet"],
                     ),
                     object_detail.Button(
                         weight=500,
                         link_name="dcim:device_interfaces_add",
-                        label="Interfaces",
+                        label=_("Interfaces"),
                         icon=DEVICE_COMPONENT_ICONS["interface"],
                         required_permissions=["dcim.add_interface"],
                     ),
                     object_detail.Button(
                         weight=600,
                         link_name="dcim:device_frontports_add",
-                        label="Front Ports",
+                        label=_("Front Ports"),
                         icon=DEVICE_COMPONENT_ICONS["frontport"],
                         required_permissions=["dcim.add_frontport"],
                     ),
                     object_detail.Button(
                         weight=700,
                         link_name="dcim:device_rearports_add",
-                        label="Rear Ports",
+                        label=_("Rear Ports"),
                         icon=DEVICE_COMPONENT_ICONS["rearport"],
                         required_permissions=["dcim.add_rearport"],
                     ),
                     object_detail.Button(
                         weight=800,
                         link_name="dcim:device_devicebays_add",
-                        label="Device Bays",
+                        label=_("Device Bays"),
                         icon=DEVICE_COMPONENT_ICONS["devicebay"],
                         required_permissions=["dcim.add_devicebay"],
                     ),
                     object_detail.Button(
                         weight=900,
                         link_name="dcim:device_modulebays_add",
-                        label="Module Bays",
+                        label=_("Module Bays"),
                         icon=DEVICE_COMPONENT_ICONS["modulebay"],
                         required_permissions=["dcim.add_modulebay"],
                     ),
                     object_detail.Button(
                         weight=1000,
                         link_name="dcim:device_inventoryitems_add",
-                        label="Inventory Items",
+                        label=_("Inventory Items"),
                         icon=DEVICE_COMPONENT_ICONS["inventoryitem"],
                         required_permissions=["dcim.add_inventoryitem"],
                     ),
@@ -3319,14 +3356,14 @@ class DeviceUIViewSet(NautobotUIViewSet):
                 weight=110,
                 section=SectionChoices.LEFT_HALF,
                 context_table_key="vc_members_table",
-                table_title="Virtual Chassis",
+                table_title=_("Virtual Chassis"),
                 related_field_name="vc_master",
                 show_table_config_button=False,
                 add_button_route=None,
                 footer_buttons=[
                     object_detail.Button(
                         weight=100,
-                        label="View Virtual Chassis",
+                        label=_("View Virtual Chassis"),
                         icon="mdi-arrow-right-bold",
                         size="xs",
                         link_name="dcim:virtualchassis",
@@ -3337,7 +3374,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             DeviceFieldsPanel(
                 weight=120,
                 section=SectionChoices.LEFT_HALF,
-                label="Management",
+                label=_("Management"),
                 fields=[
                     "role",
                     "platform",
@@ -3350,7 +3387,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                     "controller_managed_device_group__controller",
                     "software_version",
                 ],
-                key_transforms={"controller_managed_device_group__controller": "Managed By Controller"},
+                key_transforms={"controller_managed_device_group__controller": _("Managed By Controller")},
                 value_transforms={
                     "primary_ip4": [render_ip_with_nat],
                     "primary_ip6": [render_ip_with_nat],
@@ -3360,13 +3397,13 @@ class DeviceUIViewSet(NautobotUIViewSet):
             DevicePowerUtilizationPanel(
                 weight=100,
                 section=SectionChoices.RIGHT_HALF,
-                label="Power Utilization",
+                label=_("Power Utilization"),
                 body_wrapper_template_path="components/panel/body_wrapper_generic_table.html",
             ),
             object_detail.ObjectsTablePanel(
                 weight=200,
                 section=SectionChoices.RIGHT_HALF,
-                table_title="Assigned VRFs",
+                table_title=_("Assigned VRFs"),
                 table_class=VRFDeviceAssignmentTable,
                 table_filter="device",
                 exclude_columns=["related_object_type", "related_object_name"],
@@ -3376,7 +3413,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             object_detail.ObjectsTablePanel(
                 weight=250,
                 section=SectionChoices.RIGHT_HALF,
-                table_title="Clusters",
+                table_title=_("Clusters"),
                 table_class=ClusterTable,
                 table_filter="devices",
                 show_table_config_button=False,
@@ -3385,7 +3422,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             object_detail.ObjectsTablePanel(
                 weight=300,
                 section=SectionChoices.RIGHT_HALF,
-                table_title="Services",
+                table_title=_("Services"),
                 table_class=ServiceTable,
                 table_filter="device",
                 exclude_columns=["parent"],
@@ -3395,7 +3432,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             DeviceImageAttachmentsTablePanel(
                 weight=400,
                 section=SectionChoices.RIGHT_HALF,
-                table_title="Images",
+                table_title=_("Images"),
                 table_class=ImageAttachmentTable,
                 table_attribute="images",
                 related_field_name="device",
@@ -3405,7 +3442,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             object_detail.ObjectsTablePanel(
                 weight=100,
                 section=SectionChoices.FULL_WIDTH,
-                table_title="Virtual Device Contexts",
+                table_title=_("Virtual Device Contexts"),
                 table_class=tables.VirtualDeviceContextTable,
                 table_filter="device",
                 exclude_columns=["device"],
@@ -3416,7 +3453,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             DeviceModuleBaysTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 100,
                 tab_id="module_bays",
-                label="Module Bays",
+                label=_("Module Bays"),
                 url_name="dcim:device_modulebays",
                 related_object_attribute="module_bays",
                 hide_if_empty=True,
@@ -3424,7 +3461,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                     DeviceModuleBaysTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="Module Bays",
+                        table_title=_("Module Bays"),
                         table_class=tables.DeviceModuleBayTable,
                         prefetch_related_fields=["installed_module", "installed_module__status"],
                         related_field_name="parent_device",
@@ -3439,7 +3476,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 200,
                 tab_id="interfaces",
-                label="Interfaces",
+                label=_("Interfaces"),
                 url_name="dcim:device_interfaces",
                 related_object_attribute="vc_interfaces",
                 hide_if_empty=True,
@@ -3448,7 +3485,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                         # TODO: .prefetch_related(ip_addresses.restrict, member_interfaces.restrict)
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="Interfaces",
+                        table_title=_("Interfaces"),
                         table_class=tables.DeviceModuleInterfaceTable,
                         table_attribute="vc_interfaces",
                         order_by_fields=["_name"],
@@ -3472,7 +3509,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 300,
                 tab_id="front_ports",
-                label="Front Ports",
+                label=_("Front Ports"),
                 url_name="dcim:device_frontports",
                 related_object_attribute="all_front_ports",
                 hide_if_empty=True,
@@ -3480,7 +3517,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="Front Ports",
+                        table_title=_("Front Ports"),
                         table_class=tables.DeviceModuleFrontPortTable,
                         table_attribute="all_front_ports",
                         select_related_fields=[*FrontPort.cable_columns_select_related_fields(), "rear_port"],
@@ -3498,7 +3535,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 400,
                 tab_id="rear_ports",
-                label="Rear Ports",
+                label=_("Rear Ports"),
                 url_name="dcim:device_rearports",
                 related_object_attribute="all_rear_ports",
                 hide_if_empty=True,
@@ -3506,7 +3543,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="Rear Ports",
+                        table_title=_("Rear Ports"),
                         table_class=tables.DeviceModuleRearPortTable,
                         table_attribute="all_rear_ports",
                         select_related_fields=RearPort.cable_columns_select_related_fields(),
@@ -3522,7 +3559,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 500,
                 tab_id="console_ports",
-                label="Console Ports",
+                label=_("Console Ports"),
                 url_name="dcim:device_consoleports",
                 related_object_attribute="all_console_ports",
                 hide_if_empty=True,
@@ -3530,7 +3567,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="Console Ports",
+                        table_title=_("Console Ports"),
                         table_class=tables.DeviceModuleConsolePortTable,
                         table_attribute="all_console_ports",
                         select_related_fields=ConsolePort.cable_columns_select_related_fields(),
@@ -3548,7 +3585,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 600,
                 tab_id="console_server_ports",
-                label="Console Server Ports",
+                label=_("Console Server Ports"),
                 url_name="dcim:device_consoleserverports",
                 related_object_attribute="all_console_server_ports",
                 hide_if_empty=True,
@@ -3556,7 +3593,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="Console Server Ports",
+                        table_title=_("Console Server Ports"),
                         table_class=tables.DeviceModuleConsoleServerPortTable,
                         table_attribute="all_console_server_ports",
                         select_related_fields=ConsoleServerPort.cable_columns_select_related_fields(),
@@ -3574,7 +3611,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 700,
                 tab_id="power_ports",
-                label="Power Ports",
+                label=_("Power Ports"),
                 url_name="dcim:device_powerports",
                 related_object_attribute="all_power_ports",
                 hide_if_empty=True,
@@ -3582,7 +3619,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="Power Ports",
+                        table_title=_("Power Ports"),
                         table_class=tables.DeviceModulePowerPortTable,
                         table_attribute="all_power_ports",
                         select_related_fields=PowerPort.cable_columns_select_related_fields(),
@@ -3600,7 +3637,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 800,
                 tab_id="power_outlets",
-                label="Power Outlets",
+                label=_("Power Outlets"),
                 url_name="dcim:device_poweroutlets",
                 related_object_attribute="all_power_outlets",
                 hide_if_empty=True,
@@ -3608,7 +3645,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="Power Outlets",
+                        table_title=_("Power Outlets"),
                         table_class=tables.DeviceModulePowerOutletTable,
                         table_attribute="all_power_outlets",
                         select_related_fields=[*PowerOutlet.cable_columns_select_related_fields(), "power_port"],
@@ -3626,7 +3663,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 900,
                 tab_id="device_bays",
-                label="Device Bays",
+                label=_("Device Bays"),
                 url_name="dcim:device_devicebays",
                 related_object_attribute="device_bays",
                 hide_if_empty=True,
@@ -3634,7 +3671,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="Device Bays",
+                        table_title=_("Device Bays"),
                         table_class=tables.DeviceDeviceBayTable,
                         select_related_fields=["installed_device__device_type__manufacturer"],
                         table_filter="device",
@@ -3649,7 +3686,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 1000,
                 tab_id="inventory",
-                label="Inventory",
+                label=_("Inventory"),
                 url_name="dcim:device_inventory",
                 related_object_attribute="inventory_items",
                 hide_if_empty=True,
@@ -3657,7 +3694,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="Inventory Items",
+                        table_title=_("Inventory Items"),
                         table_class=tables.DeviceInventoryItemTable,
                         select_related_fields=["manufacturer"],
                         table_filter="device",
@@ -3672,14 +3709,14 @@ class DeviceUIViewSet(NautobotUIViewSet):
             DeviceWirelessTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 1100,
                 tab_id="wireless",
-                label="Wireless",
+                label=_("Wireless"),
                 url_name="dcim:device_wireless",
                 related_object_attribute="controller_managed_device_group",
                 panels=(
                     object_detail.ObjectFieldsPanel(
                         weight=100,
                         section=SectionChoices.LEFT_HALF,
-                        label="Controller Managed Device Group",
+                        label=_("Controller Managed Device Group"),
                         fields=["controller_managed_device_group", "controller_managed_device_group__controller"],
                         key_transforms={
                             "controller_managed_device_group": "Name",
@@ -3689,7 +3726,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         weight=200,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="Wireless Networks",
+                        table_title=_("Wireless Networks"),
                         table_class=BaseControllerManagedDeviceGroupWirelessNetworkAssignmentTable,
                         table_attribute="wireless_network_assignments",
                         related_field_name="controller_managed_device_groups__devices",
@@ -3701,7 +3738,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         weight=300,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="Radio Profiles",
+                        table_title=_("Radio Profiles"),
                         table_class=ControllerManagedDeviceGroupRadioProfileAssignmentTable,
                         table_attribute="radio_profile_assignments",
                         related_field_name="controller_managed_device_groups__devices",
@@ -3715,7 +3752,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 1200,
                 tab_id="vpn_endpoints",
-                label="VPN Endpoints",
+                label=_("VPN Endpoints"),
                 url_name="dcim:device_vpnendpoints",
                 related_object_attribute="vpn_tunnel_endpoints",
                 hide_if_empty=True,
@@ -3723,7 +3760,7 @@ class DeviceUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="VPN Endpoints",
+                        table_title=_("VPN Endpoints"),
                         table_class=VPNTunnelEndpointTable,
                         table_attribute="vpn_tunnel_endpoints",
                         related_field_name="device",
@@ -3738,28 +3775,28 @@ class DeviceUIViewSet(NautobotUIViewSet):
             DeviceNAPALMTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 1300,
                 tab_id="status",
-                label="Status",
+                label=_("Status"),
                 url_name="dcim:device_status",
                 required_permissions=["dcim.napalm_read_device"],
             ),
             DeviceNAPALMTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 1400,
                 tab_id="lldp_neighbors",
-                label="LLDP Neighbors",
+                label=_("LLDP Neighbors"),
                 url_name="dcim:device_lldp_neighbors",
                 required_permissions=["dcim.napalm_read_device"],
             ),
             DeviceNAPALMTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 1500,
                 tab_id="config",
-                label="Configuration",
+                label=_("Configuration"),
                 url_name="dcim:device_config",
                 required_permissions=["dcim.napalm_read_device"],
             ),
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 1600,
                 tab_id="config_context",
-                label="Config Context",
+                label=_("Config Context"),
                 url_name="dcim:device_configcontext",
                 required_permissions=["extras.view_configcontext"],
             ),
@@ -4091,8 +4128,10 @@ class ComponentBulkDisconnectViewMixin(NautobotViewSetMixin):
                 messages.info(
                     request,
                     format_html(
-                        "The following cables still exist — delete any that are no longer needed:<ul>{}</ul>",
-                        cable_items,
+                        gettext(
+                            "The following cables still exist — delete any that are no longer needed:<ul>{items}</ul>"
+                        ),
+                        items=cable_items,
                     ),
                 )
         except ObjectDoesNotExist:
@@ -4140,7 +4179,7 @@ class ComponentBulkDisconnectViewMixin(NautobotViewSetMixin):
             for field_name, errors in form.errors.items():
                 for error in errors:
                     label = "" if field_name == "__all__" else f"{field_name}: "
-                    messages.error(request, f"{label}{error}")
+                    messages.error(request, gettext("%(label)s%(error)s") % {"label": label, "error": error})
         else:
             form = form_class(initial={"pk": self.pk_list})
 
@@ -4176,7 +4215,7 @@ class BulkComponentCreateUIViewSetMixin:
         if not selected_objects:
             messages.warning(
                 request,
-                f"No {parent_model_name} were selected.",
+                gettext("No %(parent_model_name)s were selected.") % {"parent_model_name": parent_model_name},
             )
             return redirect(self.get_return_url(request))
         table = self.table_class(selected_objects)
@@ -4667,7 +4706,7 @@ class ConsolePortUIViewSet(
             object_detail.ObjectFieldsPanel(
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
-                label="Console Port",
+                label=_("Console Port"),
                 exclude_fields=("cable_termination",),
                 hide_if_unset=("device", "module"),
             ),
@@ -4709,7 +4748,7 @@ class ConsoleServerPortUIViewSet(
             object_detail.ObjectFieldsPanel(
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
-                label="Console Server Port",
+                label=_("Console Server Port"),
                 exclude_fields=("cable_termination",),
                 hide_if_unset=("device", "module"),
             ),
@@ -4893,17 +4932,17 @@ class InterfaceUIViewSet(
             InterfaceBreakoutLaneConnectionPanel(
                 weight=200,
                 section=SectionChoices.RIGHT_HALF,
-                label="Connections",
+                label=_("Connections"),
             ),
             InterfaceLAGMembersPanel(
                 weight=300,
                 section=SectionChoices.RIGHT_HALF,
-                label="LAG Members",
+                label=_("LAG Members"),
             ),
             InterfaceVPNEndpointsPanel(
                 weight=400,
                 section=SectionChoices.RIGHT_HALF,
-                label="VPN Endpoints",
+                label=_("VPN Endpoints"),
             ),
             *get_connected_endpoint_panels("interface"),
             object_detail.ObjectsTablePanel(
@@ -4913,14 +4952,14 @@ class InterfaceUIViewSet(
                 table_attribute="ip_addresses",
                 related_field_name="interfaces",
                 select_related_fields=["tenant"],
-                table_title="IP Addresses",
+                table_title=_("IP Addresses"),
                 add_button_route=None,
             ),
             object_detail.ObjectsTablePanel(
                 weight=400,
                 section=SectionChoices.FULL_WIDTH,
                 context_table_key="vlan_table",
-                table_title="VLANs",
+                table_title=_("VLANs"),
                 add_button_route=None,
                 related_field_name="interfaces",
             ),
@@ -4928,7 +4967,7 @@ class InterfaceUIViewSet(
                 weight=500,
                 section=SectionChoices.FULL_WIDTH,
                 context_table_key="redundancy_table",
-                table_title="Interface Redundancy Groups",
+                table_title=_("Interface Redundancy Groups"),
                 related_field_name="interface",
                 enable_related_link=False,
                 add_button_route=None,
@@ -4940,7 +4979,7 @@ class InterfaceUIViewSet(
                 table_attribute="child_interfaces",
                 related_field_name="parent_interface",
                 exclude_columns=["device"],
-                table_title="Child Interfaces",
+                table_title=_("Child Interfaces"),
                 add_button_route=None,
             ),
             object_detail.ObjectsTablePanel(
@@ -4951,7 +4990,7 @@ class InterfaceUIViewSet(
                 related_field_name="interfaces",
                 select_related_fields=["device", "tenant", "primary_ip4", "primary_ip6"],
                 exclude_columns=["device"],
-                table_title="Virtual Device Contexts",
+                table_title=_("Virtual Device Contexts"),
                 add_button_route=None,
             ),
         )
@@ -5124,7 +5163,7 @@ class DeviceBayUIViewSet(
             object_detail.KeyValueTablePanel(
                 weight=100,
                 section=SectionChoices.RIGHT_HALF,
-                label="Installed Device",
+                label=_("Installed Device"),
                 context_data_key="installed_device_data",
                 hide_if_unset=["device_type"],
             ),
@@ -5155,7 +5194,8 @@ class DeviceBayUIViewSet(
                 device_bay.validated_save()
                 messages.success(
                     request,
-                    f"Added {device_bay.installed_device} to {device_bay}.",
+                    gettext("Added %(installed_device)s to %(device_bay)s.")
+                    % {"installed_device": device_bay.installed_device, "device_bay": device_bay},
                 )
                 return redirect("dcim:device_devicebays", pk=device_bay.device.pk)
         else:
@@ -5183,7 +5223,8 @@ class DeviceBayUIViewSet(
                 device_bay.validated_save()
                 messages.success(
                     request,
-                    f"Removed {removed_device} from {device_bay}.",
+                    gettext("Removed %(removed_device)s from %(device_bay)s.")
+                    % {"removed_device": removed_device, "device_bay": device_bay},
                 )
                 return redirect("dcim:device_devicebays", pk=device_bay.device.pk)
         else:
@@ -5227,7 +5268,7 @@ class ModuleBayUIViewSet(ModuleBayCommonViewSetMixin, NautobotUIViewSet, ObjectB
                 weight=100,
                 section=SectionChoices.RIGHT_HALF,
                 context_object_key="installed_module_data",
-                label="Installed Module",
+                label=_("Installed Module"),
             ),
         )
     )
@@ -5342,7 +5383,7 @@ class InventoryItemUIViewSet(DeviceComponentPageMixin, ComponentCreateViewMixin,
             InventoryItemFieldsPanel(
                 weight=100,
                 section=SectionChoices.LEFT_HALF,
-                label="Inventory Item",
+                label=_("Inventory Item"),
                 fields=[
                     "device",
                     "parent",
@@ -5527,13 +5568,13 @@ class CableTypeUIViewSet(NautobotUIViewSet):
             object_detail.Panel(
                 weight=100,
                 section=SectionChoices.RIGHT_HALF,
-                label="Lane Mapping Diagram",
+                label=_("Lane Mapping Diagram"),
                 body_content_template_path="dcim/inc/cabletype_diagram_panel.html",
             ),
             object_detail.ObjectTextPanel(
                 weight=200,
                 section=SectionChoices.RIGHT_HALF,
-                label="Mapping",
+                label=_("Mapping"),
                 object_field="mapping",
                 render_as=object_detail.BaseTextPanel.RenderOptions.JSON,
             ),
@@ -5542,7 +5583,7 @@ class CableTypeUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=100,
                 tab_id="cables",
-                label="Cables",
+                label=_("Cables"),
                 url_name="dcim:cabletype_cables",
                 related_object_attribute="cables",
                 panels=(
@@ -5734,7 +5775,7 @@ class PathTraceView(generic.ObjectView):
 
     additional_permissions = ["dcim.view_cable"]
     template_name = "dcim/cable_trace.html"
-    view_titles = Titles(titles={"detail": "Cable Trace for {{ object }}"})
+    view_titles = Titles(titles={"detail": "{% blocktrans %}Cable Trace for {{ object }}{% endblocktrans %}"})
 
     def dispatch(self, request, *args, **kwargs):
         model = kwargs.pop("model")
@@ -5877,7 +5918,7 @@ class ConsoleConnectionsListView(ConnectionsListView):
     table = tables.ConsoleConnectionTable
     template_name = "dcim/console_port_connection_list.html"
     action_buttons = ("export",)
-    view_titles = Titles(titles={"list": "Console Connections"})
+    view_titles = Titles(titles={"list": '{% trans "Console Connections" %}'})
 
 
 class PowerConnectionsListView(ConnectionsListView):
@@ -5887,7 +5928,7 @@ class PowerConnectionsListView(ConnectionsListView):
     table = tables.PowerConnectionTable
     template_name = "dcim/power_port_connection_list.html"
     action_buttons = ("export",)
-    view_titles = Titles(titles={"list": "Power Connections"})
+    view_titles = Titles(titles={"list": '{% trans "Power Connections" %}'})
 
 
 class InterfaceConnectionsListView(ConnectionsListView):
@@ -5897,7 +5938,7 @@ class InterfaceConnectionsListView(ConnectionsListView):
     table = tables.InterfaceConnectionTable
     template_name = "dcim/interface_connection_list.html"
     action_buttons = ("export",)
-    view_titles = Titles(titles={"list": "Interface Connections"})
+    view_titles = Titles(titles={"list": '{% trans "Interface Connections" %}'})
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -5996,7 +6037,7 @@ class VirtualChassisUIViewSet(NautobotUIViewSet):
                 weight=100,
                 table_class=tables.VirtualChassisMembersTable,
                 table_filter="virtual_chassis",
-                table_title="Members",
+                table_title=_("Members"),
             ),
         ]
     )
@@ -6071,7 +6112,11 @@ class VirtualChassisUIViewSet(NautobotUIViewSet):
 
                 if membership_form.is_valid():
                     membership_form.save()
-                    msg = format_html('Added member <a href="{}">{}</a>', device.get_absolute_url(), device)
+                    msg = format_html(
+                        gettext('Added member <a href="{url}">{device}</a>'),
+                        url=device.get_absolute_url(),
+                        device=device,
+                    )
                     messages.success(request, msg)
 
                     if "_addanother" in request.POST:
@@ -6123,7 +6168,10 @@ class VirtualChassisRemoveMemberView(ObjectPermissionRequiredMixin, GetReturnURL
         # Protect master device from being removed
         virtual_chassis = VirtualChassis.objects.filter(master=device).first()
         if virtual_chassis is not None:
-            msg = format_html("Unable to remove master device {} from the virtual chassis.", device)
+            msg = format_html(
+                _("Unable to remove master device {device} from the virtual chassis."),
+                device=device,
+            )
             messages.error(request, msg)
             return redirect(device.get_absolute_url())
 
@@ -6195,7 +6243,7 @@ class PowerPanelUIViewSet(NautobotUIViewSet):
                 weight=100,
                 table_class=tables.PowerFeedTable,
                 table_filter="destination_panel",
-                table_title="Incoming Feeders",
+                table_title=_("Incoming Feeders"),
                 exclude_columns=["destination_panel", "cable", "cable_peer", "rack"],
                 add_button_route=None,
                 paginate=False,
@@ -6206,7 +6254,7 @@ class PowerPanelUIViewSet(NautobotUIViewSet):
                 weight=200,
                 table_class=tables.PowerFeedTable,
                 table_filter="power_panel",
-                table_title="Connected Feeds",
+                table_title=_("Connected Feeds"),
                 exclude_columns=["power_panel"],
                 add_button_route=None,
                 paginate=False,
@@ -6270,13 +6318,13 @@ class PowerFeedUIViewSet(NautobotUIViewSet):
             CustomPowerFeedKeyValueTablePanel(
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
-                label="Power Feed",
+                label=_("Power Feed"),
                 context_data_key="powerfeed_data",
             ),
             object_detail.ObjectFieldsPanel(
                 section=SectionChoices.LEFT_HALF,
                 weight=200,
-                label="Electrical Characteristics",
+                label=_("Electrical Characteristics"),
                 fields=["supply", "voltage", "amperage", "phase", "max_utilization", "available_power"],
                 value_transforms={
                     "voltage": [lambda v: f"{v}V" if v is not None else helpers.placeholder(v)],
@@ -6290,13 +6338,13 @@ class PowerFeedUIViewSet(NautobotUIViewSet):
             object_detail.KeyValueTablePanel(
                 section=SectionChoices.RIGHT_HALF,
                 weight=200,
-                label="Breaker Configuration",
+                label=_("Breaker Configuration"),
                 context_data_key="breaker_config_data",
             ),
             object_detail.KeyValueTablePanel(
                 section=SectionChoices.RIGHT_HALF,
                 weight=300,
-                label="Connection",
+                label=_("Connection"),
                 context_data_key="connection_data",
             ),
             *get_connected_endpoint_panels("powerfeed"),
@@ -6427,13 +6475,14 @@ class PowerFeedUIViewSet(NautobotUIViewSet):
                 + f"&return_url={instance.get_absolute_url()}"
             )
             connect_link = format_html(
-                '<a href="{}" class="btn btn-primary btn-sm float-end">'
-                '<span class="mdi mdi-ethernet-cable me-4" aria-hidden="true"></span>Add Cable</a>',
-                connect_url,
+                '<a href="{url}" class="btn btn-primary btn-sm float-end">'
+                '<span class="mdi mdi-ethernet-cable me-4" aria-hidden="true"></span>{label}</a>',
+                url=connect_url,
+                label=_("Add Cable"),
             )
-            return {"Connection": format_html("Not connected {}", connect_link)}
+            return {_("Connection"): format_html(_("Not connected {link}"), link=connect_link)}
 
-        return {"Connection": "Not connected"}
+        return {_("Connection"): _("Not connected")}
 
     def _get_path_status_html(self, instance):
         """
@@ -6510,7 +6559,7 @@ class InterfaceRedundancyGroupUIViewSet(NautobotUIViewSet):
                 table_attribute="interface_redundancy_group_associations",
                 prefetch_related_fields=["interface"],
                 order_by_fields=["priority"],
-                table_title="Interfaces",
+                table_title=_("Interfaces"),
                 related_field_name="interface_redundancy_groups",
                 related_list_url_name="dcim:interface_list",
                 include_columns=[
@@ -6643,7 +6692,7 @@ class SoftwareImageFileUIViewSet(NautobotUIViewSet):
                 weight=700,
                 tab_id="device_types",
                 url_name="dcim:softwareimagefile_device_types",
-                label="Device Types",
+                label=_("Device Types"),
                 related_object_attribute="device_types",
                 panels=(
                     object_detail.ObjectsTablePanel(
@@ -6661,7 +6710,7 @@ class SoftwareImageFileUIViewSet(NautobotUIViewSet):
                 weight=800,
                 tab_id="devices",
                 url_name="dcim:softwareimagefile_devices",
-                label="Devices",
+                label=_("Devices"),
                 related_object_attribute="devices",
                 panels=(
                     object_detail.ObjectsTablePanel(
@@ -6670,7 +6719,7 @@ class SoftwareImageFileUIViewSet(NautobotUIViewSet):
                         table_class=tables.DeviceTable,
                         table_filter="software_image_files",
                         tab_id="devices",
-                        table_title="Devices overridden to use this file",
+                        table_title=_("Devices overridden to use this file"),
                         add_button_route=None,
                         include_paginator=True,
                     ),
@@ -6680,7 +6729,7 @@ class SoftwareImageFileUIViewSet(NautobotUIViewSet):
                 weight=900,
                 tab_id="inventory_items",
                 url_name="dcim:softwareimagefile_inventory_items",
-                label="Inventory Items",
+                label=_("Inventory Items"),
                 related_object_attribute="inventory_items",
                 panels=(
                     object_detail.ObjectsTablePanel(
@@ -6689,7 +6738,7 @@ class SoftwareImageFileUIViewSet(NautobotUIViewSet):
                         table_class=tables.InventoryItemTable,
                         table_filter="software_image_files",
                         tab_id="inventory_items",
-                        table_title="Inventory items overridden to use this file",
+                        table_title=_("Inventory items overridden to use this file"),
                         add_button_route=None,
                         include_paginator=True,
                     ),
@@ -6699,7 +6748,7 @@ class SoftwareImageFileUIViewSet(NautobotUIViewSet):
                 weight=1000,
                 tab_id="virtual_machines",
                 url_name="dcim:softwareimagefile_virtual_machines",
-                label="Virtual Machines",
+                label=_("Virtual Machines"),
                 related_object_attribute="virtual_machines",
                 panels=(
                     object_detail.ObjectsTablePanel(
@@ -6708,7 +6757,7 @@ class SoftwareImageFileUIViewSet(NautobotUIViewSet):
                         table_class=VirtualMachineTable,
                         table_filter="software_image_files",
                         tab_id="virtual_machines",
-                        table_title="Virtual machines overridden to use this file",
+                        table_title=_("Virtual machines overridden to use this file"),
                         add_button_route=None,
                         include_paginator=True,
                     ),
@@ -6782,7 +6831,7 @@ class SoftwareVersionUIViewSet(NautobotUIViewSet):
             ),
             object_detail.StatsPanel(
                 weight=100,
-                label="Stats",
+                label=_("Stats"),
                 section=SectionChoices.RIGHT_HALF,
                 filter_name="software_version",
                 related_models=[SoftwareImageFile, Device, InventoryItem, VirtualMachine],
@@ -6824,7 +6873,7 @@ class ControllerUIViewSet(NautobotUIViewSet):
             object_detail.ObjectFieldsPanel(
                 section=SectionChoices.RIGHT_HALF,
                 weight=200,
-                label="Integration",
+                label=_("Integration"),
                 fields=[
                     "external_integration",
                     "controller_device",
@@ -6835,7 +6884,7 @@ class ControllerUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.FULL_WIDTH,
                 weight=100,
                 table_class=tables.DeviceTable,
-                table_title="Managed Devices",
+                table_title=_("Managed Devices"),
                 table_filter="controller_managed_device_group__controller",
                 include_columns=[
                     "capabilities",
@@ -6851,13 +6900,13 @@ class ControllerUIViewSet(NautobotUIViewSet):
                 weight=700,
                 tab_id="wireless_networks",
                 url_name="dcim:controller_wireless_networks",
-                label="Wireless Networks",
+                label=_("Wireless Networks"),
                 related_object_attribute="wireless_network_assignments",
                 panels=(
                     object_detail.ObjectsTablePanel(
                         section=SectionChoices.FULL_WIDTH,
                         weight=100,
-                        table_title="Wireless Networks",
+                        table_title=_("Wireless Networks"),
                         table_class=BaseControllerManagedDeviceGroupWirelessNetworkAssignmentTable,
                         table_filter="controller_managed_device_group__controller",
                         related_field_name="controller_managed_device_groups__controller",
@@ -6923,14 +6972,14 @@ class ControllerManagedDeviceGroupUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=800,
                 tab_id="wireless_networks",
-                label="Wireless Networks",
+                label=_("Wireless Networks"),
                 url_name="dcim:controllermanageddevicegroup_wireless_networks",
                 related_object_attribute="wireless_network_assignments",
                 panels=(
                     object_detail.ObjectsTablePanel(
                         section=SectionChoices.FULL_WIDTH,
                         weight=100,
-                        table_title="Wireless Networks",
+                        table_title=_("Wireless Networks"),
                         table_class=DeviceGroupWirelessNetworkTable,
                         table_filter="controller_managed_device_group",
                         related_field_name="controller_managed_device_groups",
@@ -6944,14 +6993,14 @@ class ControllerManagedDeviceGroupUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=900,
                 tab_id="radio_profiles",
-                label="Radio Profiles",
+                label=_("Radio Profiles"),
                 url_name="dcim:controllermanageddevicegroup_radio_profiles",
                 related_object_attribute="radio_profiles",
                 panels=(
                     object_detail.ObjectsTablePanel(
                         section=SectionChoices.FULL_WIDTH,
                         weight=100,
-                        table_title="Radio Profiles",
+                        table_title=_("Radio Profiles"),
                         table_class=RadioProfileTable,
                         table_filter="controller_managed_device_groups",
                         tab_id="radio_profiles",

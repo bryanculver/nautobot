@@ -6,6 +6,7 @@ from django.forms import ValidationError as FormsValidationError
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.translation import gettext, gettext_lazy as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from graphene_django.views import GraphQLView
@@ -844,9 +845,9 @@ class JobViewSetBase(
         """Run the specified Job."""
         job_model = self.get_object()
         if not request.user.has_perm("extras.run_job"):
-            raise PermissionDenied("This user does not have permission to run jobs.")
+            raise PermissionDenied(_("This user does not have permission to run jobs."))
         if not job_model.enabled:
-            raise PermissionDenied("This job is not enabled to be run.")
+            raise PermissionDenied(_("This job is not enabled to be run."))
         if not job_model.installed:
             raise MethodNotAllowed(request.method, detail="This job is not presently installed and cannot be run")
 
@@ -893,7 +894,9 @@ class JobViewSetBase(
             ):
                 raise ValidationError(
                     {
-                        "_task_queue": "_task_queue and _job_queue are both specified. Please specify only one or another."
+                        "_task_queue": _(
+                            "_task_queue and _job_queue are both specified. Please specify only one or another."
+                        )
                     }
                 )
 
@@ -936,12 +939,18 @@ class JobViewSetBase(
                 "job_queue", None
             ):
                 raise ValidationError(
-                    {"task_queue": "task_queue and job_queue are both specified. Please specify only one or another."}
+                    {
+                        "task_queue": _(
+                            "task_queue and job_queue are both specified. Please specify only one or another."
+                        )
+                    }
                 )
             schedule_data = input_serializer.validated_data.get("schedule", None)
 
         if task_queue not in valid_queues:
-            raise ValidationError({"task_queue": [f'"{task_queue}" is not a valid choice.']})
+            raise ValidationError(
+                {"task_queue": [gettext('"%(task_queue)s" is not a valid choice.') % {"task_queue": task_queue}]}
+            )
 
         cleaned_data = None
         try:
@@ -994,9 +1003,11 @@ class JobViewSetBase(
                     schedule.delete()
                     del schedule
                     raise ValidationError(
-                        "Unable to run or schedule job: "
-                        "This job is flagged as possibly having sensitive variables but also has an applicable approval workflow definition."
-                        "Modify or remove the approval workflow definition or modify the job to set `has_sensitive_variables` to False."
+                        _(
+                            "Unable to run or schedule job: "
+                            "This job is flagged as possibly having sensitive variables but also has an applicable approval workflow definition."
+                            "Modify or remove the approval workflow definition or modify the job to set `has_sensitive_variables` to False."
+                        )
                     )
 
             # Approval is not required for dryrun
@@ -1186,7 +1197,7 @@ class JobResultViewSet(
         job_result = self.get_object()
 
         if not user_can_cancel_job_result(request.user, job_result):
-            raise PermissionDenied("You do not have permission to cancel this job.")
+            raise PermissionDenied(_("You do not have permission to cancel this job."))
 
         if not job_result.is_unready_state and request.method == "POST":
             return Response(
@@ -1313,7 +1324,7 @@ class ScheduledJobViewSet(
         if not job_model.supports_dryrun:
             raise MethodNotAllowed("This job does not support dry-run.")
         if not Job.objects.check_perms(request.user, instance=job_model, action="run"):
-            raise PermissionDenied("You do not have permission to run this job.")
+            raise PermissionDenied(_("You do not have permission to run this job."))
 
         # Immediately enqueue the job
         job_class = get_job(job_model.class_path, reload=True)

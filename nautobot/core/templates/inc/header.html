@@ -1,12 +1,14 @@
+{% load i18n %}
 {% load helpers %}
 {% load static %}
+{% if is_apple_os %}{% captureas shortcut_key %}⌘{% endcaptureas %}{% else %}{% captureas shortcut_key %}Ctrl+{% endcaptureas %}{% endif %}
 
 {% if request.user.is_authenticated %}
     {% with is_apple_os=request.META.HTTP_USER_AGENT|split:'Mac OS X'|length|divisibleby:'2' %}
         <form action="{% url 'search' %}" class="col-4 text-center" data-nb-live-search-path="{% url 'live_search' %}" id="header_search" method="get" role="search">
             <label class="position-relative w-100">
                 <input
-                    aria-placeholder="Press {% if is_apple_os %}⌘{% else %}Ctrl+{% endif %}K to search"
+                    aria-placeholder="{% blocktrans with key=shortcut_key %}Press {{ key }}K to search{% endblocktrans %}"
                     autocomplete="off"
                     class="form-control nb-text-transparent"
                     name="q"
@@ -23,10 +25,10 @@
                                     {% for item_link, item_details in group_details.items.items %}
                                         {% if item_details.is_active %}
                                             <span class="badge border" data-nb-link="{{ item_link }}"><!--
-                                                -->in: {{ item_details.name }}<!--
+                                                -->{% blocktrans with name=item_details.label|default:item_details.name %}in: {{ name }}{% endblocktrans %}<!--
                                                 --><button tabindex="-1" type="button">
                                                 <span aria-hidden="true" class="mdi mdi-close"></span>
-                                                <span class="visually-hidden">Remove</span>
+                                                <span class="visually-hidden">{% trans "Remove" %}</span>
                                             </button>
                                             </span>
                                         {% endif %}
@@ -40,17 +42,17 @@
                         class="align-items-center d-inline-flex gap-4 text-nowrap{% if not request.GET.q %} text-secondary{% endif %}"
                     >
                         {% if not request.GET.q %}
-                            Press <kbd class="mt-n1">{% if is_apple_os %}⌘{% else %}Ctrl+{% endif %}K</kbd> to search
+                            {% blocktrans with key=shortcut_key %}Press <kbd class="mt-n1">{{ key }}K</kbd> to search{% endblocktrans %}
                         {% else %}
                             {{ request.GET.q }}
                         {% endif %}
                     </span>
                     {% searchable_fields_for_content_type content_type as searchable_fields %}
-                    <a class="align-items-center d-inline-flex ms-auto pe-auto" aria-label="Search help"
+                    <a class="align-items-center d-inline-flex ms-auto pe-auto" aria-label="{% trans "Search help" %}"
                        href="{% static 'docs/user-guide/platform-functionality/user-interface/search.html' %}"
                        target="_blank"
                        rel="noopener"
-                       {% if searchable_fields %}data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Searchable fields: {{ searchable_fields|join:', ' }}"{% endif %}
+                       {% if searchable_fields %}data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{% blocktrans with fields=searchable_fields|join:', ' %}Searchable fields: {{ fields }}{% endblocktrans %}"{% endif %}
                     >
                         <span aria-hidden="true" class="mdi mdi-help-circle-outline text-secondary"></span>
                     </a>
@@ -66,15 +68,15 @@
                 {% firstof request.user.get_full_name request.user.username %}
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="{% url 'about' %}"><span class="mdi mdi-information"></span>About Nautobot</a></li>
-                <li><a class="dropdown-item" href="{% url 'user:profile' %}"><span class="mdi mdi-account-box"></span>Profile</a></li>
-                <li><a class="dropdown-item" href="{% url 'extras:approver_dashboard' %}"><span class="mdi mdi-check-bold"></span>Approval Dashboard</a></li>
+                <li><a class="dropdown-item" href="{% url 'about' %}"><span class="mdi mdi-information"></span>{% trans "About Nautobot" %}</a></li>
+                <li><a class="dropdown-item" href="{% url 'user:profile' %}"><span class="mdi mdi-account-box"></span>{% trans "Profile" %}</a></li>
+                <li><a class="dropdown-item" href="{% url 'extras:approver_dashboard' %}"><span class="mdi mdi-check-bold"></span>{% trans "Approval Dashboard" %}</a></li>
                 {% if request.user.is_staff %}
-                    <li><a class="dropdown-item" href="{% url 'worker_status' %}"><span class="mdi mdi-server-network"></span>Worker Status</a></li>
-                    <li><a class="dropdown-item" href="{% url 'admin:index' %}"><span class="mdi mdi-cogs"></span>Admin</a></li>
+                    <li><a class="dropdown-item" href="{% url 'worker_status' %}"><span class="mdi mdi-server-network"></span>{% trans "Worker Status" %}</a></li>
+                    <li><a class="dropdown-item" href="{% url 'admin:index' %}"><span class="mdi mdi-cogs"></span>{% trans "Admin" %}</a></li>
                 {% endif %}
                 <li class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="{% url 'logout' %}"><span class="mdi mdi-logout"></span>Log out</a></li>
+                <li><a class="dropdown-item" href="{% url 'logout' %}"><span class="mdi mdi-logout"></span>{% trans "Log out" %}</a></li>
             </ul>
         </div>
     </div>
@@ -83,7 +85,7 @@
     {% if request.path != login_url %}
         <div class="col-4 offset-4 text-end">
             <a class="btn btn-primary" href="{{ login_url }}?next={{ request.get_full_path | urlencode }}">
-                <span aria-hidden="true" class="mdi mdi-login me-4"></span>Log in
+                <span aria-hidden="true" class="mdi mdi-login me-4"></span>{% trans "Log in" %}
             </a>
         </div>
     {% endif %}

@@ -1,4 +1,5 @@
 from django.utils.html import format_html, format_html_join
+from django.utils.translation import gettext_lazy as _
 import django_tables2 as tables
 from django_tables2.utils import Accessor
 
@@ -111,12 +112,12 @@ class PlatformTable(BaseTable):
     device_count = LinkedCountColumn(
         viewname="dcim:device_list",
         url_params={"platform": "pk"},
-        verbose_name="Devices",
+        verbose_name=_("Devices"),
     )
     virtual_machine_count = LinkedCountColumn(
         viewname="virtualization:virtualmachine_list",
         url_params={"platform": "pk"},
-        verbose_name="VMs",
+        verbose_name=_("VMs"),
     )
     actions = ButtonsColumn(Platform)
 
@@ -153,12 +154,12 @@ class PlatformTable(BaseTable):
 
 
 class VirtualChassisMembersTable(BaseTable):
-    name = tables.TemplateColumn(order_by=("_name",), template_code=DEVICE_LINK, verbose_name="Device")
+    name = tables.TemplateColumn(order_by=("_name",), template_code=DEVICE_LINK, verbose_name=_("Device"))
     vc_position = tables.TemplateColumn(
-        verbose_name="Position", template_code='<span class="badge badge-default">{{ record.vc_position }}</span>'
+        verbose_name=_("Position"), template_code='<span class="badge badge-default">{{ record.vc_position }}</span>'
     )
-    master = BooleanColumn(accessor="is_vc_master", verbose_name="Master")
-    vc_priority = tables.Column(verbose_name="Priority")
+    master = BooleanColumn(accessor="is_vc_master", verbose_name=_("Master"))
+    vc_priority = tables.Column(verbose_name=_("Priority"))
 
     class Meta(BaseTable.Meta):
         model = Device
@@ -185,26 +186,26 @@ class DeviceTable(StatusTableMixin, RoleTableMixin, BaseTable):
     device_type = tables.LinkColumn(  # used because tables.Column() doesn't support `text` lambda
         viewname="dcim:devicetype",
         args=[Accessor("device_type__pk")],
-        verbose_name="Type",
+        verbose_name=_("Type"),
         text=lambda record: record.device_type.display,
     )
-    primary_ip = tables.Column(linkify=True, order_by=("primary_ip6", "primary_ip4"), verbose_name="IP Address")
-    primary_ip4 = tables.Column(linkify=True, verbose_name="IPv4 Address")
-    primary_ip6 = tables.Column(linkify=True, verbose_name="IPv6 Address")
+    primary_ip = tables.Column(linkify=True, order_by=("primary_ip6", "primary_ip4"), verbose_name=_("IP Address"))
+    primary_ip4 = tables.Column(linkify=True, verbose_name=_("IPv4 Address"))
+    primary_ip6 = tables.Column(linkify=True, verbose_name=_("IPv6 Address"))
     cluster_count = LinkedCountColumn(
         viewname="virtualization:cluster_list",
         url_params={"devices": "pk"},
-        verbose_name="Clusters",
+        verbose_name=_("Clusters"),
     )
     virtual_chassis = tables.Column(linkify=True)
-    vc_position = tables.Column(verbose_name="VC Position")
-    vc_priority = tables.Column(verbose_name="VC Priority")
+    vc_position = tables.Column(verbose_name=_("VC Position"))
+    vc_priority = tables.Column(verbose_name=_("VC Priority"))
     device_redundancy_group = tables.Column(linkify=True)
     device_redundancy_group_priority = tables.TemplateColumn(
         template_code="""{% if record.device_redundancy_group %}<span class="badge badge-default">{{ record.device_redundancy_group_priority|default:'None' }}</span>{% else %}<span class="text-secondary">—</span>{% endif %}"""
     )
-    controller_managed_device_group = tables.Column(linkify=True, verbose_name="Device Group")
-    software_version = tables.Column(linkify=True, verbose_name="Software Version")
+    controller_managed_device_group = tables.Column(linkify=True, verbose_name=_("Device Group"))
+    software_version = tables.Column(linkify=True, verbose_name=_("Software Version"))
     secrets_group = tables.Column(linkify=True)
     capabilities = tables.Column(orderable=False, accessor="controller_managed_device_group.capabilities")
     manufacturer = tables.Column(orderable=False, accessor="device_type.manufacturer")
@@ -273,7 +274,7 @@ class DeviceImportTable(StatusTableMixin, RoleTableMixin, BaseTable):
     tenant = TenantColumn()
     location = tables.Column(linkify=True)
     rack = tables.Column(linkify=True)
-    device_type = tables.Column(verbose_name="Type")
+    device_type = tables.Column(verbose_name=_("Type"))
 
     class Meta(BaseTable.Meta):
         model = Device
@@ -297,22 +298,22 @@ class DeviceImportTable(StatusTableMixin, RoleTableMixin, BaseTable):
 
 class ModuleTable(StatusTableMixin, RoleTableMixin, BaseTable):
     pk = ToggleColumn()
-    id = tables.Column(linkify=True, verbose_name="ID")
+    id = tables.Column(linkify=True, verbose_name=_("ID"))
     module_type = tables.Column(
         linkify=lambda record: record.module_type.get_absolute_url(),
-        verbose_name="Type",
+        verbose_name=_("Type"),
         accessor="module_type__display",
         order_by=["module_type"],
     )
     parent_module_bay = tables.Column(
         linkify=lambda record: record.parent_module_bay.get_absolute_url() if record else None,
-        verbose_name="Parent Module Bay",
+        verbose_name=_("Parent Module Bay"),
         accessor="parent_module_bay__display",
         order_by=["parent_module_bay"],
     )
     location = tables.Column(linkify=True)
     tenant = TenantColumn()
-    module_family = tables.Column(linkify=True, verbose_name="Family", accessor="module_type__module_family")
+    module_family = tables.Column(linkify=True, verbose_name=_("Family"), accessor="module_type__module_family")
     tags = TagColumn(url_name="dcim:module_list")
     actions = ButtonsColumn(Module)
 
@@ -353,10 +354,10 @@ class ModuleFamilyTable(BaseTable):
     pk = ToggleColumn()
     name = tables.Column(linkify=True)
     module_type_count = LinkedCountColumn(
-        viewname="dcim:moduletype_list", url_params={"module_family": "pk"}, verbose_name="Module Types"
+        viewname="dcim:moduletype_list", url_params={"module_family": "pk"}, verbose_name=_("Module Types")
     )
     module_bay_count = LinkedCountColumn(
-        viewname="dcim:modulebay_list", url_params={"module_family": "pk"}, verbose_name="Module Bays"
+        viewname="dcim:modulebay_list", url_params={"module_family": "pk"}, verbose_name=_("Module Bays")
     )
     tags = TagColumn()
     actions = ButtonsColumn(ModuleFamily)
@@ -410,12 +411,12 @@ class ModularDeviceComponentTable(DeviceComponentTable):
 class CableTerminationTable(BaseTable):
     # `cable` is a property on CableTermination subclasses (resolved via the cable_termination
     # join row), not a real model field, so the column is not DB-orderable.
-    cable = tables.Column(linkify=True, orderable=False)
+    cable = tables.Column(linkify=True, orderable=False, verbose_name=_("Cable"))
     cable_peer = tables.TemplateColumn(
         accessor="get_cable_peers",
         template_code=CABLETERMINATION,
         orderable=False,
-        verbose_name="Cable Peer",
+        verbose_name=_("Cable Peer"),
     )
 
     def __init__(self, *args, **kwargs):
@@ -433,7 +434,7 @@ class PathEndpointTable(CableTerminationTable):
     connection = tables.TemplateColumn(
         accessor="get_connected_endpoints",
         template_code=PATHENDPOINT,
-        verbose_name="Connection",
+        verbose_name=_("Connection"),
         orderable=False,
     )
 
@@ -714,15 +715,15 @@ class BaseInterfaceTable(StatusTableMixin, RoleTableMixin, BaseTable):
     ip_addresses = tables.TemplateColumn(
         template_code=INTERFACE_IPADDRESSES,
         orderable=False,
-        verbose_name="IP Addresses",
+        verbose_name=_("IP Addresses"),
     )
     untagged_vlan = tables.Column(linkify=True)
     tagged_vlans = tables.TemplateColumn(
         template_code=INTERFACE_TAGGED_VLANS,
         orderable=False,
-        verbose_name="Tagged VLANs",
+        verbose_name=_("Tagged VLANs"),
     )
-    vrf = tables.Column(linkify=True, verbose_name="VRF")
+    vrf = tables.Column(linkify=True, verbose_name=_("VRF"))
 
 
 class InterfaceTable(ModularDeviceComponentTable, BaseInterfaceTable, PathEndpointTable):
@@ -731,10 +732,10 @@ class InterfaceTable(ModularDeviceComponentTable, BaseInterfaceTable, PathEndpoi
     virtual_device_context_count = LinkedCountColumn(
         viewname="dcim:virtualdevicecontext_list",
         url_params={"interfaces": "pk"},
-        verbose_name="Virtual Device Contexts",
+        verbose_name=_("Virtual Device Contexts"),
     )
-    speed = tables.Column(verbose_name="Speed", accessor="speed")
-    duplex = tables.Column(verbose_name="Duplex", accessor="duplex")
+    speed = tables.Column(verbose_name=_("Speed"), accessor="speed")
+    duplex = tables.Column(verbose_name=_("Duplex"), accessor="duplex")
     actions = ButtonsColumn(model=Interface, prepend_template=INTERFACE_BUTTONS)
 
     class Meta(ModularDeviceComponentTable.Meta):
@@ -806,9 +807,9 @@ class DeviceModuleInterfaceTable(InterfaceTable):
             '<a href="{{ record.get_absolute_url }}">{{ value }}</a>'
         ),
     )
-    parent_interface = tables.Column(linkify=True, verbose_name="Parent")
+    parent_interface = tables.Column(linkify=True, verbose_name=_("Parent"))
     bridge = tables.Column(linkify=True)
-    lag = tables.Column(linkify=True, verbose_name="LAG")
+    lag = tables.Column(linkify=True, verbose_name=_("LAG"))
 
     class Meta(ModularDeviceComponentTable.Meta):
         model = Interface
@@ -879,7 +880,7 @@ class DeviceModuleInterfaceTable(InterfaceTable):
 
 
 class FrontPortTable(ModularDeviceComponentTable, CableTerminationTable):
-    rear_port_position = tables.Column(verbose_name="Position")
+    rear_port_position = tables.Column(verbose_name=_("Position"))
     rear_port = tables.Column(linkify=True)
     tags = TagColumn(url_name="dcim:frontport_list")
     actions = ButtonsColumn(model=FrontPort, prepend_template=CABLE_TERMINATION_BUTTONS)
@@ -1055,21 +1056,21 @@ class ModuleBayTable(BaseTable):
     pk = ToggleColumn()
     parent_device = tables.Column(
         linkify=lambda record: record.parent_device.get_absolute_url(),
-        verbose_name="Parent Device",
+        verbose_name=_("Parent Device"),
         accessor="parent_device__display",
         order_by=["parent_device"],
     )
     parent_module = tables.Column(
         linkify=lambda record: record.parent_module.get_absolute_url(),
-        verbose_name="Parent Module",
+        verbose_name=_("Parent Module"),
         accessor="parent_module__display",
         order_by=["parent_module"],
     )
     name = tables.Column(linkify=True, order_by=("_name",))
-    installed_module = tables.Column(linkify=True, verbose_name="Installed Module")
+    installed_module = tables.Column(linkify=True, verbose_name=_("Installed Module"))
     installed_module__status = ColoredLabelColumn()
     tags = TagColumn(url_name="dcim:devicebay_list")
-    module_family = tables.Column(linkify=True, verbose_name="Family")
+    module_family = tables.Column(linkify=True, verbose_name=_("Family"))
     actions = ButtonsColumn(model=ModuleBay, prepend_template=MODULEBAY_BUTTONS)
 
     class Meta(BaseTable.Meta):
@@ -1146,10 +1147,10 @@ class DeviceModuleBayTable(ModuleBayTable):
         order_by=("_name",),
         attrs={"td": {"class": "nb-tree-element text-nowrap", "data-pk": lambda record: str(record.pk)}},
     )
-    module_family = tables.Column(linkify=True, verbose_name="Family")
-    installed_module = tables.Column(linkify=True, verbose_name="Installed Module")
-    installed_module__status = ColoredLabelColumn(verbose_name="Installed Module Status")
-    requires_first_party_modules = BooleanColumn(verbose_name="First-Party Only")
+    module_family = tables.Column(linkify=True, verbose_name=_("Family"))
+    installed_module = tables.Column(linkify=True, verbose_name=_("Installed Module"))
+    installed_module__status = ColoredLabelColumn(verbose_name=_("Installed Module Status"))
+    requires_first_party_modules = BooleanColumn(verbose_name=_("First-Party Only"))
 
     class Meta(ModularDeviceComponentTable.Meta):
         model = ModuleBay
@@ -1274,7 +1275,7 @@ class VirtualChassisTable(BaseTable):
     member_count = LinkedCountColumn(
         viewname="dcim:device_list",
         url_params={"virtual_chassis": "pk"},
-        verbose_name="Members",
+        verbose_name=_("Members"),
     )
     tags = TagColumn(url_name="dcim:virtualchassis_list")
 
@@ -1295,12 +1296,12 @@ class DeviceRedundancyGroupTable(BaseTable):
     device_count = LinkedCountColumn(
         viewname="dcim:device_list",
         url_params={"device_redundancy_group": "pk"},
-        verbose_name="Devices",
+        verbose_name=_("Devices"),
     )
     controller_count = LinkedCountColumn(
         viewname="dcim:controller_list",
         url_params={"controller_device_redundancy_group": "pk"},
-        verbose_name="Controllers",
+        verbose_name=_("Controllers"),
     )
     secrets_group = tables.Column(linkify=True)
     tags = TagColumn(url_name="dcim:deviceredundancygroup_list")
@@ -1334,7 +1335,7 @@ class InterfaceRedundancyGroupTable(StatusTableMixin, BaseTable):
     interfaces = tables.TemplateColumn(
         template_code=INTERFACE_REDUNDANCY_GROUP_INTERFACES,
         orderable=False,
-        verbose_name="Interfaces",
+        verbose_name=_("Interfaces"),
     )
     actions = ButtonsColumn(InterfaceRedundancyGroup)
 
@@ -1366,18 +1367,18 @@ class InterfaceRedundancyGroupAssociationTable(BaseTable):
 
     pk = ToggleColumn()
     interface__enabled = BooleanColumn()
-    interface_redundancy_group = tables.Column(linkify=True, verbose_name="Group Name")
-    interface_redundancy_group__virtual_ip = tables.Column(linkify=True, verbose_name="Virtual IP")
-    interface_redundancy_group__protocol_group_id = tables.Column(verbose_name="Group ID")
+    interface_redundancy_group = tables.Column(linkify=True, verbose_name=_("Group Name"))
+    interface_redundancy_group__virtual_ip = tables.Column(linkify=True, verbose_name=_("Virtual IP"))
+    interface_redundancy_group__protocol_group_id = tables.Column(verbose_name=_("Group ID"))
     priority = tables.TemplateColumn(template_code=INTERFACE_REDUNDANCY_INTERFACE_PRIORITY)
     interface__device = tables.Column(linkify=True)
     interface = tables.Column(linkify=True)
     interface__status = ColoredLabelColumn()
-    interface_redundancy_group__status = ColoredLabelColumn(verbose_name="Group Status")
+    interface_redundancy_group__status = ColoredLabelColumn(verbose_name=_("Group Status"))
     interface__ip_addresses = tables.TemplateColumn(
         template_code=INTERFACE_REDUNDANCY_GROUP_INTERFACES_IPADDRESSES,
         orderable=False,
-        verbose_name="IP Addresses",
+        verbose_name=_("IP Addresses"),
     )
     actions = ButtonsColumn(model=InterfaceRedundancyGroupAssociation, buttons=["edit", "delete"])
 
@@ -1420,7 +1421,7 @@ class SoftwareImageFileTable(StatusTableMixin, BaseTable):
     device_type_count = LinkedCountColumn(
         viewname="dcim:devicetype_list",
         url_params={"software_image_files": "pk"},
-        verbose_name="Device Types",
+        verbose_name=_("Device Types"),
     )
     tags = TagColumn(url_name="dcim:softwareimagefile_list")
     actions = ButtonsColumn(SoftwareImageFile)
@@ -1462,17 +1463,17 @@ class SoftwareVersionTable(StatusTableMixin, BaseTable):
     software_image_file_count = LinkedCountColumn(
         viewname="dcim:softwareimagefile_list",
         url_params={"software_version": "pk"},
-        verbose_name="Software Image Files",
+        verbose_name=_("Software Image Files"),
     )
     device_count = LinkedCountColumn(
         viewname="dcim:device_list",
         url_params={"software_version": "pk"},
-        verbose_name="Devices",
+        verbose_name=_("Devices"),
     )
     inventory_item_count = LinkedCountColumn(
         viewname="dcim:inventoryitem_list",
         url_params={"software_version": "pk"},
-        verbose_name="Inventory Items",
+        verbose_name=_("Inventory Items"),
     )
     long_term_support = BooleanColumn()
     pre_release = BooleanColumn()
@@ -1581,22 +1582,22 @@ class ControllerManagedDeviceGroupTable(BaseTable):
     device_count = LinkedCountColumn(
         viewname="dcim:device_list",
         url_params={"controller_managed_device_group": "pk"},
-        verbose_name="Devices",
+        verbose_name=_("Devices"),
     )
     virtual_device_context_count = LinkedCountColumn(
         viewname="dcim:virtualdevicecontext_list",
         url_params={"controller_managed_device_group": "pk"},
-        verbose_name="VDCs",
+        verbose_name=_("VDCs"),
     )
     radio_profiles_count = LinkedCountColumn(
         viewname="wireless:radioprofile_list",
         url_params={"controller_managed_device_groups": "pk"},
-        verbose_name="Radio Profiles",
+        verbose_name=_("Radio Profiles"),
     )
     wireless_networks_count = LinkedCountColumn(
         viewname="wireless:wirelessnetwork_list",
         url_params={"controller_managed_device_groups": "pk"},
-        verbose_name="Wireless Networks",
+        verbose_name=_("Wireless Networks"),
     )
 
     class Meta(BaseTable.Meta):
@@ -1643,14 +1644,14 @@ class VirtualDeviceContextTable(StatusTableMixin, RoleTableMixin, BaseTable):
     name = tables.Column(linkify=True)
     tenant = TenantColumn()
     device = tables.Column(linkify=True)
-    controller_managed_device_group = tables.Column(linkify=True, verbose_name="Device Group")
-    primary_ip = tables.Column(linkify=True, order_by=("primary_ip6", "primary_ip4"), verbose_name="IP Address")
-    primary_ip4 = tables.Column(linkify=True, verbose_name="IPv4 Address")
-    primary_ip6 = tables.Column(linkify=True, verbose_name="IPv6 Address")
+    controller_managed_device_group = tables.Column(linkify=True, verbose_name=_("Device Group"))
+    primary_ip = tables.Column(linkify=True, order_by=("primary_ip6", "primary_ip4"), verbose_name=_("IP Address"))
+    primary_ip4 = tables.Column(linkify=True, verbose_name=_("IPv4 Address"))
+    primary_ip6 = tables.Column(linkify=True, verbose_name=_("IPv6 Address"))
     interface_count = LinkedCountColumn(
         viewname="dcim:interface_list",
         url_params={"virtual_device_contexts": "pk"},
-        verbose_name="Interfaces",
+        verbose_name=_("Interfaces"),
     )
     tags = TagColumn(url_name="dcim:device_list")
 

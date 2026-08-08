@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.core.choices import ChoiceSet
 
 #
@@ -14,12 +16,12 @@ class VirtualMachineStatusChoices(ChoiceSet):
     STATUS_DECOMMISSIONING = "decommissioning"
 
     CHOICES = (
-        (STATUS_OFFLINE, "Offline"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_PLANNED, "Planned"),
-        (STATUS_STAGED, "Staged"),
-        (STATUS_FAILED, "Failed"),
-        (STATUS_DECOMMISSIONING, "Decommissioning"),
+        (STATUS_OFFLINE, _("Offline")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_PLANNED, _("Planned")),
+        (STATUS_STAGED, _("Staged")),
+        (STATUS_FAILED, _("Failed")),
+        (STATUS_DECOMMISSIONING, _("Decommissioning")),
     )
 
 
@@ -31,9 +33,9 @@ class VMInterfaceStatusChoices(ChoiceSet):
     STATUS_PLANNED = "planned"
 
     CHOICES = (
-        (STATUS_FAILED, "Failed"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_DECOMMISSIONING, "Decommissioning"),
-        (STATUS_MAINTENANCE, "Maintenance"),
-        (STATUS_PLANNED, "Planned"),
+        (STATUS_FAILED, _("Failed")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_DECOMMISSIONING, _("Decommissioning")),
+        (STATUS_MAINTENANCE, _("Maintenance")),
+        (STATUS_PLANNED, _("Planned")),
     )

@@ -1,0 +1,1 @@
+Marked user-facing flash messages that were plain strings as translatable, so confirmations such as "Your preferences have been updated." now follow the user's language.

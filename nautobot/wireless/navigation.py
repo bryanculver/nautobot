@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.core.apps import (
     NavMenuAddButton,
     NavMenuGroup,
@@ -9,16 +11,19 @@ from nautobot.core.ui.choices import NavigationIconChoices, NavigationWeightChoi
 menu_items = (
     NavMenuTab(
         name="Wireless",
+        label=_("Wireless"),
         icon=NavigationIconChoices.WIRELESS,
         weight=NavigationWeightChoices.WIRELESS,
         groups=(
             NavMenuGroup(
                 name="Wireless",
+                label=_("Wireless"),
                 weight=100,
                 items=(
                     NavMenuItem(
                         link="wireless:wirelessnetwork_list",
                         name="Wireless Networks",
+                        label=_("Wireless Networks"),
                         weight=100,
                         permissions=[
                             "wireless.view_wirelessnetwork",
@@ -35,6 +40,7 @@ menu_items = (
                     NavMenuItem(
                         link="dcim:controller_list",
                         name="Wireless Controllers",
+                        label=_("Wireless Controllers"),
                         query_params={"capabilities": "wireless"},
                         weight=200,
                         permissions=[
@@ -53,6 +59,7 @@ menu_items = (
                     NavMenuItem(
                         link="dcim:controllermanageddevicegroup_list",
                         name="Device Groups",
+                        label=_("Device Groups"),
                         query_params={"capabilities": "wireless"},
                         weight=300,
                         permissions=[
@@ -71,6 +78,7 @@ menu_items = (
                     NavMenuItem(
                         link="wireless:radioprofile_list",
                         name="Radio Profiles",
+                        label=_("Radio Profiles"),
                         weight=500,
                         permissions=[
                             "wireless.view_radioprofile",
@@ -87,6 +95,7 @@ menu_items = (
                     NavMenuItem(
                         link="wireless:supporteddatarate_list",
                         name="Supported Data Rates",
+                        label=_("Supported Data Rates"),
                         weight=600,
                         permissions=[
                             "wireless.view_supporteddatarate",

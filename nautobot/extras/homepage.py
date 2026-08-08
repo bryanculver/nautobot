@@ -1,4 +1,5 @@
 from django.db.models.functions import Coalesce
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.apps import HomePageItem, HomePagePanel
 from nautobot.extras.choices import ApprovalWorkflowStateChoices, JobResultStatusChoices
@@ -45,12 +46,14 @@ def get_changelog(request):
 layout = (
     HomePagePanel(
         name="Organization",
+        label=_("Organization"),
         items=(
             HomePageItem(
                 name="Dynamic Groups",
+                label=_("Dynamic Groups"),
                 link="extras:dynamicgroup_list",
                 model=DynamicGroup,
-                description="Groups of related objects",
+                description=_("Groups of related objects"),
                 permissions=["extras.view_dynamicgroup"],
                 weight=300,
             ),
@@ -58,6 +61,7 @@ layout = (
     ),
     HomePagePanel(
         name="Approval Workflow",
+        label=_("Approval Workflow"),
         permissions=["extras.view_approvalworkflowstage"],
         weight=600,
         custom_data={"approval_workflow_stages": get_approval_workflow_stages},
@@ -65,13 +69,15 @@ layout = (
     ),
     HomePagePanel(
         name="Data Sources",
+        label=_("Data Sources"),
         weight=700,
         items=(
             HomePageItem(
                 name="Git Repositories",
+                label=_("Git Repositories"),
                 link="extras:gitrepository_list",
                 model=GitRepository,
-                description="Collections of data and/or job files",
+                description=_("Collections of data and/or job files"),
                 permissions=["extras.view_gitrepository"],
                 weight=100,
             ),
@@ -79,6 +85,7 @@ layout = (
     ),
     HomePagePanel(
         name="Job History",
+        label=_("Job History"),
         permissions=["extras.view_jobresult"],
         weight=800,
         custom_data={"job_results": get_job_results},
@@ -86,6 +93,7 @@ layout = (
     ),
     HomePagePanel(
         name="Change Log",
+        label=_("Change Log"),
         permissions=["extras.view_objectchange"],
         weight=900,
         custom_data={"changelog": get_changelog},

@@ -1,0 +1,1 @@
+Marked form and model validation error messages as translatable, so errors such as "CIDR mask (e.g. /24) is required." follow the user's language.

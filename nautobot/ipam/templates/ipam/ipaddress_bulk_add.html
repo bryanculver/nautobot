@@ -1,8 +1,9 @@
 {% extends 'generic/object_create.html' %}
+{% load i18n %}
 {% load static %}
 {% load form_helpers %}
 
-{% block title %}Bulk Add IP Addresses{% endblock %}
+{% block title %}{% trans "Bulk Add IP Addresses" %}{% endblock %}
 
 {% block tabs %}
     {% include 'ipam/inc/ipadress_edit_header.html' with active_tab='bulk_add' %}
@@ -10,7 +11,7 @@
 
 {% block form %}
     <div class="card">
-        <div class="card-header"><strong>IP Addresses</strong></div>
+        <div class="card-header"><strong>{% trans "IP Addresses" %}</strong></div>
         <div class="card-body">
             {% render_field form.pattern %}
             {% render_field model_form.namespace %}

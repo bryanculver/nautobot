@@ -1,6 +1,7 @@
 """Tables for the vpn models."""
 
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 import django_tables2 as tables
 
 from nautobot.apps.tables import (
@@ -26,12 +27,12 @@ class VPNProfileTable(RoleTableMixin, BaseTable):
     name = tables.Column(linkify=True)
     vpn_phase1_policy_count = LinkedCountColumn(
         viewname="vpn:vpnphase1policy_list",
-        verbose_name="Phase 1 Policies",
+        verbose_name=_("Phase 1 Policies"),
         url_params={"vpn_profiles": "pk"},
     )
     vpn_phase2_policy_count = LinkedCountColumn(
         viewname="vpn:vpnphase2policy_list",
-        verbose_name="Phase 2 Policies",
+        verbose_name=_("Phase 2 Policies"),
         url_params={"vpn_profiles": "pk"},
     )
     secrets_group = tables.Column(linkify=True)
@@ -237,12 +238,12 @@ class VPNTable(StatusTableMixin, RoleTableMixin, BaseTable):
     name = tables.Column(linkify=True)
     tunnel_count = LinkedCountColumn(
         viewname="vpn:vpntunnel_list",
-        verbose_name="VPN Tunnels",
+        verbose_name=_("VPN Tunnels"),
         url_params={"vpn": "pk"},
     )
     termination_count = LinkedCountColumn(
         viewname="vpn:vpntermination_list",
-        verbose_name="Terminations",
+        verbose_name=_("Terminations"),
         url_params={"vpn": "pk"},
     )
     vpn_profile = tables.Column(linkify=True)
@@ -349,7 +350,7 @@ class VPNTunnelEndpointTable(RoleTableMixin, BaseTable):
     tunnel_interface = tables.Column(linkify=True)
     protected_prefixes_count = LinkedCountColumn(
         viewname="ipam:prefix_list",
-        verbose_name="Protected Prefixes",
+        verbose_name=_("Protected Prefixes"),
         url_params={"vpn_tunnel_endpoints": "pk"},
         reverse_lookup="vpn_tunnel_endpoints",
     )
@@ -396,9 +397,9 @@ class VPNTerminationTable(BaseTable):
 
     pk = ToggleColumn()
     vpn = tables.Column(linkify=True)
-    assigned_object_type = tables.Column(verbose_name="Object Type", orderable=False)
-    assigned_object = tables.Column(linkify=True, orderable=False, verbose_name="Object")
-    assigned_object_parent = tables.Column(linkify=True, orderable=False, verbose_name="Parent")
+    assigned_object_type = tables.Column(verbose_name=_("Object Type"), orderable=False)
+    assigned_object = tables.Column(linkify=True, orderable=False, verbose_name=_("Object"))
+    assigned_object_parent = tables.Column(linkify=True, orderable=False, verbose_name=_("Parent"))
     actions = ButtonsColumn(models.VPNTermination)
     tags = TagColumn(url_name="vpn:vpntermination_list")
 

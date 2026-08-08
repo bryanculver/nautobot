@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import django_tables2 as tables
 from django_tables2.utils import Accessor
 
@@ -144,17 +145,17 @@ class ConsoleConnectionTable(BaseTable):
         accessor=Accessor("cable_paths__destination__parent"),
         orderable=False,
         linkify=True,
-        verbose_name="Console Server",
+        verbose_name=_("Console Server"),
     )
     console_server_port = tables.Column(
         accessor=Accessor("cable_paths__destination"),
         orderable=False,
         linkify=True,
-        verbose_name="Port",
+        verbose_name=_("Port"),
     )
     device = tables.Column(linkify=True, accessor="parent", orderable=False)
-    name = tables.Column(linkify=True, verbose_name="Console Port")
-    reachable = BooleanColumn(accessor=Accessor("cable_paths__is_active"), verbose_name="Reachable")
+    name = tables.Column(linkify=True, verbose_name=_("Console Port"))
+    reachable = BooleanColumn(accessor=Accessor("cable_paths__is_active"), verbose_name=_("Reachable"))
 
     class Meta(BaseTable.Meta):
         model = ConsolePort
@@ -172,17 +173,17 @@ class PowerConnectionTable(BaseTable):
         accessor=Accessor("cable_paths__destination__parent"),
         orderable=False,
         linkify=True,
-        verbose_name="PDU",
+        verbose_name=_("PDU"),
     )
     outlet = tables.Column(
         accessor=Accessor("cable_paths__destination"),
         orderable=False,
         linkify=True,
-        verbose_name="Outlet",
+        verbose_name=_("Outlet"),
     )
     device = tables.Column(linkify=True, accessor="parent", orderable=False)
-    name = tables.Column(linkify=True, verbose_name="Power Port")
-    reachable = BooleanColumn(accessor=Accessor("cable_paths__is_active"), verbose_name="Reachable")
+    name = tables.Column(linkify=True, verbose_name=_("Power Port"))
+    reachable = BooleanColumn(accessor=Accessor("cable_paths__is_active"), verbose_name=_("Reachable"))
 
     class Meta(BaseTable.Meta):
         model = PowerPort
@@ -198,18 +199,18 @@ class InterfaceConnectionTable(BaseTable):
     """
 
     device_a = tables.TemplateColumn(
-        template_code=INTERFACE_CONNECTION_DEVICE_A, orderable=False, verbose_name="Device A"
+        template_code=INTERFACE_CONNECTION_DEVICE_A, orderable=False, verbose_name=_("Device A")
     )
     interface_a = tables.TemplateColumn(
-        template_code=INTERFACE_CONNECTION_INTERFACE_A, orderable=False, verbose_name="Interface A"
+        template_code=INTERFACE_CONNECTION_INTERFACE_A, orderable=False, verbose_name=_("Interface A")
     )
     device_b = tables.Column(
-        accessor=Accessor("destination.parent"), orderable=False, linkify=True, verbose_name="Device B"
+        accessor=Accessor("destination.parent"), orderable=False, linkify=True, verbose_name=_("Device B")
     )
     interface_b = tables.Column(
-        accessor=Accessor("destination"), orderable=False, linkify=True, verbose_name="Interface B"
+        accessor=Accessor("destination"), orderable=False, linkify=True, verbose_name=_("Interface B")
     )
-    reachable = BooleanColumn(accessor=Accessor("is_active"), verbose_name="Reachable")
+    reachable = BooleanColumn(accessor=Accessor("is_active"), verbose_name=_("Reachable"))
 
     class Meta(BaseTable.Meta):
         model = CablePath

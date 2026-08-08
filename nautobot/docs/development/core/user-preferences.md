@@ -7,6 +7,7 @@ The `users.User` model holds individual preferences for each user in the form of
 | Name | Description |
 | ---- | ----------- |
 | `extras.configcontext.format` | Preferred format when rendering config context data (JSON or YAML) |
+| `language` | Preferred language for the user interface; must be one of the codes in the [`LANGUAGES`](../../user-guide/administration/configuration/settings.md#languages) setting. Unset means the instance default (`LANGUAGE_CODE`) |
 | `navbar_favorites` | Navbar items marked as "favorites" (starred) |
 | `pagination.per_page` | The number of items to display per page of a paginated table |
 | `tables.TABLE_NAME.columns` | The ordered list of columns to display when viewing the table |

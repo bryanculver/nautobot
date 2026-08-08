@@ -1,10 +1,11 @@
 {% comment %}Kept for use with apps that have not transitioned to the new UI Component framework.{% endcomment %}
 {% extends base_template %}
+{% load i18n %}
 {% load helpers %}
 {% load tz %}
 {% load static %}
 
-{% block title %} {{ object }} - Data Compliance {% endblock %}
+{% block title %}{% blocktrans with object=object %}{{ object }} - Data Compliance{% endblocktrans %}{% endblock %}
 
 {% block content %}
     {% include 'responsive_table.html' %}

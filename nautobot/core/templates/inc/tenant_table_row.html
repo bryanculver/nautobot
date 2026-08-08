@@ -1,7 +1,8 @@
+{% load i18n %}
 {% load helpers %}
 
 <tr>
-    <td>Tenant</td>
+    <td>{% trans "Tenant" %}</td>
     <td>
         {% if object.tenant and object.tenant.tenant_group %}
             {{ object.tenant.tenant_group|hyperlinked_object }} /

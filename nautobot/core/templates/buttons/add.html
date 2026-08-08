@@ -1,13 +1,14 @@
+{% load i18n %}
 {% if add_url %}
     {% if list_element %}
         <li>
             <a href="{{ add_url }}" id="add-button">
-                <span class="mdi mdi-plus-thick text-secondary" aria-hidden="true"></span> Add {{ verbose_name }}
+                <span class="mdi mdi-plus-thick text-secondary" aria-hidden="true"></span> {% blocktrans with verbose_name=verbose_name %}Add {{ verbose_name }}{% endblocktrans %}
             </a>
         </li>
     {% else %}
         <a href="{{ add_url }}" class="btn btn-primary" id="add-button">
-            <span class="mdi mdi-plus-thick" aria-hidden="true"></span> Add {{ verbose_name }}
+            <span class="mdi mdi-plus-thick" aria-hidden="true"></span> {% blocktrans with verbose_name=verbose_name %}Add {{ verbose_name }}{% endblocktrans %}
         </a>
     {% endif %}
 {% endif %}

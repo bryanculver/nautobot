@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.core.choices import ChoiceSet
 
 
@@ -56,12 +58,12 @@ class WirelessNetworkModeChoices(ChoiceSet):
     BRIDGE = "Bridge"
 
     CHOICES = (
-        (CENTRAL, "Central"),
-        (FABRIC, "Fabric"),
-        (STANDALONE, "Standalone (Autonomous)"),
-        (LOCAL, "Local (Flex)"),
-        (MESH, "Mesh"),
-        (BRIDGE, "Bridge"),
+        (CENTRAL, _("Central")),
+        (FABRIC, _("Fabric")),
+        (STANDALONE, _("Standalone (Autonomous)")),
+        (LOCAL, _("Local (Flex)")),
+        (MESH, _("Mesh")),
+        (BRIDGE, _("Bridge")),
     )
 
 

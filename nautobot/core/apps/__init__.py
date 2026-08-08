@@ -165,6 +165,8 @@ def register_menu_items(tab_list):
                         # Catch the invalid link here and render the link name as an error message in the template
                         logger.debug("%s", e)
                         item.name = "ERROR: Invalid link!"
+                        # Null any label so the error message above is what actually gets displayed.
+                        item.label = None
 
                     create_or_check_entry(
                         registry_groups[group.name]["items"],

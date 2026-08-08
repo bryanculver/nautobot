@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.models import BaseModel
@@ -71,11 +72,15 @@ class ComponentTemplateModel(
     RelationshipModel,
     BaseModel,
 ):
-    device_type = ForeignKeyWithAutoRelatedName(to="dcim.DeviceType", on_delete=models.CASCADE)
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
+    device_type = ForeignKeyWithAutoRelatedName(
+        to="dcim.DeviceType", on_delete=models.CASCADE, verbose_name=_("device type")
+    )
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("name"))
     _name = NaturalOrderingField(target_field="name", max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    label = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, help_text="Physical label")
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    label = models.CharField(
+        max_length=CHARFIELD_MAX_LENGTH, blank=True, help_text=_("Physical label"), verbose_name=_("label")
+    )
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     class Meta:
         abstract = True
@@ -144,12 +149,14 @@ class ModularComponentTemplateModel(ComponentTemplateModel):
         on_delete=models.CASCADE,
         blank=True,
         null=True,
+        verbose_name=_("device type"),
     )
     module_type = ForeignKeyWithAutoRelatedName(
         to="dcim.ModuleType",
         on_delete=models.CASCADE,
         blank=True,
         null=True,
+        verbose_name=_("module type"),
     )
 
     natural_key_field_names = ["device_type", "module_type", "name"]
@@ -203,10 +210,10 @@ class ModularComponentTemplateModel(ComponentTemplateModel):
 
         # Validate that a DeviceType or ModuleType is set, but not both
         if self.device_type and self.module_type:
-            raise ValidationError("Only one of device_type or module_type must be set")
+            raise ValidationError(_("Only one of device_type or module_type must be set"))
 
         if not (self.device_type or self.module_type):
-            raise ValidationError("Either device_type or module_type must be set")
+            raise ValidationError(_("Either device_type or module_type must be set"))
 
 
 @extras_features(
@@ -219,7 +226,7 @@ class ConsolePortTemplate(ModularComponentTemplateModel):
     A template for a ConsolePort to be created for a new Device.
     """
 
-    type = models.CharField(max_length=50, choices=ConsolePortTypeChoices, blank=True)
+    type = models.CharField(max_length=50, choices=ConsolePortTypeChoices, blank=True, verbose_name=_("type"))
 
     def instantiate(self, device, module=None):
         return self.instantiate_model(model=ConsolePort, device=device, module=module, type=self.type)
@@ -235,7 +242,7 @@ class ConsoleServerPortTemplate(ModularComponentTemplateModel):
     A template for a ConsoleServerPort to be created for a new Device.
     """
 
-    type = models.CharField(max_length=50, choices=ConsolePortTypeChoices, blank=True)
+    type = models.CharField(max_length=50, choices=ConsolePortTypeChoices, blank=True, verbose_name=_("type"))
 
     def instantiate(self, device, module=None):
         return self.instantiate_model(model=ConsoleServerPort, device=device, module=module, type=self.type)
@@ -251,25 +258,28 @@ class PowerPortTemplate(ModularComponentTemplateModel):
     A template for a PowerPort to be created for a new Device.
     """
 
-    type = models.CharField(max_length=50, choices=PowerPortTypeChoices, blank=True)
+    type = models.CharField(max_length=50, choices=PowerPortTypeChoices, blank=True, verbose_name=_("type"))
     maximum_draw = models.PositiveSmallIntegerField(
         blank=True,
         null=True,
         validators=[MinValueValidator(1)],
-        help_text="Maximum power draw (watts)",
+        help_text=_("Maximum power draw (watts)"),
+        verbose_name=_("maximum draw"),
     )
     allocated_draw = models.PositiveSmallIntegerField(
         blank=True,
         null=True,
         validators=[MinValueValidator(1)],
-        help_text="Allocated power draw (watts)",
+        help_text=_("Allocated power draw (watts)"),
+        verbose_name=_("allocated draw"),
     )
     power_factor = models.DecimalField(
         max_digits=4,
         decimal_places=2,
         default=Decimal("0.95"),
         validators=[MinValueValidator(Decimal("0.01")), MaxValueValidator(Decimal("1.00"))],
-        help_text="Power factor (0.01-1.00) for converting between watts (W) and volt-amps (VA). Defaults to 0.95.",
+        help_text=_("Power factor (0.01-1.00) for converting between watts (W) and volt-amps (VA). Defaults to 0.95."),
+        verbose_name=_("power factor"),
     )
 
     def instantiate(self, device, module=None):
@@ -289,7 +299,10 @@ class PowerPortTemplate(ModularComponentTemplateModel):
         if self.maximum_draw is not None and self.allocated_draw is not None:
             if self.allocated_draw > self.maximum_draw:
                 raise ValidationError(
-                    {"allocated_draw": f"Allocated draw cannot exceed the maximum draw ({self.maximum_draw}W)."}
+                    {
+                        "allocated_draw": gettext("Allocated draw cannot exceed the maximum draw (%(maximum_draw)sW).")
+                        % {"maximum_draw": self.maximum_draw}
+                    }
                 )
 
 
@@ -303,19 +316,21 @@ class PowerOutletTemplate(ModularComponentTemplateModel):
     A template for a PowerOutlet to be created for a new Device.
     """
 
-    type = models.CharField(max_length=50, choices=PowerOutletTypeChoices, blank=True)
+    type = models.CharField(max_length=50, choices=PowerOutletTypeChoices, blank=True, verbose_name=_("type"))
     power_port_template = models.ForeignKey(
         to="dcim.PowerPortTemplate",
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
         related_name="power_outlet_templates",
+        verbose_name=_("power port template"),
     )
     feed_leg = models.CharField(
         max_length=50,
         choices=PowerOutletFeedLegChoices,
         blank=True,
-        help_text="Phase (for three-phase feeds)",
+        help_text=_("Phase (for three-phase feeds)"),
+        verbose_name=_("feed leg"),
     )
 
     def clean(self):
@@ -325,11 +340,13 @@ class PowerOutletTemplate(ModularComponentTemplateModel):
         if self.power_port_template:
             if self.device_type and self.power_port_template.device_type != self.device_type:
                 raise ValidationError(
-                    f"Parent power port ({self.power_port_template}) must belong to the same device type"
+                    gettext("Parent power port (%(power_port_template)s) must belong to the same device type")
+                    % {"power_port_template": self.power_port_template}
                 )
             if self.module_type and self.power_port_template.module_type != self.module_type:
                 raise ValidationError(
-                    f"Parent power port ({self.power_port_template}) must belong to the same module type"
+                    gettext("Parent power port (%(power_port_template)s) must belong to the same module type")
+                    % {"power_port_template": self.power_port_template}
                 )
 
     def instantiate(self, device, module=None):
@@ -364,13 +381,19 @@ class InterfaceTemplate(ModularComponentTemplateModel):
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
     )
-    type = models.CharField(max_length=50, choices=InterfaceTypeChoices)
+    type = models.CharField(max_length=50, choices=InterfaceTypeChoices, verbose_name=_("type"))
     port_type = models.CharField(
-        max_length=50, choices=PortTypeChoices, blank=True, help_text="Physical connector type"
+        max_length=50,
+        choices=PortTypeChoices,
+        blank=True,
+        help_text=_("Physical connector type"),
+        verbose_name=_("port type"),
     )
-    mgmt_only = models.BooleanField(default=False, verbose_name="Management only")
-    speed = models.PositiveIntegerField(null=True, blank=True)
-    duplex = models.CharField(max_length=10, choices=InterfaceDuplexChoices, blank=True, default="")
+    mgmt_only = models.BooleanField(default=False, verbose_name=_("Management only"))
+    speed = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("speed"))
+    duplex = models.CharField(
+        max_length=10, choices=InterfaceDuplexChoices, blank=True, default="", verbose_name=_("duplex")
+    )
 
     def clean(self):
         super().clean()
@@ -385,16 +408,16 @@ class InterfaceTemplate(ModularComponentTemplateModel):
 
         # Check settings by interface type
         if self.speed and any([is_lag, is_virtual, is_wireless]):
-            raise ValidationError({"speed": "Speed is not applicable to this interface type."})
+            raise ValidationError({"speed": _("Speed is not applicable to this interface type.")})
 
         if self.duplex and any([is_lag, is_virtual, is_wireless]):
-            raise ValidationError({"duplex": "Duplex is not applicable to this interface type."})
+            raise ValidationError({"duplex": _("Duplex is not applicable to this interface type.")})
 
         if self.duplex and self.type not in COPPER_TWISTED_PAIR_IFACE_TYPES:
-            raise ValidationError({"duplex": "Duplex is only applicable to copper twisted-pair interfaces."})
+            raise ValidationError({"duplex": _("Duplex is only applicable to copper twisted-pair interfaces.")})
 
         if self.type in NONCONNECTABLE_IFACE_TYPES and self.port_type:
-            raise ValidationError({"port_type": "Virtual and wireless interfaces cannot have a port type."})
+            raise ValidationError({"port_type": _("Virtual and wireless interfaces cannot have a port type.")})
 
     def instantiate(self, device, module=None):
         try:
@@ -424,11 +447,12 @@ class FrontPortTemplate(ModularComponentTemplateModel):
     Template for a pass-through port on the front of a new Device.
     """
 
-    type = models.CharField(max_length=50, choices=PortTypeChoices)
+    type = models.CharField(max_length=50, choices=PortTypeChoices, verbose_name=_("type"))
     rear_port_template = models.ForeignKey(
         to="dcim.RearPortTemplate",
         on_delete=models.CASCADE,
         related_name="front_port_templates",
+        verbose_name=_("rear port template"),
     )
     rear_port_position = models.PositiveSmallIntegerField(
         default=1,
@@ -436,6 +460,7 @@ class FrontPortTemplate(ModularComponentTemplateModel):
             MinValueValidator(REARPORT_POSITIONS_MIN),
             MaxValueValidator(REARPORT_POSITIONS_MAX),
         ],
+        verbose_name=_("rear port position"),
     )
 
     natural_key_field_names = ["device_type", "module_type", "name", "rear_port_template", "rear_port_position"]
@@ -454,16 +479,28 @@ class FrontPortTemplate(ModularComponentTemplateModel):
 
         # Validate rear port assignment
         if self.device_type and self.rear_port_template.device_type != self.device_type:
-            raise ValidationError(f"Rear port ({self.rear_port_template}) must belong to the same device type")
+            raise ValidationError(
+                gettext("Rear port (%(rear_port_template)s) must belong to the same device type")
+                % {"rear_port_template": self.rear_port_template}
+            )
         if self.module_type and self.rear_port_template.module_type != self.module_type:
-            raise ValidationError(f"Rear port ({self.rear_port_template}) must belong to the same module type")
+            raise ValidationError(
+                gettext("Rear port (%(rear_port_template)s) must belong to the same module type")
+                % {"rear_port_template": self.rear_port_template}
+            )
 
         # Validate rear port position assignment
         if self.rear_port_position > self.rear_port_template.positions:
             raise ValidationError(
                 (
-                    f"Invalid rear port position ({self.rear_port_position}); "
-                    f"rear port {self.rear_port_template.name} has only {self.rear_port_template.positions} positions"
+                    gettext(
+                        "Invalid rear port position (%(rear_port_position)s); rear port %(name)s has only %(positions)s positions"
+                    )
+                    % {
+                        "rear_port_position": self.rear_port_position,
+                        "name": self.rear_port_template.name,
+                        "positions": self.rear_port_template.positions,
+                    }
                 )
             )
 
@@ -492,13 +529,14 @@ class RearPortTemplate(ModularComponentTemplateModel):
     Template for a pass-through port on the rear of a new Device.
     """
 
-    type = models.CharField(max_length=50, choices=PortTypeChoices)
+    type = models.CharField(max_length=50, choices=PortTypeChoices, verbose_name=_("type"))
     positions = models.PositiveSmallIntegerField(
         default=1,
         validators=[
             MinValueValidator(REARPORT_POSITIONS_MIN),
             MaxValueValidator(REARPORT_POSITIONS_MAX),
         ],
+        verbose_name=_("positions"),
     )
 
     def instantiate(self, device, module=None):
@@ -531,7 +569,11 @@ class DeviceBayTemplate(ComponentTemplateModel):
     def clean(self):
         if self.device_type and not self.device_type.is_parent_device:  # pylint: disable=no-member
             raise ValidationError(
-                f'Subdevice role of device type ({self.device_type}) must be set to "parent" or "parent-child" to allow device bays.'
+                _(
+                    'Subdevice role of device type (%(device_type)s) must be set to "parent" '
+                    'or "parent-child" to allow device bays.'
+                )
+                % {"device_type": self.device_type}
             )
 
 
@@ -542,21 +584,26 @@ class ModuleBayTemplate(ModularComponentTemplateModel):
     position = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        help_text="The position of the module bay within the device or module",
+        help_text=_("The position of the module bay within the device or module"),
+        verbose_name=_("position"),
     )
-    label = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, help_text="Physical label")
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    label = models.CharField(
+        max_length=CHARFIELD_MAX_LENGTH, blank=True, help_text=_("Physical label"), verbose_name=_("label")
+    )
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     module_family = models.ForeignKey(
         to="dcim.ModuleFamily",
         on_delete=models.PROTECT,
         related_name="module_bay_templates",
         blank=True,
         null=True,
-        help_text="Module family that can be installed in this bay. Leave blank for no restriction.",
+        help_text=_("Module family that can be installed in this bay. Leave blank for no restriction."),
+        verbose_name=_("module family"),
     )
     requires_first_party_modules = models.BooleanField(
         default=False,
-        help_text="This bay will only accept modules from the same manufacturer as the parent device or module",
+        help_text=_("This bay will only accept modules from the same manufacturer as the parent device or module"),
+        verbose_name=_("requires first party modules"),
     )
 
     natural_key_field_names = ["device_type", "module_type", "name"]
@@ -609,7 +656,7 @@ class ModuleBayTemplate(ModularComponentTemplateModel):
 
         # Validate that a DeviceType or ModuleType is set, but not both
         if self.device_type and self.module_type:
-            raise ValidationError("Only one of device_type or module_type must be set")
+            raise ValidationError(_("Only one of device_type or module_type must be set"))
 
         if not (self.device_type or self.module_type):
-            raise ValidationError("Either device_type or module_type must be set")
+            raise ValidationError(_("Either device_type or module_type must be set"))

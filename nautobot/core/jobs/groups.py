@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy as _
+
 from nautobot.extras.choices import DynamicGroupTypeChoices
 from nautobot.extras.jobs import Job, JobButtonReceiver, ObjectVar
 from nautobot.extras.models import DynamicGroup
@@ -11,7 +13,7 @@ class RefreshDynamicGroupCaches(Job):
     """
 
     single_group = ObjectVar(
-        description="Select to refresh only a single specified group instead of all groups",
+        description=_("Select to refresh only a single specified group instead of all groups"),
         model=DynamicGroup,
         query_params={
             "group_type": [DynamicGroupTypeChoices.TYPE_DYNAMIC_FILTER, DynamicGroupTypeChoices.TYPE_DYNAMIC_SET],

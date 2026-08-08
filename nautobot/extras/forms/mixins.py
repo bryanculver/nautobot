@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.core.forms import (
     BulkEditForm,
@@ -71,6 +72,7 @@ class ContactTeamModelFilterFormMixin(forms.Form):
                     required=False,
                     queryset=Contact.objects.all(),
                     to_field_name="name",
+                    label=_("Contacts"),
                 )
 
             if "teams" not in self.fields:
@@ -78,6 +80,7 @@ class ContactTeamModelFilterFormMixin(forms.Form):
                     required=False,
                     queryset=Team.objects.all(),
                     to_field_name="name",
+                    label=_("Teams"),
                 )
 
             self.order_fields(self.field_order)
@@ -172,6 +175,7 @@ class DynamicGroupModelFormMixin(forms.ModelForm):
         if getattr(self._meta.model, "is_dynamic_group_associable_model", False):
             self.fields["dynamic_groups"] = DynamicModelMultipleChoiceField(
                 required=False,
+                label=_("Dynamic groups"),
                 initial=self.instance.dynamic_groups if self.instance else None,
                 queryset=(
                     DynamicGroup.objects.get_for_model(self._meta.model).filter(
@@ -183,7 +187,7 @@ class DynamicGroupModelFormMixin(forms.ModelForm):
                     "group_type": DynamicGroupTypeChoices.TYPE_STATIC,
                 },
                 to_field_name="name",
-                help_text='Only Dynamic Groups of type "static" are selectable here.',
+                help_text=_('Only Dynamic Groups of type "static" are selectable here.'),
             )
 
     def save(self, commit=True):
@@ -200,7 +204,7 @@ class DynamicGroupModelFormMixin(forms.ModelForm):
 class NoteFormBase(forms.Form):
     """Base for the NoteModelFormMixin and NoteModelBulkEditFormMixin."""
 
-    object_note = CommentField(label="Note")
+    object_note = CommentField(label=_("Note"))
 
     def save_note(self, *, instance, user):
         value = self.cleaned_data.get("object_note", "").strip()
@@ -577,7 +581,10 @@ class RelationshipModelFormMixin(forms.ModelForm):
                 for target_peer in target_peers:
                     if target_peer.pk == self.instance.pk:
                         raise ValidationError(
-                            {field_name: f"Object {self.instance} cannot form a relationship to itself!"}
+                            {
+                                field_name: gettext("Object %(instance)s cannot form a relationship to itself!")
+                                % {"instance": self.instance}
+                            }
                         )
 
                     if relationship.has_many(side):
@@ -602,7 +609,12 @@ class RelationshipModelFormMixin(forms.ModelForm):
 
                     if existing_peer_associations.exists():
                         raise ValidationError(
-                            {field_name: f"{target_peer} is already involved in a {relationship} relationship"}
+                            {
+                                field_name: gettext(
+                                    "%(target_peer)s is already involved in a %(relationship)s relationship"
+                                )
+                                % {"target_peer": target_peer, "relationship": relationship}
+                            }
                         )
 
         super().clean()

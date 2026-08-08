@@ -1,0 +1,1 @@
+Marked flash messages that interpolate values (for example "No devices were selected.") as translatable by converting them from f-strings to parameterized `gettext` calls. `xgettext` cannot extract an f-string, so these messages were previously invisible to the translation pipeline.

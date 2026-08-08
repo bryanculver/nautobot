@@ -4,6 +4,7 @@ import re
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils.translation import gettext, gettext_lazy as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator, UniqueValidator
@@ -207,7 +208,7 @@ class ModularDeviceComponentTemplateSerializerMixin:
     def validate(self, data):
         """Validate device_type and module_type field constraints for modular device component templates."""
         if data.get("device_type") and data.get("module_type"):
-            raise serializers.ValidationError("Only one of device_type or module_type must be set")
+            raise serializers.ValidationError(_("Only one of device_type or module_type must be set"))
         if data.get("device_type"):
             validator = UniqueTogetherValidator(queryset=self.Meta.model.objects.all(), fields=("device_type", "name"))
             validator(data, self)
@@ -221,7 +222,7 @@ class ModularDeviceComponentSerializerMixin:
     def validate(self, data):
         """Validate device and module field constraints for modular device components."""
         if data.get("device") and (data.get("module") and data["module"].device != data["device"]):
-            raise serializers.ValidationError("module is installed in a different device")
+            raise serializers.ValidationError(_("module is installed in a different device"))
         if data.get("device") and not data.get("module"):
             validator = UniqueTogetherValidator(
                 queryset=self.Meta.model.objects.filter(module__isnull=True), fields=("device", "name")
@@ -295,7 +296,7 @@ class RackGroupSerializer(TreeModelSerializerMixin, NautobotModelSerializer):
 
 class RackSerializer(TaggedModelSerializerMixin, NautobotModelSerializer):
     type = ChoiceField(choices=RackTypeChoices, allow_blank=True, required=False)
-    width = ChoiceField(choices=RackWidthChoices, required=False, help_text="Rail-to-rail width (in inches)")
+    width = ChoiceField(choices=RackWidthChoices, required=False, help_text=_("Rail-to-rail width (in inches)"))
     outer_unit = ChoiceField(choices=RackDimensionUnitChoices, allow_blank=True, required=False)
     device_count = serializers.IntegerField(read_only=True)
     power_feed_count = serializers.IntegerField(read_only=True)
@@ -589,7 +590,10 @@ class DeviceSerializer(TaggedModelSerializerMixin, NautobotModelSerializer):
             if parent_bay.installed_device and parent_bay.installed_device != self.instance:
                 raise ValidationError(
                     {
-                        "installed_device": f"Cannot install device; parent bay is already taken ({parent_bay.installed_device})"
+                        "installed_device": gettext(
+                            "Cannot install device; parent bay is already taken (%(installed_device)s)"
+                        )
+                        % {"installed_device": parent_bay.installed_device}
                     }
                 )
 
@@ -706,12 +710,15 @@ class InterfaceCommonSerializer(TaggedModelSerializerMixin, NautobotModelSeriali
             if attrs.get("tagged_vlans"):
                 raise serializers.ValidationError(
                     {
-                        "tagged_vlans": f"Mode must be set to {InterfaceModeChoices.MODE_TAGGED} when specifying tagged_vlans"
+                        "tagged_vlans": gettext("Mode must be set to %(MODE_TAGGED)s when specifying tagged_vlans")
+                        % {"MODE_TAGGED": InterfaceModeChoices.MODE_TAGGED}
                     }
                 )
 
             if attrs.get("tagged_vlans") != [] and self.instance and self.instance.tagged_vlans.exists():
-                raise serializers.ValidationError({"tagged_vlans": f"Clear tagged_vlans to set mode to {mode}"})
+                raise serializers.ValidationError(
+                    {"tagged_vlans": gettext("Clear tagged_vlans to set mode to %(mode)s") % {"mode": mode}}
+                )
 
         return super().validate(attrs)
 
@@ -750,8 +757,10 @@ class InterfaceSerializer(
             if vlan.locations.exists() and not vlan.locations.filter(pk__in=location_ids).exists():
                 raise serializers.ValidationError(
                     {
-                        "tagged_vlans": f"VLAN {vlan} must have the same location as the interface's parent device, "
-                        f"or is in one of the parents of the interface's parent device's location, or it must be global."
+                        "tagged_vlans": gettext(
+                            "VLAN %(vlan)s must have the same location as the interface's parent device, or is in one of the parents of the interface's parent device's location, or it must be global."
+                        )
+                        % {"vlan": vlan}
                     }
                 )
 
@@ -1013,7 +1022,7 @@ class CableSerializer(TaggedModelSerializerMixin, NautobotModelSerializer):
         """
         if not isinstance(raw, dict):
             raise serializers.ValidationError(
-                {"terminations": "Expected an object keyed by side and connector (e.g. 'a1', 'b2')."}
+                {"terminations": _("Expected an object keyed by side and connector (e.g. 'a1', 'b2').")}
             )
         entries = []
         for side_connector_key, value in raw.items():
@@ -1119,7 +1128,8 @@ class CableSerializer(TaggedModelSerializerMixin, NautobotModelSerializer):
                 raise serializers.ValidationError(
                     {
                         f"termination_{side}_type": (
-                            f"{term_type.app_label}.{term_type.model} is not a valid cable termination type."
+                            gettext("%(app_label)s.%(term_type)s is not a valid cable termination type.")
+                            % {"app_label": term_type.app_label, "term_type": term_type.model}
                         )
                     }
                 )
@@ -1394,7 +1404,7 @@ class ModuleBaySerializer(TaggedModelSerializerMixin, NautobotModelSerializer):
         """Validate device and module field constraints for module bay."""
         if attrs.get("parent_device") and attrs.get("parent_module"):
             if attrs["parent_device"] != attrs["parent_module"].device:
-                raise serializers.ValidationError("parent_module is installed in a different parent_device")
+                raise serializers.ValidationError(_("parent_module is installed in a different parent_device"))
         if attrs.get("parent_device"):
             validator = UniqueTogetherValidator(
                 queryset=self.Meta.model.objects.filter(parent_module__isnull=True), fields=("parent_device", "name")
@@ -1417,7 +1427,7 @@ class ModuleBayTemplateSerializer(NautobotModelSerializer):
     def validate(self, attrs):
         """Validate device_type and module_type field constraints for module bay template."""
         if attrs.get("device_type") and attrs.get("module_type"):
-            raise serializers.ValidationError("Only one of device_type or module_type must be set")
+            raise serializers.ValidationError(_("Only one of device_type or module_type must be set"))
         if attrs.get("device_type"):
             validator = UniqueTogetherValidator(queryset=self.Meta.model.objects.all(), fields=("device_type", "name"))
             validator(attrs, self)
@@ -1437,7 +1447,7 @@ class ModuleSerializer(TaggedModelSerializerMixin, NautobotModelSerializer):
     def validate(self, attrs):
         """Validate asset_Tag, serial, parent_module_bay and location field constraints for module."""
         if attrs.get("parent_module_bay") and attrs.get("location"):
-            raise serializers.ValidationError("Only one of parent_module_bay or location must be set")
+            raise serializers.ValidationError(_("Only one of parent_module_bay or location must be set"))
         if attrs.get("serial"):
             validator = UniqueTogetherValidator(queryset=Module.objects.all(), fields=("module_type", "serial"))
             validator(attrs, self)
@@ -1464,7 +1474,7 @@ class VirtualDeviceContextSerializer(TaggedModelSerializerMixin, NautobotModelSe
     def validate(self, attrs):
         """Validate device cannot be changed for VirtualDeviceContext."""
         if attrs.get("device") and self.instance and self.instance.device != attrs.get("device"):
-            raise serializers.ValidationError("Changing the device of a VirtualDeviceContext is not allowed.")
+            raise serializers.ValidationError(_("Changing the device of a VirtualDeviceContext is not allowed."))
         return super().validate(attrs)
 
 

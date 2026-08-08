@@ -11,6 +11,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.models import BaseManager
@@ -53,33 +54,31 @@ class GitRepositoryManager(BaseManager.from_queryset(RestrictedQuerySet)):
 class GitRepository(PrimaryModel):
     """Representation of a Git repository used as an external data source."""
 
-    name = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH,
-        unique=True,
-    )
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
     slug = AutoSlugField(
         populate_from="name",
-        help_text="Internal field name. Please use underscores rather than dashes in this key.",
+        help_text=_("Internal field name. Please use underscores rather than dashes in this key."),
         slugify_function=slugify_dashes_to_underscores,
+        verbose_name=_("slug"),
     )
 
     remote_url = LaxURLField(
         max_length=CHARFIELD_MAX_LENGTH,
         # For the moment we don't support ssh:// and git:// URLs
-        help_text="Only HTTP and HTTPS URLs are presently supported",
+        help_text=_("Only HTTP and HTTPS URLs are presently supported"),
         validators=[EnhancedURLValidator(schemes=["http", "https"])],
+        verbose_name=_("remote url"),
     )
     branch = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH,
-        default="main",
-        help_text="Branch, tag, or commit",
+        max_length=CHARFIELD_MAX_LENGTH, default="main", help_text=_("Branch, tag, or commit"), verbose_name=_("branch")
     )
 
     current_head = models.CharField(
-        help_text="Commit hash of the most recent fetch from the selected branch. Used for syncing between workers.",
+        help_text=_("Commit hash of the most recent fetch from the selected branch. Used for syncing between workers."),
         max_length=48,
         default="",
         blank=True,
+        verbose_name=_("current head"),
     )
 
     secrets_group = models.ForeignKey(
@@ -89,11 +88,14 @@ class GitRepository(PrimaryModel):
         blank=True,
         null=True,
         related_name="git_repositories",
+        verbose_name=_("secrets group"),
     )
 
     # Data content types that this repo is a source of. Valid options are dynamically generated based on
     # the data types registered in registry['datasource_contents'].
-    provided_contents = models.JSONField(encoder=DjangoJSONEncoder, default=list, blank=True)
+    provided_contents = models.JSONField(
+        encoder=DjangoJSONEncoder, default=list, blank=True, verbose_name=_("provided contents")
+    )
 
     objects = GitRepositoryManager()
 
@@ -101,8 +103,8 @@ class GitRepository(PrimaryModel):
 
     class Meta:
         ordering = ["name"]
-        verbose_name = "Git repository"
-        verbose_name_plural = "Git repositories"
+        verbose_name = _("Git repository")
+        verbose_name_plural = _("Git repositories")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -131,13 +133,23 @@ class GitRepository(PrimaryModel):
 
         if self.present_in_database and self.slug != self.__initial_slug:
             raise ValidationError(
-                f"Slug cannot be changed once set. Current slug is {self.__initial_slug}, requested slug is {self.slug}"
+                gettext(
+                    "Slug cannot be changed once set. Current slug is %(__initial_slug)s, requested slug is %(slug)s"
+                )
+                % {"__initial_slug": self.__initial_slug, "slug": self.slug}
             )
 
         if not self.present_in_database:
             permitted, reason = check_name_safe_to_import_privately(self.slug)
             if not permitted:
-                raise ValidationError({"slug": f"Please choose a different slug; {self.slug!r} is {reason}"})
+                raise ValidationError(
+                    {
+                        # `repr()` here preserves what the `!r` conversion used to render; the
+                        # conversion itself cannot survive into a translatable placeholder.
+                        "slug": gettext("Please choose a different slug; %(slug)s is %(reason)s")
+                        % {"slug": repr(self.slug), "reason": reason}
+                    }
+                )
 
         if self.provided_contents:
             q = models.Q()
@@ -146,8 +158,10 @@ class GitRepository(PrimaryModel):
             duplicate_repos = GitRepository.objects.filter(remote_url=self.remote_url).exclude(id=self.id).filter(q)
             if duplicate_repos.exists():
                 raise ValidationError(
-                    f"Another Git repository already configured for remote URL {self.remote_url} "
-                    "provides contents overlapping with this repository."
+                    gettext(
+                        "Another Git repository already configured for remote URL %(remote_url)s provides contents overlapping with this repository."
+                    )
+                    % {"remote_url": self.remote_url}
                 )
 
         # Changing branch or remote_url invalidates current_head

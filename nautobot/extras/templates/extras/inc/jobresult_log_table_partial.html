@@ -1,9 +1,10 @@
+{% load i18n %}
 {% load helpers %}
 
 {% if job_is_pending and not has_logs %}
     <div class="text-center p-3 text-secondary">
         <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-        Loading logs…
+        {% trans "Loading logs…" %}
     </div>
 {% else %}
     {{ table_html }}

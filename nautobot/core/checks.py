@@ -237,3 +237,77 @@ def check_for_removed_storage_settings(app_configs, **kwargs):
             )
 
     return errors
+
+
+@register(Tags.database)
+def check_database_unicode_support(app_configs, databases=None, **kwargs):
+    """
+    Verify that the database itself can actually store the full range of Unicode.
+
+    Nautobot asks MySQL for a `utf8mb4` *connection*, and MySQL will happily grant it against a
+    database whose own character set is `utf8mb3`. Nothing fails until someone saves a 4-byte
+    character -- an emoji, or a CJK Extension B ideograph -- at which point the INSERT raises and
+    the user gets a 500 with no indication of the real cause. Failing loudly at startup is far
+    cheaper than diagnosing that from a stack trace.
+
+    PostgreSQL is checked for a UTF8 server encoding, which is the equivalent misconfiguration.
+    """
+    if databases is None:
+        return []
+
+    errors = []
+    for alias in databases:
+        conn = connections[alias]
+
+        if conn.vendor == "mysql":
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME "
+                    "FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = DATABASE()"
+                )
+                row = cursor.fetchone()
+            if row is None:
+                continue
+            charset, collation = row
+            if charset != "utf8mb4":
+                errors.append(
+                    Error(
+                        f"Database '{conn.settings_dict['NAME']}' uses the character set '{charset}', "
+                        "which cannot store 4-byte UTF-8 characters such as emoji or less common CJK "
+                        "ideographs. Saving such a value will fail at write time.",
+                        hint=(
+                            f"Convert the database and its existing tables to utf8mb4, for example: "
+                            f"ALTER DATABASE `{conn.settings_dict['NAME']}` CHARACTER SET utf8mb4 "
+                            f"COLLATE utf8mb4_0900_ai_ci; followed by "
+                            f"ALTER TABLE <table> CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci; "
+                            f"for each existing table. Detected collation is '{collation}'."
+                        ),
+                        obj=f"connections[{alias}]",
+                        id="nautobot.core.E011",
+                    )
+                )
+
+        elif conn.vendor == "postgresql":
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT pg_encoding_to_char(encoding) FROM pg_database WHERE datname = current_database()"
+                )
+                row = cursor.fetchone()
+            if row is None:
+                continue
+            encoding = row[0]
+            if encoding != "UTF8":
+                errors.append(
+                    Error(
+                        f"Database '{conn.settings_dict['NAME']}' uses the encoding '{encoding}' rather than UTF8. "
+                        "Nautobot requires a UTF8 database to store international text.",
+                        hint=(
+                            "A database's encoding cannot be changed in place; it must be recreated with "
+                            "CREATE DATABASE ... ENCODING 'UTF8' and the data reloaded."
+                        ),
+                        obj=f"connections[{alias}]",
+                        id="nautobot.core.E011",
+                    )
+                )
+
+    return errors

@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load helpers %}
 {% load plugins %}
 
@@ -10,8 +11,8 @@
 {% endif %}
 {% if settings.MAINTENANCE_MODE %}
     <div class="alert alert-warning text-center" role="alert">
-        <h4><span class="mdi mdi-alert me-4"></span>Maintenance Mode</h4>
-        <p>Nautobot is currently in maintenance mode. Functionality may be limited.</p>
+        <h4><span class="mdi mdi-alert me-4"></span>{% trans "Maintenance Mode" %}</h4>
+        <p>{% trans "Nautobot is currently in maintenance mode. Functionality may be limited." %}</p>
     </div>
 {% endif %}
 {% plugin_banners %}

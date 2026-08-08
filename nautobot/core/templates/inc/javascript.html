@@ -2,6 +2,12 @@
 {% load plugins %}
 {% load static %}
 
+{% comment %}
+Must precede nautobot.js: it installs the global `django.gettext` that nautobot.js translates through.
+Deliberately not `versioned_static` -- this is a generated view, not a static file, and it varies per
+user language rather than per Nautobot release.
+{% endcomment %}
+<script src="{% url 'javascript_catalog' %}"></script>
 <script src="{% static 'dist/js/nautobot.js' %}" onerror="nb.media.handleFailure(this)"></script>
 <script src="{% static 'dist/js/libraries.js' %}" onerror="nb.media.handleFailure(this)"></script>
 <script src="{% versioned_static 'js/forms.js' %}" onerror="nb.media.handleFailure(this)"></script>

@@ -391,6 +391,7 @@ nav:
               - Nautobot Docker Images: "user-guide/administration/guides/docker.md"
               - SELinux Troubleshooting: "user-guide/administration/guides/selinux-troubleshooting.md"
               - Health Checks: "user-guide/administration/guides/health-checks.md"
+              - Internationalization: "user-guide/administration/guides/internationalization.md"
               - Permissions: "user-guide/administration/guides/permissions.md"
               - Prometheus Metrics: "user-guide/administration/guides/prometheus-metrics.md"
               - Replicating Nautobot: "user-guide/administration/guides/replicating-nautobot.md"
@@ -671,6 +672,7 @@ nav:
               - Navigation: "development/apps/api/ui-extensions/navigation.md"
               - Object Detail & List Views: "development/apps/api/ui-extensions/object-views.md"
           - Testing: "development/apps/api/testing.md"
+          - Translations: "development/apps/api/translations.md"
           - Code Reference:
               - nautobot.apps: "code-reference/nautobot/apps/__init__.md"
               - nautobot.apps.admin: "code-reference/nautobot/apps/admin.md"
@@ -744,6 +746,7 @@ nav:
           - Role Internals: "development/core/role-internals.md"
           - Style Guide: "development/core/style-guide.md"
           - Testing: "development/core/testing.md"
+          - Translations: "development/core/translations.md"
           - User Preferences: "development/core/user-preferences.md"
           - UI Component Framework: "development/core/ui-component-framework.md"
           - Release Checklist: "development/core/release-checklist.md"

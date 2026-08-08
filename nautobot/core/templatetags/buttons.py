@@ -3,6 +3,7 @@ from django.core.exceptions import FieldDoesNotExist
 from django.db.models import CharField
 from django.urls import NoReverseMatch, reverse
 from django.utils.html import format_html, format_html_join
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.core.templatetags.helpers import bettertitle
 from nautobot.core.templatetags.perms import can_add, can_change, can_delete
@@ -99,7 +100,7 @@ def delete_button(instance, use_pk=False, key="slug"):
 
 
 @register.inclusion_tag("buttons/copy.html")
-def copy_button(target=None, text=None, label="Copy", size=None, css_class=None):
+def copy_button(target=None, text=None, label=None, size=None, css_class=None):
     """Render a reusable hover "copy to clipboard" button.
 
     Renders the standard Nautobot hover-copy button markup (see the v2->v3 migration guide,
@@ -116,6 +117,10 @@ def copy_button(target=None, text=None, label="Copy", size=None, css_class=None)
         size (str, optional): Bootstrap-style size suffix (e.g. `"sm"`, `"xs"`) applied as `btn-{size}`.
         css_class (str, optional): Additional CSS class(es) to append to the button.
     """
+    if label is None:
+        # Resolved here rather than as a parameter default, so the string is translated per
+        # request instead of once at import time.
+        label = gettext("Copy")
     return {
         "target": target,
         "text": text,
@@ -209,7 +214,7 @@ def consolidate_bulk_action_buttons(context):
     if context["bulk_edit_url"] and context["permissions"]["change"]:
         button_defs.append(
             {
-                "label": "Edit Selected",
+                "label": _("Edit Selected"),
                 "icon": "mdi mdi-pencil",
                 "btn_class": "btn btn-sm btn-warning",
                 "attrs": {"type": "submit", "formaction": reverse(context["bulk_edit_url"]) + query_string},
@@ -220,7 +225,7 @@ def consolidate_bulk_action_buttons(context):
     if context["bulk_delete_url"] and context["permissions"]["delete"]:
         button_defs.append(
             {
-                "label": "Delete Selected",
+                "label": _("Delete Selected"),
                 "icon": "mdi mdi-trash-can-outline",
                 "btn_class": "btn btn-sm btn-danger",
                 "dropdown_class": "dropdown-item text-danger",
@@ -236,7 +241,7 @@ def consolidate_bulk_action_buttons(context):
     if context.get("bulk_disconnect_url") and context["permissions"]["change"]:
         button_defs.append(
             {
-                "label": "Disconnect Selected",
+                "label": _("Disconnect Selected"),
                 "icon": "mdi mdi-ethernet-cable-off",
                 "btn_class": "btn btn-sm btn-danger",
                 "dropdown_class": "dropdown-item",
@@ -253,7 +258,7 @@ def consolidate_bulk_action_buttons(context):
     ):
         button_defs.append(
             {
-                "label": "Update Group Assignment",
+                "label": _("Update Group Assignment"),
                 "icon": "mdi mdi-group",
                 "btn_class": "btn btn-sm btn-primary",
                 "dropdown_class": "dropdown-item",
@@ -278,7 +283,7 @@ def consolidate_bulk_action_buttons(context):
     if context.get("bulk_rename_url") and context["permissions"]["change"] and has_name_field:
         button_defs.append(
             {
-                "label": "Rename Selected",
+                "label": _("Rename Selected"),
                 "icon": "mdi mdi-rename",
                 "btn_class": "btn btn-sm btn-warning",
                 "dropdown_class": "dropdown-item",
@@ -314,11 +319,12 @@ def consolidate_bulk_action_buttons(context):
                 rendered += format_html(
                     """
                     <button type="button" data-bs-toggle="dropdown" class="{} dropdown-toggle" aria-haspopup="true">
-                        <span class="visually-hidden">Toggle Dropdown</span>
+                        <span class="visually-hidden">{}</span>
                         <span class="mdi mdi-chevron-down"></span>
                     </button>
                     """,
                     btn["btn_class"],
+                    _("Toggle Dropdown"),
                 )
         elif is_dropdown:
             css_class = btn.get("dropdown_class", btn["btn_class"])
@@ -352,10 +358,11 @@ def consolidate_bulk_action_buttons(context):
             format_html(
                 """
                 <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true">
-                    Bulk Actions
+                    {}
                     <span class="mdi mdi-chevron-down" aria-hidden="true"></span>
                 </button>
-                """
+                """,
+                _("Bulk Actions"),
             ),
         )
 
@@ -421,7 +428,7 @@ def consolidate_detail_view_action_buttons(context):
         detail_view_action_buttons.append(
             format_html(
                 primary_button_fragment,
-                label=f"Edit {bettertitle(context['verbose_name'])}",
+                label=gettext("Edit %(object_type)s") % {"object_type": bettertitle(context["verbose_name"])},
                 attrs=render_tag_attrs(attrs),
                 button_class=edit_button_classes,
                 icon="mdi mdi-pencil",
@@ -456,7 +463,7 @@ def consolidate_detail_view_action_buttons(context):
         detail_view_action_buttons.append(
             format_html(
                 delete_button_fragment,
-                label=f"Clone {bettertitle(context['verbose_name'])}",
+                label=gettext("Clone %(object_type)s") % {"object_type": bettertitle(context["verbose_name"])},
                 attrs=render_tag_attrs(
                     {
                         "id": "clone-button",
@@ -486,7 +493,7 @@ def consolidate_detail_view_action_buttons(context):
         detail_view_action_buttons.append(
             format_html(
                 delete_button_fragment,
-                label=f"Delete {bettertitle(context['verbose_name'])}",
+                label=gettext("Delete %(object_type)s") % {"object_type": bettertitle(context["verbose_name"])},
                 attrs=render_tag_attrs(
                     {
                         "id": "delete-button",

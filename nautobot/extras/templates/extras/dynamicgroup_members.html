@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load i18n %}
 {% load helpers %}
 
 {% block content %}
@@ -6,18 +7,19 @@
         <div class="col-lg-12">
             {% if members_list_url %}
                 <div class="alert alert-success" role="alert">
-                    You can bulk-add and bulk-remove members of this group from the <a href="{{ members_list_url }}">{{ members_verbose_name_plural|bettertitle }} list view</a>.
+                    {% blocktrans with url=members_list_url name=members_verbose_name_plural|bettertitle %}You can bulk-add and bulk-remove members of this group from the <a href="{{ url }}">{{ name }} list view</a>.{% endblocktrans %}
                 </div>
             {% else %}
                 <div class="alert alert-warning" role="alert">
-                    Dynamic group membership is cached for performance reasons,
-                    therefore this listing may not always be up-to-date.
+                    {% blocktrans %}Dynamic group membership is cached for performance reasons, therefore this listing may not always be up-to-date.{% endblocktrans %}
                     {% if request.user|has_perm:'extras.run_job' %}
-                        <br>You can refresh the membership of this group asynchronously by clicking the
-                        "Refresh Members" button on the main tab of this page, or by running the
-                        <a href="{% url 'extras:job_run_by_class_path' class_path='nautobot.core.jobs.groups.RefreshDynamicGroupCaches' %}?single_group={{ object.pk }}">
-                            Refresh Dynamic Group Caches
-                        </a> Job as needed.
+                        {% url 'extras:job_run_by_class_path' class_path='nautobot.core.jobs.groups.RefreshDynamicGroupCaches' as refresh_job_url %}
+                        {% comment %}
+                            Translators: "Refresh Dynamic Group Caches" is a Job name. Job names are stored
+                            in the database and always render in English, so leave it untranslated or the
+                            link will disagree with the Jobs list.
+                        {% endcomment %}
+                        {% blocktrans with url=refresh_job_url group=object.pk %}<br>You can refresh the membership of this group asynchronously by clicking the "Refresh Members" button on the main tab of this page, or by running the <a href="{{ url }}?single_group={{ group }}">Refresh Dynamic Group Caches</a> Job as needed.{% endblocktrans %}
                     {% endif %}
                 </div>
             {% endif %}
@@ -25,7 +27,8 @@
     </div>
     <div class="row">
         <div class="col-lg-12">
-            {% include 'utilities/obj_table.html' with table=members_table table_template='panel_table.html' heading='Dynamic Group members' %}
+            {% trans "Dynamic Group members" as panel_heading %}
+            {% include 'utilities/obj_table.html' with table=members_table table_template='panel_table.html' heading=panel_heading %}
         </div>
     </div>
 {% endblock content %}

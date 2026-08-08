@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load static %}
 {% load form_helpers %}
 {% load helpers %}
@@ -6,21 +7,21 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Select a Theme</h4>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h4 class="modal-title">{% trans "Select a Theme" %}</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}"></button>
             </div>
             <div class="modal-body">
                 <dl class="align-items-center column-gap-20 d-grid row-gap-16 mb-0 text-center" style="grid-auto-flow: column; grid-template: repeat(2, auto) / repeat(3, 1fr);">
-                    <dt>Light</dt>
-                    <dd><button class="btn overflow-hidden p-0" data-nb-theme="light"><img src="{% static 'img/light-theme.png' %}" alt="Light Theme" class="mx-auto my-0 w-100" /></button></dd>
-                    <dt>Dark</dt>
-                    <dd><button class="btn overflow-hidden p-0" data-nb-theme="dark"><img src="{% static 'img/dark-theme.png' %}" alt="Dark Theme" class="mx-auto my-0 w-100" /></button></dd>
-                    <dt>System</dt>
-                    <dd><button class="btn overflow-hidden p-0" data-nb-theme="system"><img src="{% static 'img/system-theme.png' %}" alt="System Theme" class="mx-auto my-0 w-100" /></button></dd>
+                    <dt>{% trans "Light" %}</dt>
+                    <dd><button class="btn overflow-hidden p-0" data-nb-theme="light"><img src="{% static 'img/light-theme.png' %}" alt="{% trans "Light Theme" %}" class="mx-auto my-0 w-100" /></button></dd>
+                    <dt>{% trans "Dark" %}</dt>
+                    <dd><button class="btn overflow-hidden p-0" data-nb-theme="dark"><img src="{% static 'img/dark-theme.png' %}" alt="{% trans "Dark Theme" %}" class="mx-auto my-0 w-100" /></button></dd>
+                    <dt>{% trans "System" %}</dt>
+                    <dd><button class="btn overflow-hidden p-0" data-nb-theme="system"><img src="{% static 'img/system-theme.png' %}" alt="{% trans "System Theme" %}" class="mx-auto my-0 w-100" /></button></dd>
                 </dl>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="dismiss-modal-theme" data-bs-dismiss="modal"><span aria-hidden="true" class="mdi mdi-close me-4"></span>Cancel</button>
+                <button type="button" class="btn btn-secondary" id="dismiss-modal-theme" data-bs-dismiss="modal"><span aria-hidden="true" class="mdi mdi-close me-4"></span>{% trans "Cancel" %}</button>
             </div>
         </div>
     </div>

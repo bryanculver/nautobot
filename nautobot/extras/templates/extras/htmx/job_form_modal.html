@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load form_helpers %}
 {% load helpers %}
 
@@ -14,21 +15,21 @@
             <div class="row justify-content-center flex-fill">
                 {% if not job_model.installed or job_model.job_class is None %}
                     <div class="alert alert-warning">
-                        <span aria-hidden="true" class="mdi mdi-alert"></span> This job is not presently installed and cannot be run.
+                        <span aria-hidden="true" class="mdi mdi-alert"></span> {% trans "This job is not presently installed and cannot be run." %}
                     </div>
                 {% elif not job_model.enabled %}
                     <div class="alert alert-warning">
-                        <span aria-hidden="true" class="mdi mdi-alert"></span> This job is not enabled to be run.
+                        <span aria-hidden="true" class="mdi mdi-alert"></span> {% trans "This job is not enabled to be run." %}
                     </div>
                 {% endif %}
                 {% if job_model.read_only %}
                     <div class="alert alert-info">
-                        <span aria-hidden="true" class="mdi mdi-info"></span>This job is read-only in its operation.
+                        <span aria-hidden="true" class="mdi mdi-info"></span>{% trans "This job is read-only in its operation." %}
                     </div>
                 {% endif %}
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }} alert-dismissable" role="alert">
-                        <button type="button" class="btn-close float-end" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close float-end" data-bs-dismiss="alert" aria-label="{% trans "Close" %}"></button>
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -36,7 +37,7 @@
                     <div class="alert alert-danger d-flex align-items-center mb-6" role="alert">
                         <span aria-hidden="true" class="mdi mdi-alert-octagon-outline me-3 fs-4"></span>
                         <div>
-                            <strong>Errors</strong>
+                            <strong>{% trans "Errors" %}</strong>
                             {{ job_form.non_field_errors }}
                             {{ schedule_form.non_field_errors }}
                         </div>
@@ -49,7 +50,7 @@
                     <div class="col-md-9 offset-md-3">
                         <div class="form-check mt-6">
                             <input class="form-check-input" type="checkbox" id="toggle-advanced">
-                            <label class="form-check-label" for="toggle-advanced">Show Advanced Settings</label>
+                            <label class="form-check-label" for="toggle-advanced">{% trans "Show Advanced Settings" %}</label>
                         </div>
                     </div>
                 </div>
@@ -82,7 +83,7 @@
                 </button>
                 <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">
                     <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-                    -->Cancel
+                    -->{% trans "Cancel" %}
                 </button>
             {% endblock job_form_footer %}
         </div>

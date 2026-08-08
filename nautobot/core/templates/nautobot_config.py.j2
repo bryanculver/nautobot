@@ -118,11 +118,26 @@ SECRET_KEY = os.getenv("NAUTOBOT_SECRET_KEY", "{{ secret_key }}")
 # Date/time formatting. See the following link for supported formats:
 # https://docs.djangoproject.com/en/stable/ref/templates/builtins/#date
 #
+# If you set any of these to a non-default value, it applies in every language. If you leave them
+# at their defaults, users who select a non-English language see that language's own conventions.
+#
 # DATE_FORMAT = os.getenv("NAUTOBOT_DATE_FORMAT", "N j, Y")
 # SHORT_DATE_FORMAT = os.getenv("NAUTOBOT_SHORT_DATE_FORMAT", "Y-m-d")
 # TIME_FORMAT = os.getenv("NAUTOBOT_TIME_FORMAT", "g:i a")
 # DATETIME_FORMAT = os.getenv("NAUTOBOT_DATETIME_FORMAT", "N j, Y g:i a")
 # SHORT_DATETIME_FORMAT = os.getenv("NAUTOBOT_SHORT_DATETIME_FORMAT", "Y-m-d H:i")
+
+# Languages that users may select from in their preferences. Narrow this list to offer fewer
+# languages; reduce it to English alone to turn off language selection entirely. Translations other
+# than English are machine-assisted and pending native-speaker review.
+#
+# LANGUAGES = [
+#     ("en", "English"),
+#     ("de", "Deutsch"),
+#     ("es", "Español"),
+#     ("fr", "Français"),
+#     ("zh-hans", "中文（简体）"),
+# ]
 
 # Set to True to enable server debugging. WARNING: Debugging introduces a substantial performance penalty and may reveal
 # sensitive information about your installation. Only enable debugging while performing testing. Never enable debugging

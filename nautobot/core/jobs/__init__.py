@@ -12,6 +12,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import QueryDict
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions as drf_exceptions
 
 from nautobot.core.api.exceptions import SerializerNotFound
@@ -68,8 +69,8 @@ class GitRepositorySync(Job):
     """
 
     repository = ObjectVar(
-        description="Git Repository to pull and refresh",
-        label="Git Repository",
+        description=_("Git Repository to pull and refresh"),
+        label=_("Git Repository"),
         model=GitRepository,
     )
 
@@ -109,8 +110,8 @@ class GitRepositoryDryRun(Job):
     """System Job to perform a dry run on a Git repository."""
 
     repository = ObjectVar(
-        description="Git Repository to dry-run",
-        label="Git Repository",
+        description=_("Git Repository to dry-run"),
+        label=_("Git Repository"),
         model=GitRepository,
     )
 
@@ -134,20 +135,22 @@ class ExportObjectList(Job):
 
     content_type = ObjectVar(
         model=ContentType,
-        description="Type of objects to export",
-        label="Content Type",
+        description=_("Type of objects to export"),
+        label=_("Content Type"),
         query_params={"can_view": True},  # not adding "has_serializer": True as it might just support export-templates
     )
     query_string = StringVar(
-        description='Filterset parameters to apply, in URL query parameter format e.g. "name=test&status=Active"',
-        label="Filterset Parameters",
+        description=_('Filterset parameters to apply, in URL query parameter format e.g. "name=test&status=Active"'),
+        label=_("Filterset Parameters"),
         default="",
         required=False,
     )
     export_format = ChoiceVar(
         choices=(("csv", "CSV"), ("yaml", "YAML")),
-        description="Format to export to if not using an Export Template<br>"
-        "(note, in core only <code>dcim | device type</code> supports YAML export at present)",
+        description=_(
+            "Format to export to if not using an Export Template<br>"
+            "(note, in core only <code>dcim | device type</code> supports YAML export at present)"
+        ),
         default="csv",
         required=False,
     )
@@ -155,8 +158,8 @@ class ExportObjectList(Job):
         model=ExportTemplate,
         query_params={"content_type": "$content_type"},
         display_field="name",
-        description="Export Template to use (if unspecified, will export to CSV/YAML as specified above)",
-        label="Export Template",
+        description=_("Export Template to use (if unspecified, will export to CSV/YAML as specified above)"),
+        label=_("Export Template"),
         default=None,
         required=False,
     )
@@ -269,16 +272,18 @@ class ImportObjects(Job):
 
     content_type = ObjectVar(
         model=ContentType,
-        description="Type of objects to import",
+        description=_("Type of objects to import"),
         query_params={"can_add": True, "has_serializer": True},
     )
-    csv_data = TextVar(label="CSV Data", required=False)
-    csv_file = FileVar(label="CSV File", required=False)
+    csv_data = TextVar(label=_("CSV Data"), required=False)
+    csv_file = FileVar(label=_("CSV File"), required=False)
     roll_back_if_error = BooleanVar(
-        label="Rollback Changes on Failure",
+        label=_("Rollback Changes on Failure"),
         required=False,
         default=True,
-        description="If an error is encountered when processing any row of data, rollback the entire import such that no data is imported.",
+        description=_(
+            "If an error is encountered when processing any row of data, rollback the entire import such that no data is imported."
+        ),
     )
 
     template_name = "system_jobs/import_objects.html"
@@ -454,13 +459,14 @@ class RunRegisteredDataComplianceRules(Job):
 
     selected_data_compliance_rules = MultiChoiceVar(
         choices=get_data_compliance_choices,
-        label="Select Data Compliance Rules",
+        label=_("Select Data Compliance Rules"),
         required=False,
-        description="Not selecting any rules will run all rules listed.",
+        description=_("Not selecting any rules will run all rules listed."),
     )
 
     run_user_created_rules_in_report = BooleanVar(
-        label="Run user created validation rules?", description="Include user created data validation rules in report."
+        label=_("Run user created validation rules?"),
+        description=_("Include user created data validation rules in report."),
     )
 
     def run(self, *args, **kwargs):
@@ -550,12 +556,12 @@ class ValidateModelData(Job):
 
     content_types = MultiObjectVar(
         model=ContentType,
-        description="Type(s) of objects to validate.",
-        label="Content Types",
+        description=_("Type(s) of objects to validate."),
+        label=_("Content Types"),
         query_params={"can_view": True},
         required=True,
     )
-    verbose = BooleanVar(default=False, label="Verbose output?")
+    verbose = BooleanVar(default=False, label=_("Verbose output?"))
 
     def run(self, *, content_types, verbose=False):  # pylint:disable=arguments-differ
         for content_type in content_types:

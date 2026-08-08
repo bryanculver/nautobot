@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.html import format_html, format_html_join
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.core.forms import ConfirmationForm
 from nautobot.core.templatetags import helpers
@@ -65,10 +66,10 @@ class CircuitTerminationObjectFieldsPanel(ObjectFieldsPanel):
 
     def render_key(self, key, value, context):
         if key == "connected_endpoint":
-            return "IP Addressing"
+            return _("IP Addressing")
 
         if key == "port_speed":
-            return "Speed"
+            return _("Speed")
 
         return super().render_key(key, value, context)
 
@@ -265,10 +266,10 @@ class CircuitUIViewSet(NautobotUIViewSet):
                     helpers.bettertitle(relationship.get_label(side)),
                 )
             if key == "ip_addresses":
-                return "IP Addressing"
+                return _("IP Addressing")
 
             if key == "port_speed":
-                return "Speed"
+                return _("Speed")
 
             return super().render_key(key, value, context)
 
@@ -301,14 +302,14 @@ class CircuitUIViewSet(NautobotUIViewSet):
                 value_transforms={"commit_rate": [helpers.humanize_speed, helpers.placeholder]},
             ),
             CircuitTerminationPanel(
-                label="Termination - A Side",
+                label=_("Termination - A Side"),
                 section=SectionChoices.RIGHT_HALF,
                 weight=100,
                 context_object_key="circuit_termination_a",
                 side=CircuitTerminationSideChoices.SIDE_A,
             ),
             ConnectionPanel(
-                label="Connections - A Side",
+                label=_("Connections - A Side"),
                 section=SectionChoices.RIGHT_HALF,
                 weight=150,
                 context_object_key="circuit_termination_a",
@@ -316,14 +317,14 @@ class CircuitUIViewSet(NautobotUIViewSet):
                 require_location=True,
             ),
             CircuitTerminationPanel(
-                label="Termination - Z Side",
+                label=_("Termination - Z Side"),
                 section=SectionChoices.RIGHT_HALF,
                 weight=200,
                 context_object_key="circuit_termination_z",
                 side=CircuitTerminationSideChoices.SIDE_Z,
             ),
             ConnectionPanel(
-                label="Connections - Z Side",
+                label=_("Connections - Z Side"),
                 section=SectionChoices.RIGHT_HALF,
                 weight=250,
                 context_object_key="circuit_termination_z",
@@ -428,7 +429,7 @@ class CircuitSwapTerminations(generic.ObjectEditView):
         if not circuit.circuit_termination_a and not circuit.circuit_termination_z:
             messages.error(
                 request,
-                f"No terminations have been defined for circuit {circuit}.",
+                gettext("No terminations have been defined for circuit %(circuit)s.") % {"circuit": circuit},
             )
             return redirect("circuits:circuit", pk=circuit.pk)
 
@@ -473,7 +474,7 @@ class CircuitSwapTerminations(generic.ObjectEditView):
                 circuit_termination_z.term_side = "A"
                 circuit_termination_z.save()
 
-            messages.success(request, f"Swapped terminations for circuit {circuit}.")
+            messages.success(request, gettext("Swapped terminations for circuit %(circuit)s.") % {"circuit": circuit})
             return redirect("circuits:circuit", pk=circuit.pk)
 
         return render(

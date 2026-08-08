@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load form_helpers %}
 
 {% block content %}
@@ -14,15 +15,15 @@
                         {% block title %}{% endblock %}
                     </div>
                     <div class="card-body">
-                        <div class="mb-16">{% block message %}<p>Are you sure?</p>{% endblock %}</div>
+                        <div class="mb-16">{% block message %}<p>{% trans "Are you sure?" %}</p>{% endblock %}</div>
                         <div class="gap-8 hstack justify-content-end">
                             <button type="submit" name="_confirm" class="btn btn-{{ button_class|default:'danger' }}">
                                 <span aria-hidden="true" class="mdi mdi-check me-4"></span><!--
-                                -->Confirm
+                                -->{% trans "Confirm" %}
                             </button>
                             <a href="{{ return_url }}" class="btn btn-secondary">
                                 <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-                                -->Cancel
+                                -->{% trans "Cancel" %}
                             </a>
                         </div>
                     </div>

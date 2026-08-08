@@ -1,0 +1,1 @@
+Added an Internationalization administration guide covering language selection, the date-format precedence rule, and what Nautobot deliberately never translates, plus a core-developer guide to maintaining translation catalogs.

@@ -3,6 +3,7 @@
 import logging
 
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -74,7 +75,7 @@ class VPNProfileUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 100,
                 tab_id="vpn_vpns",
-                label="VPNs",
+                label=_("VPNs"),
                 url_name="vpn:vpnprofile_vpns",
                 related_object_attribute="vpns",
                 hide_if_empty=True,
@@ -82,7 +83,7 @@ class VPNProfileUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="VPNs",
+                        table_title=_("VPNs"),
                         table_class=tables.VPNTable,
                         table_attribute="vpns",
                         related_field_name="vpn_profile",
@@ -97,7 +98,7 @@ class VPNProfileUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 200,
                 tab_id="vpn_tunnels",
-                label="VPN Tunnels",
+                label=_("VPN Tunnels"),
                 url_name="vpn:vpnprofile_vpntunnels",
                 related_object_attribute="vpn_tunnels",
                 hide_if_empty=True,
@@ -105,7 +106,7 @@ class VPNProfileUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="VPN Tunnels",
+                        table_title=_("VPN Tunnels"),
                         table_class=tables.VPNTunnelTable,
                         table_attribute="vpn_tunnels",
                         related_field_name="vpn_profile",
@@ -120,7 +121,7 @@ class VPNProfileUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 300,
                 tab_id="vpn_endpoints",
-                label="VPN Endpoints",
+                label=_("VPN Endpoints"),
                 url_name="vpn:vpnprofile_vpnendpoints",
                 related_object_attribute="vpn_tunnel_endpoints",
                 hide_if_empty=True,
@@ -128,7 +129,7 @@ class VPNProfileUIViewSet(NautobotUIViewSet):
                     object_detail.ObjectsTablePanel(
                         weight=100,
                         section=SectionChoices.FULL_WIDTH,
-                        table_title="VPN Endpoints",
+                        table_title=_("VPN Endpoints"),
                         table_class=tables.VPNTunnelEndpointTable,
                         table_attribute="vpn_tunnel_endpoints",
                         related_field_name="vpn_profile",
@@ -322,7 +323,7 @@ class VPNUIViewSet(NautobotUIViewSet):
                 table_class=tables.VPNTerminationTable,
                 table_filter="vpn",
                 section=SectionChoices.FULL_WIDTH,
-                table_title="Terminations",
+                table_title=_("Terminations"),
             ),
         ],
     )
@@ -360,10 +361,10 @@ class VPNTunnelUIViewSet(NautobotUIViewSet):
             ),
             ObjectsTablePanel(
                 weight=100,
-                label="A",
+                label=_("A"),
                 table_class=tables.VPNTunnelEndpointTable,
                 table_filter="endpoint_a_vpn_tunnels",
-                table_title="Tunnel Endpoint",
+                table_title=_("Tunnel Endpoint"),
                 section=SectionChoices.RIGHT_HALF,
                 exclude_columns=[
                     "protected_prefixes_count",
@@ -373,10 +374,10 @@ class VPNTunnelUIViewSet(NautobotUIViewSet):
             ),
             ObjectsTablePanel(
                 weight=200,
-                label="Z",
+                label=_("Z"),
                 table_class=tables.VPNTunnelEndpointTable,
                 table_filter="endpoint_z_vpn_tunnels",
-                table_title="Tunnel Endpoint",
+                table_title=_("Tunnel Endpoint"),
                 section=SectionChoices.RIGHT_HALF,
                 exclude_columns=[
                     "protected_prefixes_count",
@@ -421,7 +422,7 @@ class VPNTunnelEndpointUIViewSet(NautobotUIViewSet):
                 weight=100,
                 table_class=tables.VPNTunnelTable,
                 table_filter="endpoint_a",
-                table_title="A Endpoint Tunnels",
+                table_title=_("A Endpoint Tunnels"),
                 section=SectionChoices.RIGHT_HALF,
                 exclude_columns=[
                     "description",
@@ -435,7 +436,7 @@ class VPNTunnelEndpointUIViewSet(NautobotUIViewSet):
                 weight=200,
                 table_class=tables.VPNTunnelTable,
                 table_filter="endpoint_z",
-                table_title="Z Endpoint Tunnels",
+                table_title=_("Z Endpoint Tunnels"),
                 section=SectionChoices.RIGHT_HALF,
                 exclude_columns=[
                     "description",
@@ -450,7 +451,7 @@ class VPNTunnelEndpointUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 100,
                 tab_id="protected_prefixes",
-                label="Protected Prefixes",
+                label=_("Protected Prefixes"),
                 url_name="vpn:vpntunnelendpoint_protectedprefixes",
                 related_object_attribute="protected_prefixes",
                 hide_if_empty=True,
@@ -468,7 +469,7 @@ class VPNTunnelEndpointUIViewSet(NautobotUIViewSet):
             object_detail.DistinctViewTab(
                 weight=object_detail.Tab.WEIGHT_CHANGELOG_TAB + 200,
                 tab_id="protected_dynamic_groups",
-                label="Protected Prefixes from Dynamic Group",
+                label=_("Protected Prefixes from Dynamic Group"),
                 url_name="vpn:vpntunnelendpoint_protecteddynamicgroups",
                 related_object_attribute="protected_prefixes_dg",
                 hide_if_empty=True,

@@ -1,5 +1,6 @@
+{% load i18n %}
 {% if url %}
     <a href="{{ url }}" class="btn btn-warning" id="edit-button">
-        <span class="mdi mdi-pencil" aria-hidden="true"></span> Edit
+        <span class="mdi mdi-pencil" aria-hidden="true"></span> {% trans "Edit" %}
     </a>
 {% endif %}

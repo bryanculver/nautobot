@@ -2,6 +2,7 @@
 
 from django.core.validators import MaxValueValidator
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.models import BaseModel
@@ -16,30 +17,37 @@ class VirtualServer(PrimaryModel):  # pylint: disable=too-many-ancestors
     """Virtual Server model for Load Balancer Models app."""
 
     vip = models.ForeignKey(
-        to="ipam.IPAddress", on_delete=models.PROTECT, related_name="virtual_servers", verbose_name="VIP"
+        to="ipam.IPAddress", on_delete=models.PROTECT, related_name="virtual_servers", verbose_name=_("VIP")
     )
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
-    port = models.PositiveIntegerField(blank=True, null=True, validators=[MaxValueValidator(constants.PORT_VALUE_MAX)])
-    protocol = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, choices=choices.ProtocolChoices)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("name"))
+    port = models.PositiveIntegerField(
+        blank=True, null=True, validators=[MaxValueValidator(constants.PORT_VALUE_MAX)], verbose_name=_("port")
+    )
+    protocol = models.CharField(
+        max_length=CHARFIELD_MAX_LENGTH, blank=True, choices=choices.ProtocolChoices, verbose_name=_("protocol")
+    )
     source_nat_pool = models.ForeignKey(
         to="ipam.Prefix",
         on_delete=models.PROTECT,
         blank=True,
         null=True,
         related_name="virtual_servers",
-        verbose_name="Source NAT Pool",
+        verbose_name=_("Source NAT Pool"),
     )
     source_nat_type = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         choices=choices.SourceNATTypeChoices,
         blank=True,
-        verbose_name="Source NAT Type",
+        verbose_name=_("Source NAT Type"),
     )
     load_balancer_type = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH, choices=choices.LoadBalancerTypeChoices, blank=True
+        max_length=CHARFIELD_MAX_LENGTH,
+        choices=choices.LoadBalancerTypeChoices,
+        blank=True,
+        verbose_name=_("load balancer type"),
     )
-    enabled = models.BooleanField(default=True)
-    ssl_offload = models.BooleanField(default=False, verbose_name="SSL Offload")
+    enabled = models.BooleanField(default=True, verbose_name=_("enabled"))
+    ssl_offload = models.BooleanField(default=False, verbose_name=_("SSL Offload"))
     # Assignment to a device, device redundancy group, cloud service or virtual chassis
     device = models.ForeignKey(
         to="dcim.Device",
@@ -47,6 +55,7 @@ class VirtualServer(PrimaryModel):  # pylint: disable=too-many-ancestors
         blank=True,
         null=True,
         related_name="virtual_servers",
+        verbose_name=_("device"),
     )
     device_redundancy_group = models.ForeignKey(
         to="dcim.DeviceRedundancyGroup",
@@ -54,6 +63,7 @@ class VirtualServer(PrimaryModel):  # pylint: disable=too-many-ancestors
         blank=True,
         null=True,
         related_name="virtual_servers",
+        verbose_name=_("device redundancy group"),
     )
     cloud_service = models.ForeignKey(
         to="cloud.CloudService",
@@ -61,6 +71,7 @@ class VirtualServer(PrimaryModel):  # pylint: disable=too-many-ancestors
         blank=True,
         null=True,
         related_name="virtual_servers",
+        verbose_name=_("cloud service"),
     )
     virtual_chassis = models.ForeignKey(
         to="dcim.VirtualChassis",
@@ -68,6 +79,7 @@ class VirtualServer(PrimaryModel):  # pylint: disable=too-many-ancestors
         blank=True,
         null=True,
         related_name="virtual_servers",
+        verbose_name=_("virtual chassis"),
     )
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -75,6 +87,7 @@ class VirtualServer(PrimaryModel):  # pylint: disable=too-many-ancestors
         blank=True,
         null=True,
         related_name="virtual_servers",
+        verbose_name=_("tenant"),
     )
     load_balancer_pool = models.ForeignKey(
         to="load_balancers.LoadBalancerPool",
@@ -82,11 +95,12 @@ class VirtualServer(PrimaryModel):  # pylint: disable=too-many-ancestors
         blank=True,
         null=True,
         related_name="virtual_servers",
+        verbose_name=_("load balancer pool"),
     )
     health_check_monitor = models.ForeignKey(
         to="load_balancers.HealthCheckMonitor",
         related_name="virtual_servers",
-        verbose_name="Health Check Monitor",
+        verbose_name=_("Health Check Monitor"),
         on_delete=models.PROTECT,
         blank=True,
         null=True,
@@ -94,7 +108,7 @@ class VirtualServer(PrimaryModel):  # pylint: disable=too-many-ancestors
     certificate_profiles = models.ManyToManyField(
         to="load_balancers.CertificateProfile",
         related_name="virtual_servers",
-        verbose_name="Certificate Profile",
+        verbose_name=_("Certificate Profile"),
         blank=True,
         through="load_balancers.VirtualServerCertificateProfileAssignment",
     )
@@ -121,7 +135,7 @@ class VirtualServer(PrimaryModel):  # pylint: disable=too-many-ancestors
 
         ordering = ["name"]
         unique_together = ["vip", "port", "protocol"]
-        verbose_name = "Virtual Server"
+        verbose_name = _("Virtual Server")
 
     def __str__(self):
         """Stringify instance."""
@@ -138,16 +152,17 @@ class VirtualServer(PrimaryModel):  # pylint: disable=too-many-ancestors
 class LoadBalancerPool(PrimaryModel):  # pylint: disable=too-many-ancestors
     """LoadBalancerPool model for Load Balancer Models app."""
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("name"))
     # We will attempt to use Constance for the load balancer algorithm options, or statically define in choices.
     load_balancing_algorithm = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         choices=choices.LoadBalancingAlgorithmChoices,
+        verbose_name=_("load balancing algorithm"),
     )
     health_check_monitor = models.ForeignKey(
         to="load_balancers.HealthCheckMonitor",
         related_name="load_balancer_pools",
-        verbose_name="Health Check Monitor",
+        verbose_name=_("Health Check Monitor"),
         on_delete=models.PROTECT,
         blank=True,
         null=True,
@@ -158,6 +173,7 @@ class LoadBalancerPool(PrimaryModel):  # pylint: disable=too-many-ancestors
         on_delete=models.PROTECT,
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
 
     natural_key_field_names = ["pk"]
@@ -167,7 +183,7 @@ class LoadBalancerPool(PrimaryModel):  # pylint: disable=too-many-ancestors
         """Meta class for LoadBalancerPool."""
 
         ordering = ["name"]
-        verbose_name = "Load Balancer Pool"
+        verbose_name = _("Load Balancer Pool")
 
     def __str__(self):
         """Stringify instance."""
@@ -188,28 +204,30 @@ class LoadBalancerPoolMember(PrimaryModel):  # pylint: disable=too-many-ancestor
     label = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        help_text="Optional label for the load balancer pool member.",
+        help_text=_("Optional label for the load balancer pool member."),
+        verbose_name=_("label"),
     )
     ip_address = models.ForeignKey(
         to="ipam.IPAddress",
         related_name="load_balancer_pool_members",
         on_delete=models.CASCADE,
-        verbose_name="IP Address",
+        verbose_name=_("IP Address"),
     )
     load_balancer_pool = models.ForeignKey(
         to="load_balancers.LoadBalancerPool",
         related_name="load_balancer_pool_members",
         on_delete=models.PROTECT,
+        verbose_name=_("load balancer pool"),
     )
-    port = models.PositiveIntegerField(validators=[MaxValueValidator(constants.PORT_VALUE_MAX)])
+    port = models.PositiveIntegerField(validators=[MaxValueValidator(constants.PORT_VALUE_MAX)], verbose_name=_("port"))
     ssl_offload = models.BooleanField(
         default=False,
-        verbose_name="SSL Offload",
+        verbose_name=_("SSL Offload"),
     )
     health_check_monitor = models.ForeignKey(
         to="load_balancers.HealthCheckMonitor",
         related_name="load_balancer_pool_members",
-        verbose_name="Health Check Monitor",
+        verbose_name=_("Health Check Monitor"),
         on_delete=models.PROTECT,
         blank=True,
         null=True,
@@ -217,7 +235,7 @@ class LoadBalancerPoolMember(PrimaryModel):  # pylint: disable=too-many-ancestor
     certificate_profiles = models.ManyToManyField(
         to="load_balancers.CertificateProfile",
         related_name="load_balancer_pool_members",
-        verbose_name="Certificate Profile",
+        verbose_name=_("Certificate Profile"),
         blank=True,
         through="load_balancers.LoadBalancerPoolMemberCertificateProfileAssignment",
     )
@@ -227,8 +245,9 @@ class LoadBalancerPoolMember(PrimaryModel):  # pylint: disable=too-many-ancestor
         on_delete=models.PROTECT,
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
-    status = StatusField(blank=False, null=False)
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
 
     clone_fields = [
         "load_balancer_pool",
@@ -243,7 +262,7 @@ class LoadBalancerPoolMember(PrimaryModel):  # pylint: disable=too-many-ancestor
         """Meta class for LoadBalancerPoolMember."""
 
         unique_together = ["ip_address", "port", "load_balancer_pool"]
-        verbose_name = "Load Balancer Pool Member"
+        verbose_name = _("Load Balancer Pool Member")
 
     def __str__(self):
         """Stringify instance."""
@@ -259,15 +278,20 @@ class LoadBalancerPoolMember(PrimaryModel):  # pylint: disable=too-many-ancestor
 class HealthCheckMonitor(PrimaryModel):  # pylint: disable=too-many-ancestors
     """HealthCheckMonitor model for load_balancers."""
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    interval = models.PositiveIntegerField(blank=True, null=True)
-    retry = models.PositiveIntegerField(blank=True, null=True, help_text="Number of retries before marking as down")
-    timeout = models.PositiveIntegerField(blank=True, null=True)
-    port = models.PositiveIntegerField(blank=True, null=True, validators=[MaxValueValidator(constants.PORT_VALUE_MAX)])
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    interval = models.PositiveIntegerField(blank=True, null=True, verbose_name=_("interval"))
+    retry = models.PositiveIntegerField(
+        blank=True, null=True, help_text=_("Number of retries before marking as down"), verbose_name=_("retry")
+    )
+    timeout = models.PositiveIntegerField(blank=True, null=True, verbose_name=_("timeout"))
+    port = models.PositiveIntegerField(
+        blank=True, null=True, validators=[MaxValueValidator(constants.PORT_VALUE_MAX)], verbose_name=_("port")
+    )
     health_check_type = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         choices=choices.HealthCheckTypeChoices,
         blank=True,
+        verbose_name=_("health check type"),
     )
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -275,6 +299,7 @@ class HealthCheckMonitor(PrimaryModel):  # pylint: disable=too-many-ancestors
         on_delete=models.PROTECT,
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
     clone_fields = ["interval", "retry", "timeout", "port", "health_check_type", "tenant"]
 
@@ -282,7 +307,7 @@ class HealthCheckMonitor(PrimaryModel):  # pylint: disable=too-many-ancestors
         """Meta class for HealthCheckMonitor."""
 
         ordering = ["name"]
-        verbose_name = "Health Check Monitor"
+        verbose_name = _("Health Check Monitor")
 
     def __str__(self):
         """Stringify instance."""
@@ -299,42 +324,34 @@ class HealthCheckMonitor(PrimaryModel):  # pylint: disable=too-many-ancestors
 class CertificateProfile(PrimaryModel):  # pylint: disable=too-many-ancestors
     """CertificateProfile model for load_balancers."""
 
-    name = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH,
-        unique=True,
-    )
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
     certificate_type = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         choices=choices.CertificateTypeChoices,
         blank=True,
+        verbose_name=_("certificate type"),
     )
     certificate_file_path = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        verbose_name="Certificate file path",
+        verbose_name=_("Certificate file path"),
     )
     chain_file_path = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        verbose_name="Chain file path",
+        verbose_name=_("Chain file path"),
     )
     key_file_path = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
-        verbose_name="Key file path",
+        verbose_name=_("Key file path"),
     )
-    expiration_date = models.DateTimeField(
-        blank=True,
-        null=True,
-    )
-    cipher = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH,
-        blank=True,
-    )
+    expiration_date = models.DateTimeField(blank=True, null=True, verbose_name=_("expiration date"))
+    cipher = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("cipher"))
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
         related_name="certificate_profiles",
-        verbose_name="Tenant",
+        verbose_name=_("Tenant"),
         on_delete=models.PROTECT,
         blank=True,
         null=True,
@@ -353,7 +370,7 @@ class CertificateProfile(PrimaryModel):  # pylint: disable=too-many-ancestors
         """Meta class for CertificateProfile."""
 
         ordering = ["name"]
-        verbose_name = "Certificate Profile"
+        verbose_name = _("Certificate Profile")
 
     def __str__(self):
         """Stringify instance."""
@@ -373,11 +390,13 @@ class VirtualServerCertificateProfileAssignment(BaseModel):  # pylint: disable=t
         to="load_balancers.VirtualServer",
         on_delete=models.CASCADE,
         related_name="certificate_profile_assignments",
+        verbose_name=_("virtual server"),
     )
     certificate_profile = models.ForeignKey(
         to="load_balancers.CertificateProfile",
         on_delete=models.CASCADE,
         related_name="virtual_server_assignments",
+        verbose_name=_("certificate profile"),
     )
     is_metadata_associable_model = False
 
@@ -405,11 +424,13 @@ class LoadBalancerPoolMemberCertificateProfileAssignment(BaseModel):  # pylint: 
         to="load_balancers.LoadBalancerPoolMember",
         on_delete=models.CASCADE,
         related_name="certificate_profile_assignments",
+        verbose_name=_("load balancer pool member"),
     )
     certificate_profile = models.ForeignKey(
         to="load_balancers.CertificateProfile",
         on_delete=models.CASCADE,
         related_name="load_balancer_pool_member_assignments",
+        verbose_name=_("certificate profile"),
     )
     is_metadata_associable_model = False
 

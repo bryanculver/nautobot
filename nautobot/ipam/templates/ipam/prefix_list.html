@@ -1,11 +1,12 @@
 {% extends 'generic/object_list.html' %}
 {% load helpers %}
+{% load i18n %}
 {% load querystring_replace from django_tables2 %}
 
 {% block buttons %}
     <div class="dropdown">
         <button class="btn btn-secondary dropdown-toggle" type="button" id="max_length" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-            Max Length{% if "prefix_length__lte" in request.GET %}: {{ request.GET.prefix_length__lte }}{% endif %}
+            {% trans "Max Length" %}{% if "prefix_length__lte" in request.GET %}: {{ request.GET.prefix_length__lte }}{% endif %}
             <span class="mdi mdi-chevron-down"></span>
         </button>
         <ul class="dropdown-menu" aria-labelledby="max_length">

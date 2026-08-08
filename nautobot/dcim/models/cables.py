@@ -11,6 +11,7 @@ from django.db import models, transaction
 from django.db.models import Sum
 from django.urls import NoReverseMatch
 from django.utils.functional import classproperty
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.models.fields import ColorField
@@ -140,58 +141,74 @@ class CableType(PrimaryModel):
     `a_connectors` and `b_connectors`; the implied per-side positions per connector are derived from that division.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True)
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, unique=True, verbose_name=_("name"))
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
     manufacturer = models.ForeignKey(
         to="dcim.Manufacturer",
         on_delete=models.PROTECT,
         related_name="cable_types",
         blank=True,
         null=True,
+        verbose_name=_("manufacturer"),
     )
     part_number = models.CharField(
-        max_length=CHARFIELD_MAX_LENGTH, blank=True, help_text="Discrete part number (optional)"
+        max_length=CHARFIELD_MAX_LENGTH,
+        blank=True,
+        help_text=_("Discrete part number (optional)"),
+        verbose_name=_("part number"),
     )
     has_embedded_transceivers = models.BooleanField(
         default=False,
-        help_text="Indicates that this cable type has transceivers (e.g. SFP) built in.",
+        help_text=_("Indicates that this cable type has transceivers (e.g. SFP) built in."),
+        verbose_name=_("has embedded transceivers"),
     )
     a_connectors = models.PositiveSmallIntegerField(
         default=1,
-        help_text="Number of physical connectors on the A side.",
+        help_text=_("Number of physical connectors on the A side."),
         validators=[MinValueValidator(1), MaxValueValidator(CABLE_BREAKOUT_MAX_CONNECTORS)],
+        verbose_name=_("a connectors"),
     )
     b_connectors = models.PositiveSmallIntegerField(
         default=1,
-        help_text="Number of physical connectors on the B side.",
+        help_text=_("Number of physical connectors on the B side."),
         validators=[MinValueValidator(1), MaxValueValidator(CABLE_BREAKOUT_MAX_CONNECTORS)],
+        verbose_name=_("b connectors"),
     )
     total_lanes = models.PositiveSmallIntegerField(
         default=1,
-        help_text="Total number of logical lanes in the breakout, distributed evenly across connectors on each side.",
+        help_text=_(
+            "Total number of logical lanes in the breakout, distributed evenly across connectors on each side."
+        ),
         validators=[MinValueValidator(1), MaxValueValidator(CABLE_BREAKOUT_MAX_LANES)],
+        verbose_name=_("total lanes"),
     )
     mapping = models.JSONField(
         default=list,
         blank=True,
-        help_text="A→B lane mapping as a JSON array of objects with keys: "
-        "label, a_connector, a_position, b_connector, b_position. If empty, will be auto-populated.",
+        help_text=_(
+            "A→B lane mapping as a JSON array of objects with keys: "
+            "label, a_connector, a_position, b_connector, b_position. If empty, will be auto-populated."
+        ),
+        verbose_name=_("mapping"),
     )
     is_shuffle = models.BooleanField(
         default=False,
-        help_text="Indicates non-linear (polarity-shuffled) position mapping. Informational only.",
+        help_text=_("Indicates non-linear (polarity-shuffled) position mapping. Informational only."),
+        verbose_name=_("is shuffle"),
     )
     strands_per_lane = models.PositiveSmallIntegerField(
         default=1,
-        help_text="Number of physical strands per logical lane (e.g. 1 for copper, 2 for duplex fiber).",
+        help_text=_("Number of physical strands per logical lane (e.g. 1 for copper, 2 for duplex fiber)."),
         validators=[MinValueValidator(1)],
+        verbose_name=_("strands per lane"),
     )
     polarity_method = models.CharField(
         blank=True,
         choices=CableTypePolarityMethodChoices,
         default="",
-        help_text="Fiber polarity method. Informational only.",
+        help_text=_("Fiber polarity method. Informational only."),
         max_length=50,
+        verbose_name=_("polarity method"),
     )
 
     natural_key_field_names = ["name"]
@@ -294,16 +311,22 @@ class CableType(PrimaryModel):
 
         if self.a_connectors > self.b_connectors:
             raise ValidationError(
-                {"b_connectors": "Wrong breakout direction, a_connectors must not exceed b_connectors"}
+                {"b_connectors": _("Wrong breakout direction, a_connectors must not exceed b_connectors")}
             )
 
         if self.total_lanes % self.a_connectors != 0:
             raise ValidationError(
-                {"total_lanes": f"total_lanes must be evenly divisible by a_connectors ({self.a_connectors})."}
+                {
+                    "total_lanes": gettext("total_lanes must be evenly divisible by a_connectors (%(a_connectors)s).")
+                    % {"a_connectors": self.a_connectors}
+                }
             )
         if self.total_lanes % self.b_connectors != 0:
             raise ValidationError(
-                {"total_lanes": f"total_lanes must be evenly divisible by b_connectors ({self.b_connectors})."}
+                {
+                    "total_lanes": gettext("total_lanes must be evenly divisible by b_connectors (%(b_connectors)s).")
+                    % {"b_connectors": self.b_connectors}
+                }
             )
 
         self._autogenerate_mapping()
@@ -484,18 +507,19 @@ class Cable(PrimaryModel):
         related_name="cables",
         blank=True,
         null=True,
-        help_text="The cable type defining this cable's lane structure and other properties."
-        "May be null for standard point-to-point cables.",
+        help_text=_(
+            "The cable type defining this cable's lane structure and other properties."
+            "May be null for standard point-to-point cables."
+        ),
+        verbose_name=_("cable type"),
     )
-    type = models.CharField(max_length=50, choices=CableTypeChoices, blank=True)
-    status = StatusField(blank=False, null=False)
-    label = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
-    color = ColorField(blank=True)
-    length = models.PositiveSmallIntegerField(blank=True, null=True)
+    type = models.CharField(max_length=50, choices=CableTypeChoices, blank=True, verbose_name=_("type"))
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
+    label = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("label"))
+    color = ColorField(blank=True, verbose_name=_("color"))
+    length = models.PositiveSmallIntegerField(blank=True, null=True, verbose_name=_("length"))
     length_unit = models.CharField(
-        max_length=50,
-        choices=CableLengthUnitChoices,
-        blank=True,
+        max_length=50, choices=CableLengthUnitChoices, blank=True, verbose_name=_("length unit")
     )
     # Stores the normalized length (in meters) for database ordering
     # max(length) = 65535, max(length_unit) = "km" --> max(_abs_length) = 65535000.0000
@@ -511,54 +535,63 @@ class Cable(PrimaryModel):
         through="dcim.CableToCableTermination",
         through_fields=("cable", "circuit_termination"),
         related_name="+",
+        verbose_name=_("circuit terminations"),
     )
     console_ports = models.ManyToManyField(
         to="dcim.ConsolePort",
         through="dcim.CableToCableTermination",
         through_fields=("cable", "console_port"),
         related_name="+",
+        verbose_name=_("console ports"),
     )
     console_server_ports = models.ManyToManyField(
         to="dcim.ConsoleServerPort",
         through="dcim.CableToCableTermination",
         through_fields=("cable", "console_server_port"),
         related_name="+",
+        verbose_name=_("console server ports"),
     )
     front_ports = models.ManyToManyField(
         to="dcim.FrontPort",
         through="dcim.CableToCableTermination",
         through_fields=("cable", "front_port"),
         related_name="+",
+        verbose_name=_("front ports"),
     )
     interfaces = models.ManyToManyField(
         to="dcim.Interface",
         through="dcim.CableToCableTermination",
         through_fields=("cable", "interface"),
         related_name="+",
+        verbose_name=_("interfaces"),
     )
     power_feeds = models.ManyToManyField(
         to="dcim.PowerFeed",
         through="dcim.CableToCableTermination",
         through_fields=("cable", "power_feed"),
         related_name="+",
+        verbose_name=_("power feeds"),
     )
     power_outlets = models.ManyToManyField(
         to="dcim.PowerOutlet",
         through="dcim.CableToCableTermination",
         through_fields=("cable", "power_outlet"),
         related_name="+",
+        verbose_name=_("power outlets"),
     )
     power_ports = models.ManyToManyField(
         to="dcim.PowerPort",
         through="dcim.CableToCableTermination",
         through_fields=("cable", "power_port"),
         related_name="+",
+        verbose_name=_("power ports"),
     )
     rear_ports = models.ManyToManyField(
         to="dcim.RearPort",
         through="dcim.CableToCableTermination",
         through_fields=("cable", "rear_port"),
         related_name="+",
+        verbose_name=_("rear ports"),
     )
 
     natural_key_field_names = ["pk"]
@@ -949,7 +982,7 @@ class Cable(PrimaryModel):
 
         # Validate length and length_unit
         if self.length is not None and not self.length_unit:
-            raise ValidationError("Must specify a unit when setting a cable length")
+            raise ValidationError(_("Must specify a unit when setting a cable length"))
         elif self.length is None:
             self.length_unit = ""
 
@@ -968,10 +1001,15 @@ class Cable(PrimaryModel):
         type_b = term_b._meta.model_name
 
         if term_a == term_b:
-            raise ValidationError(f"Cannot connect {term_a._meta.verbose_name} to itself")
+            raise ValidationError(
+                gettext("Cannot connect %(object_name)s to itself") % {"object_name": term_a._meta.verbose_name}
+            )
 
         if type_b not in COMPATIBLE_TERMINATION_TYPES.get(type_a, ()):
-            raise ValidationError(f"Incompatible termination types: {type_a} and {type_b}")
+            raise ValidationError(
+                gettext("Incompatible termination types: %(type_a)s and %(type_b)s")
+                % {"type_a": type_a, "type_b": type_b}
+            )
 
         if (
             type_a in ("frontport", "rearport")
@@ -980,13 +1018,20 @@ class Cable(PrimaryModel):
                 getattr(term_a, "rear_port_id", None) == term_b.pk or getattr(term_b, "rear_port_id", None) == term_a.pk
             )
         ):
-            raise ValidationError("A front port cannot be connected to its corresponding rear port")
+            raise ValidationError(_("A front port cannot be connected to its corresponding rear port"))
 
         if isinstance(term_a, RearPort) and isinstance(term_b, RearPort):
             if term_a.positions > 1 and term_b.positions > 1 and term_a.positions != term_b.positions:
                 raise ValidationError(
-                    f"{term_a} has {term_a.positions} position(s) but {term_b} has {term_b.positions}. "
-                    f"Both terminations must have the same number of positions (if greater than one)."
+                    gettext(
+                        "%(term_a)s has %(positions)s position(s) but %(term_b)s has %(positions_2)s. Both terminations must have the same number of positions (if greater than one)."
+                    )
+                    % {
+                        "term_a": term_a,
+                        "positions": term_a.positions,
+                        "term_b": term_b,
+                        "positions_2": term_b.positions,
+                    }
                 )
 
     def save(self, *args, **kwargs):
@@ -1197,14 +1242,9 @@ class CableToCableTermination(BaseModel):
     """
 
     cable = models.ForeignKey(
-        to="dcim.Cable",
-        on_delete=models.CASCADE,
-        related_name="terminations",
+        to="dcim.Cable", on_delete=models.CASCADE, related_name="terminations", verbose_name=_("cable")
     )
-    cable_end = models.CharField(
-        max_length=1,
-        choices=CABLE_END_CHOICES,
-    )
+    cable_end = models.CharField(max_length=1, choices=CABLE_END_CHOICES, verbose_name=_("cable end"))
 
     # Per-type one-to-one foreign keys to each concrete CableTermination subclass.
     circuit_termination = models.OneToOneField(
@@ -1213,6 +1253,7 @@ class CableToCableTermination(BaseModel):
         related_name="cable_termination",
         blank=True,
         null=True,
+        verbose_name=_("circuit termination"),
     )
     console_port = models.OneToOneField(
         to="dcim.ConsolePort",
@@ -1220,6 +1261,7 @@ class CableToCableTermination(BaseModel):
         related_name="cable_termination",
         blank=True,
         null=True,
+        verbose_name=_("console port"),
     )
     console_server_port = models.OneToOneField(
         to="dcim.ConsoleServerPort",
@@ -1227,6 +1269,7 @@ class CableToCableTermination(BaseModel):
         related_name="cable_termination",
         blank=True,
         null=True,
+        verbose_name=_("console server port"),
     )
     front_port = models.OneToOneField(
         to="dcim.FrontPort",
@@ -1234,6 +1277,7 @@ class CableToCableTermination(BaseModel):
         related_name="cable_termination",
         blank=True,
         null=True,
+        verbose_name=_("front port"),
     )
     interface = models.OneToOneField(
         to="dcim.Interface",
@@ -1241,6 +1285,7 @@ class CableToCableTermination(BaseModel):
         related_name="cable_termination",
         blank=True,
         null=True,
+        verbose_name=_("interface"),
     )
     power_feed = models.OneToOneField(
         to="dcim.PowerFeed",
@@ -1248,6 +1293,7 @@ class CableToCableTermination(BaseModel):
         related_name="cable_termination",
         blank=True,
         null=True,
+        verbose_name=_("power feed"),
     )
     power_outlet = models.OneToOneField(
         to="dcim.PowerOutlet",
@@ -1255,6 +1301,7 @@ class CableToCableTermination(BaseModel):
         related_name="cable_termination",
         blank=True,
         null=True,
+        verbose_name=_("power outlet"),
     )
     power_port = models.OneToOneField(
         to="dcim.PowerPort",
@@ -1262,6 +1309,7 @@ class CableToCableTermination(BaseModel):
         related_name="cable_termination",
         blank=True,
         null=True,
+        verbose_name=_("power port"),
     )
     rear_port = models.OneToOneField(
         to="dcim.RearPort",
@@ -1269,6 +1317,7 @@ class CableToCableTermination(BaseModel):
         related_name="cable_termination",
         blank=True,
         null=True,
+        verbose_name=_("rear port"),
     )
 
     # Connector number on this cable end. Defaults to 1 for standard (non-breakout) cables; for
@@ -1276,7 +1325,8 @@ class CableToCableTermination(BaseModel):
     connector = models.PositiveSmallIntegerField(
         default=1,
         validators=[MinValueValidator(1), MaxValueValidator(CABLE_BREAKOUT_MAX_CONNECTORS)],
-        help_text="The connector number on this cable end. Always 1 for standard cables.",
+        help_text=_("The connector number on this cable end. Always 1 for standard cables."),
+        verbose_name=_("connector"),
     )
 
     natural_key_field_names = ["pk"]
@@ -1342,10 +1392,11 @@ class CableToCableTermination(BaseModel):
         # "at most one" so that cascade deletion (which transiently nulls the FK) doesn't trip it.
         set_fields = [field for field in TERMINATION_FK_FIELDS if getattr(self, f"{field}_id", None) is not None]
         if len(set_fields) == 0:
-            raise ValidationError("Exactly one termination foreign key must be set; none are.")
+            raise ValidationError(_("Exactly one termination foreign key must be set; none are."))
         if len(set_fields) > 1:
             raise ValidationError(
-                f"Exactly one termination foreign key must be set; {len(set_fields)} are: {', '.join(set_fields)}."
+                gettext("Exactly one termination foreign key must be set; %(count)s are: %(set_fields)s.")
+                % {"count": len(set_fields), "set_fields": ", ".join(set_fields)}
             )
 
         term = self.termination
@@ -1363,8 +1414,10 @@ class CableToCableTermination(BaseModel):
             and term._meta.model_name not in BREAKOUT_COMPATIBLE_TERMINATION_TYPES
         ):
             raise ValidationError(
-                f"A {term._meta.verbose_name} cannot terminate a multi-connector cable type; only "
-                "interfaces, front ports, rear ports, and circuit terminations support breakout."
+                gettext(
+                    "A %(object_name)s cannot terminate a multi-connector cable type; only interfaces, front ports, rear ports, and circuit terminations support breakout."
+                )
+                % {"object_name": term._meta.verbose_name}
             )
 
         # `connector` must be in the range defined by the parent cable's CableType. Standard cables
@@ -1381,8 +1434,10 @@ class CableToCableTermination(BaseModel):
                 raise ValidationError(
                     {
                         "connector": (
-                            f"Connector {self.connector} is outside the valid range "
-                            f"(1..{max_connector}) for the {self.cable_end}-side of this cable."
+                            gettext(
+                                "Connector %(connector)s is outside the valid range (1..%(max_connector)s) for the %(cable_end)s-side of this cable."
+                            )
+                            % {"connector": self.connector, "max_connector": max_connector, "cable_end": self.cable_end}
                         )
                     }
                 )
@@ -1441,8 +1496,10 @@ class CablePath(BaseModel):
     "connected".
     """
 
-    origin_type = models.ForeignKey(to=ContentType, on_delete=models.CASCADE, related_name="+")
-    origin_id = models.UUIDField()
+    origin_type = models.ForeignKey(
+        to=ContentType, on_delete=models.CASCADE, related_name="+", verbose_name=_("origin type")
+    )
+    origin_id = models.UUIDField(verbose_name=_("origin id"))
     origin = GenericForeignKey(ct_field="origin_type", fk_field="origin_id")
     destination_type = models.ForeignKey(
         to=ContentType,
@@ -1450,27 +1507,29 @@ class CablePath(BaseModel):
         related_name="+",
         blank=True,
         null=True,
+        verbose_name=_("destination type"),
     )
-    destination_id = models.UUIDField(blank=True, null=True)
+    destination_id = models.UUIDField(blank=True, null=True, verbose_name=_("destination id"))
     destination = GenericForeignKey(ct_field="destination_type", fk_field="destination_id")
     # TODO: Profile filtering on this field if it could benefit from an index
-    path = JSONPathField()
-    is_active = models.BooleanField(default=False)
-    is_split = models.BooleanField(default=False)
+    path = JSONPathField(verbose_name=_("path"))
+    is_active = models.BooleanField(default=False, verbose_name=_("is active"))
+    is_split = models.BooleanField(default=False, verbose_name=_("is split"))
     # Cable-peer-side connector that this path emerges through on its first hop — allows
     # multiple CablePaths per origin (one per peer-side connector on a breakout fan-out).
     # Always 1 for non-breakout paths.
     peer_connector = models.PositiveSmallIntegerField(
         default=1,
         validators=[MinValueValidator(1), MaxValueValidator(CABLE_BREAKOUT_MAX_CONNECTORS)],
+        verbose_name=_("peer connector"),
     )
     # Whether this path's origin / destination sits on the fan-out (trunk) side of a breakout cable,
     # i.e. its connector maps to more than one opposite-side connector (see
     # `CableTermination.breakout_fans_out()`). Stamped at path-build time (a pure function of each
     # endpoint + its cable type, so recomputed on every rebuild). Lets the Interface Connections list
     # view canonicalize a breakout's lanes onto one side and group them without per-row subqueries.
-    origin_fans_out = models.BooleanField(default=False)
-    destination_fans_out = models.BooleanField(default=False)
+    origin_fans_out = models.BooleanField(default=False, verbose_name=_("origin fans out"))
+    destination_fans_out = models.BooleanField(default=False, verbose_name=_("destination fans out"))
     # `CablePathSerializer` currently does not inherit from `BaseModelSerializer`
     # thus it does not have `object_type` field needed for the `assigned_object` field using `PolymorphicProxySerializer`.
     is_metadata_associable_model = False
@@ -1552,7 +1611,7 @@ class CablePath(BaseModel):
         first_hop = True
         while node.cable is not None:
             if node.id in visited_nodes:
-                raise ValidationError("a loop is detected in the path")
+                raise ValidationError(_("a loop is detected in the path"))
             visited_nodes.add(node.id)
             if node.cable.status != Cable.STATUS_CONNECTED:
                 is_active = False

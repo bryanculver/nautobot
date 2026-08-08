@@ -1,12 +1,13 @@
+{% load i18n %}
 {% load helpers %}
 
 {% if result.status == 'REVOKED' %}
     {% if result.cancel_type == 'terminated' %}
-        <span class="badge bg-danger">Terminated</span>
+        <span class="badge bg-danger">{% trans "Terminated" %}</span>
     {% elif result.cancel_type == 'reaped' %}
-        <span class="badge bg-warning">Reaped</span>
+        <span class="badge bg-warning">{% trans "Reaped" %}</span>
     {% elif result.cancel_type == 'abandoned' %}
-        <span class="badge bg-body-secondary border">Abandoned</span>
+        <span class="badge bg-body-secondary border">{% trans "Abandoned" %}</span>
     {% else %}
         <span class="badge bg-body-secondary border">{{ result.cancel_type }} (unrecognized)</span>
     {% endif %}

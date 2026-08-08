@@ -1,16 +1,26 @@
 {% extends base_template %}
+{% load i18n %}
 {% load helpers %}
 {% load form_helpers %}
 
-{% block title %}{{ block.super }} - Dynamic Groups{% endblock %}
+{% block title %}{{ block.super }} - {% trans "Dynamic Groups" %}{% endblock %}
 
 {% block content %}
+    {# Resolved here so the sentences below can stay whole: `blocktrans` accepts a plain name but not a `{% url %}` tag. #}
+    {% url 'extras:dynamicgroup_list' as dynamic_group_list_url %}
+    {% url 'extras:job_run_by_class_path' class_path='nautobot.core.jobs.groups.RefreshDynamicGroupCaches' as refresh_caches_job_url %}
     <div class="alert alert-warning">
-        Dynamic group membership is cached for performance reasons, therefore this page may not always be up-to-date.
-        <br>You can refresh the membership of any specific group by accessing it from the list below or from the
-        <a href="{% url 'extras:dynamicgroup_list' %}">Dynamic Groups list view</a> and clicking the "Refresh Members" button.
-        <br>You can also refresh the membership of all groups by running the
-        <a href="{% url 'extras:job_run_by_class_path' class_path='nautobot.core.jobs.groups.RefreshDynamicGroupCaches' %}">Refresh Dynamic Group Caches job</a>.
+        {% trans "Dynamic group membership is cached for performance reasons, therefore this page may not always be up-to-date." %}
+        <br>
+        {% blocktrans trimmed %}
+            You can refresh the membership of any specific group by accessing it from the list below or from the
+            <a href="{{ dynamic_group_list_url }}">Dynamic Groups list view</a> and clicking the "Refresh Members" button.
+        {% endblocktrans %}
+        <br>
+        {% blocktrans trimmed %}
+            You can also refresh the membership of all groups by running the
+            <a href="{{ refresh_caches_job_url }}">Refresh Dynamic Group Caches job</a>.
+        {% endblocktrans %}
     </div>
     {% include 'responsive_table.html' %}
     {% include 'inc/paginator.html' with paginator=table.paginator page=table.page %}

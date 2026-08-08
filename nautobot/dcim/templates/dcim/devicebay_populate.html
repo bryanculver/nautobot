@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load form_helpers %}
 
 {% block content %}
@@ -9,7 +10,7 @@
                 {% if form.non_field_errors %}
                     <div class="card border-danger">
                         <div class="card-header bg-danger-subtle border-danger text-body">
-                            <strong>Errors</strong>
+                            <strong>{% trans "Errors" %}</strong>
                         </div>
                         <div class="card-body">
                             {{ form.non_field_errors }}
@@ -17,16 +18,16 @@
                     </div>
                 {% endif %}
                 <div class="card">
-                    <div class="card-header">{% block title %}Populate {{ device_bay }}{% endblock %}</div>
+                    <div class="card-header">{% block title %}{% blocktrans with bay=device_bay %}Populate {{ bay }}{% endblocktrans %}{% endblock %}</div>
                     <div class="card-body">
                         <div class="mb-10 d-flex justify-content-center">
-                            <label class="col-lg-3 col-form-label nb-required">Parent Device</label>
+                            <label class="col-lg-3 col-form-label nb-required">{% trans "Parent Device" %}</label>
                             <div class="col-lg-9">
                                 <p class="form-control-plaintext">{{ device_bay.device }}</p>
                             </div>
                         </div>
                         <div class="mb-10 d-flex justify-content-center">
-                            <label class="col-lg-3 col-form-label nb-required">Bay</label>
+                            <label class="col-lg-3 col-form-label nb-required">{% trans "Bay" %}</label>
                             <div class="col-lg-9">
                                 <p class="form-control-plaintext">{{ device_bay }}</p>
                             </div>
@@ -39,11 +40,11 @@
         <div class="nb-form-sticky-footer">
             <button type="submit" name="_update" class="btn btn-primary">
                 <span aria-hidden="true" class="mdi mdi-check me-4"></span><!--
-                -->Save
+                -->{% trans "Save" %}
             </button>
             <a href="{{ return_url }}" class="btn btn-secondary">
                 <span aria-hidden="true" class="mdi mdi-close me-4"></span><!--
-                -->Cancel
+                -->{% trans "Cancel" %}
             </a>
         </div>
     </form>

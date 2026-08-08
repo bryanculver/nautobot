@@ -12,6 +12,7 @@ from typing import Callable
 from urllib.parse import urlencode
 import uuid
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
 from django.db import models
@@ -23,8 +24,10 @@ from django.template.defaultfilters import date as format_date, truncatechars
 from django.template.loader import render_to_string
 from django.templatetags.l10n import localize
 from django.urls import NoReverseMatch, reverse
-from django.utils import timezone
+from django.utils import timezone, translation
+from django.utils.functional import Promise
 from django.utils.html import format_html, format_html_join
+from django.utils.translation import gettext, gettext_lazy as _
 from django_tables2 import RequestConfig
 
 from nautobot.core.choices import ButtonColorChoices
@@ -205,13 +208,34 @@ class Component:
     def _generate_component_id(self):
         """Generate a deterministic ID based on an MD5 hash of the JSON representation of suitable attributes."""
 
+        def resolve(value):
+            """
+            Coerce a lazy translation proxy to its string value, leaving everything else alone.
+
+            Without this, a `gettext_lazy` label is silently dropped from the fingerprint below --
+            not an error, just a missing input -- so two components in the same view that differ
+            only by their label hash identically. That collides their DOM ids and makes HTMX
+            deferred rendering resolve to the wrong component.
+
+            Resolution is done under the default language so that component ids stay stable across
+            users: they are compared against a `component_id` GET parameter, and an id that changed
+            with the viewer's language would break deferred rendering for non-English users.
+            Class-level declarations are constructed at import time, so this is deterministic.
+            """
+            if isinstance(value, Promise):
+                with translation.override(settings.LANGUAGE_CODE):
+                    return str(value)
+            return value
+
         def filter_dict(dict_):
             filtered_dict = {}
             for key, value in dict_.items():
+                key = resolve(key)
                 if not isinstance(key, (str, int, bool)) and key is not None:
                     continue
                 if key == "component_id" or (isinstance(key, str) and key.startswith("_")):
                     continue
+                value = resolve(value)
                 if isinstance(value, (str, int, bool)) or value is None:
                     filtered_dict[key] = value
                 elif isinstance(value, (list, tuple)):
@@ -223,6 +247,7 @@ class Component:
         def filter_list(list_):
             filtered_list = []
             for item in list_:
+                item = resolve(item)
                 if isinstance(item, (str, int, bool)) or item is None:
                     filtered_list.append(item)
                 elif isinstance(item, (list, tuple)):
@@ -836,7 +861,15 @@ class Panel(Component):
         if self.body_id:
             return self.body_id
         if self.label:
-            return slugify(self.label)
+            # Slugify under the default language, for two reasons. The result is cached onto the
+            # shared component instance, so whichever request rendered first would otherwise decide
+            # the id for everyone; and the id is persisted in each user's collapse-state preferences,
+            # which must not be keyed by the language they happened to be using.
+            with translation.override(settings.LANGUAGE_CODE):
+                # Django's slugify is ASCII-destructive, so a label in a non-Latin script slugifies
+                # to the empty string; fall back rather than emit `id=""` on every such panel.
+                if body_id := slugify(self.label):
+                    return body_id
 
         return self.component_id
 
@@ -1636,18 +1669,22 @@ class KeyValueTablePanel(Panel):
                     ", ", "{}", ([self.render_value(key, record, context)] for record in value[:3])
                 )
                 if count > 3:
+                    remaining = count - 3
+                    name = model._meta.verbose_name if remaining == 1 else model._meta.verbose_name_plural
                     if list_url:
-                        display += format_html(
-                            ', and <a href="{}">{} other {}</a>',
-                            list_url,
-                            count - 3,
-                            model._meta.verbose_name if count - 3 == 1 else model._meta.verbose_name_plural,
+                        display = format_html(
+                            _('{items}, and <a href="{url}">{count} other {name}</a>'),
+                            items=display,
+                            url=list_url,
+                            count=remaining,
+                            name=name,
                         )
                     else:
-                        display += format_html(
-                            ", and {} other {}",
-                            count - 3,
-                            model._meta.verbose_name if count - 3 == 1 else model._meta.verbose_name_plural,
+                        display = format_html(
+                            _("{items}, and {count} other {name}"),
+                            items=display,
+                            count=remaining,
+                            name=name,
                         )
         else:
             display = placeholder(localize(value))
@@ -1674,7 +1711,7 @@ class KeyValueTablePanel(Panel):
                     # key might not be globally unique in a page, but is unique to a panel;
                     # Hence we add the panel label to make it globally unique to the page
                     value_id = f"{panel_label}_value_{slugify(key)}"
-                    copy_button = render_to_string("buttons/copy.html", {"target": f"#{value_id}", "label": "Copy"})
+                    copy_button = render_to_string("buttons/copy.html", {"target": f"#{value_id}", "label": _("Copy")})
                     value_tag = format_html(
                         '<span><span id="{value_id}">{value}</span>{copy_button}</span>',
                         value_id=value_id,
@@ -2308,7 +2345,7 @@ class _ObjectCustomFieldsPanel(GroupedKeyValueTablePanel):
 
     advanced_ui = False
     body_id = ""
-    label = "Custom Fields"
+    label = _("Custom Fields")
     section = SectionChoices.LEFT_HALF
     weight = Panel.WEIGHT_CUSTOM_FIELDS_PANEL
 
@@ -2371,7 +2408,7 @@ class _ObjectCustomFieldsPanel(GroupedKeyValueTablePanel):
         elif value or value == 0:
             return format_html("{}", value)
         elif cf.required:
-            return format_html('<span class="text-warning">Not defined</span>')
+            return format_html('<span class="text-warning">{}</span>', _("Not defined"))
         return placeholder(value)
 
 
@@ -2380,7 +2417,7 @@ class _ObjectComputedFieldsPanel(GroupedKeyValueTablePanel):
 
     advanced_ui = False
     body_id = ""
-    label = "Computed Fields"
+    label = _("Computed Fields")
     section = SectionChoices.LEFT_HALF
     weight = Panel.WEIGHT_COMPUTED_FIELDS_PANEL
 
@@ -2429,7 +2466,7 @@ class _ObjectRelationshipsPanel(KeyValueTablePanel):
     """A panel that renders a table of object "custom" relationships."""
 
     advanced_ui = False
-    label = "Relationships"
+    label = _("Relationships")
     section = SectionChoices.LEFT_HALF
     weight = Panel.WEIGHT_RELATIONSHIPS_PANEL
 
@@ -2478,7 +2515,7 @@ class _ObjectTagsPanel(Panel):
     """Panel displaying an object's tags as a space-separated list of color-coded tag names."""
 
     body_content_template_path = "components/panel/body_content_tags.html"
-    label = "Tags"
+    label = _("Tags")
     section = SectionChoices.LEFT_HALF
     weight = Panel.WEIGHT_TAGS_PANEL
 
@@ -2499,7 +2536,7 @@ class _ObjectTagsPanel(Panel):
 class _ObjectCommentPanel(ObjectTextPanel):
     """Panel displaying an object's comments as a Markdown formatted panel."""
 
-    label = "Comments"
+    label = _("Comments")
     object_field = "comments"
     section = SectionChoices.LEFT_HALF
     weight = Panel.WEIGHT_COMMENTS_PANEL
@@ -2538,7 +2575,14 @@ class _ObjectDataProvenancePanel(ObjectFieldsPanel):
 
     fields = ("created", "last_updated", "created_by", "last_updated_by", "api_url")
     ignore_nonexistent_fields = True
-    label = "Data Provenance"
+    # `created_by` and `last_updated_by` are injected by `get_data()` rather than being model fields,
+    # so `render_key()` finds no `verbose_name` to translate and would fall back to title-casing the
+    # English attribute name.
+    key_transforms = {
+        "created_by": _("Created By"),
+        "last_updated_by": _("Last Updated By"),
+    }
+    label = _("Data Provenance")
     section = SectionChoices.LEFT_HALF
     weight = 150
 
@@ -2554,7 +2598,7 @@ class _ObjectDataProvenancePanel(ObjectFieldsPanel):
 
     def render_key(self, key, value, context: Context):
         if key == "api_url":
-            return "View in API Browser"
+            return _("View in API Browser")
         return super().render_key(key, value, context)
 
     def render_value(self, key, value, context: Context):
@@ -2566,7 +2610,7 @@ class _ObjectDataProvenancePanel(ObjectFieldsPanel):
 class _ObjectDetailAdvancedTab(Tab):
     """Built-in class for a Tab displaying "advanced" information such as PKs and data provenance."""
 
-    label = "Advanced"
+    label = _("Advanced")
     tab_id = "advanced"
     weight = Tab.WEIGHT_ADVANCED_TAB
 
@@ -2575,11 +2619,14 @@ class _ObjectDetailAdvancedTab(Tab):
         if not self.panels:
             self.panels = (
                 ObjectFieldsPanel(
-                    label="Object Details",
+                    label=_("Object Details"),
                     section=SectionChoices.LEFT_HALF,
                     weight=100,
                     fields=["id", "natural_slug", "slug"],
                     ignore_nonexistent_fields=True,
+                    # `natural_slug` is a property, not a model field, so it carries no
+                    # `verbose_name` for `render_key()` to translate.
+                    key_transforms={"natural_slug": _("Natural Slug")},
                 ),
                 _ObjectDataProvenancePanel(),
                 _ObjectCustomFieldsPanel(advanced_ui=True),
@@ -2591,7 +2638,7 @@ class _ObjectDetailAdvancedTab(Tab):
 class _ObjectDetailContactsTab(Tab):
     """Built-in class for a Tab displaying information about contact/team associations."""
 
-    label = "Contacts"
+    label = _("Contacts")
     tab_id = "contacts"
     weight = Tab.WEIGHT_CONTACTS_TAB
 
@@ -2610,7 +2657,7 @@ class _ObjectDetailContactsTab(Tab):
                     # TODO: we should provide a standard reusable component template for bulk-actions in the footer
                     footer_content_template_path="components/panel/footer_contacts_table.html",
                     enable_related_link=False,
-                    table_title="Contacts/Teams",
+                    table_title=_("Contacts/Teams"),
                 ),
             )
 
@@ -2633,7 +2680,7 @@ class _ObjectDetailContactsTab(Tab):
 class _ObjectDetailDataComplianceTab(DistinctViewTab):
     """Built-in class for a Tab displaying information about data compliance."""
 
-    label = "Data Compliance"
+    label = _("Data Compliance")
     tab_id = "data_compliance"
     url_name = ""
     weight = Tab.WEIGHT_DATACOMPLIANCE_TAB
@@ -2647,7 +2694,7 @@ class _ObjectDetailDataComplianceTab(DistinctViewTab):
                     table_class=DataComplianceTable,
                     table_attribute="associated_data_compliance",
                     related_field_name="object_id",
-                    table_title="Data Compliance",
+                    table_title=_("Data Compliance"),
                     add_button_route=None,
                     include_paginator=True,
                 ),
@@ -2674,7 +2721,7 @@ class DynamicGroupsTextPanel(BaseTextPanel):
     """Panel displaying a note about caching of dynamic groups."""
 
     css_class = "warning"
-    label = "Dynamic Group caching"
+    label = _("Dynamic Group caching")
     render_as = BaseTextPanel.RenderOptions.MARKDOWN
 
     def get_value(self, context):
@@ -2683,13 +2730,28 @@ class DynamicGroupsTextPanel(BaseTextPanel):
             "extras:job_run_by_class_path",
             kwargs={"class_path": "nautobot.core.jobs.groups.RefreshDynamicGroupCaches"},
         )
-        return (
-            "Dynamic group membership is cached for performance reasons, "
-            "therefore this page may not always be up-to-date.\n\n"
-            "You can refresh the membership of any specific group by accessing it from the list below or from the "
-            f'[Dynamic Groups list view]({dg_list_url}) and clicking the "Refresh Members" button.\n\n'
-            "You can also refresh the membership of **all** groups by running the "
-            f"[Refresh Dynamic Group Caches job]({job_run_url})."
+        # `gettext`, not `gettext_lazy`: this runs per request, so the active language is already
+        # established. Each sentence is translated whole with its Markdown link inline, rather than
+        # concatenated from pieces -- a translator has to be able to move the link within the
+        # sentence, and the f-strings this replaces were invisible to `makemessages` entirely.
+        return "\n\n".join(
+            (
+                gettext(
+                    "Dynamic group membership is cached for performance reasons, "
+                    "therefore this page may not always be up-to-date."
+                ),
+                gettext(
+                    "You can refresh the membership of any specific group by accessing it from the list "
+                    "below or from the [Dynamic Groups list view](%(dynamic_groups_url)s) and clicking "
+                    'the "Refresh Members" button.'
+                )
+                % {"dynamic_groups_url": dg_list_url},
+                gettext(
+                    "You can also refresh the membership of **all** groups by running the "
+                    "[Refresh Dynamic Group Caches job](%(job_url)s)."
+                )
+                % {"job_url": job_run_url},
+            )
         )
 
 
@@ -2765,7 +2827,7 @@ class _ObjectDetailMetadataTab(Tab):
                     order_by_fields=["metadata_type", "scoped_fields"],
                     exclude_columns=["assigned_object"],
                     related_field_name="assigned_object_id",
-                    table_title="Object Metadata",
+                    table_title=_("Object Metadata"),
                 ),
             )
 

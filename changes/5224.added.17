@@ -1,0 +1,1 @@
+Marked per-field validation error messages as translatable, so form and API errors reported against a specific field follow the user's language.

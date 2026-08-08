@@ -1,23 +1,24 @@
+{% load i18n %}
 {% load helpers %}
 
 {% if result.status == 'FAILURE' %}
-    <span class="badge bg-danger">Failed</span>
+    <span class="badge bg-danger">{% trans "Failed" %}</span>
 {% elif result.status == 'REVOKED' %}
-    <span class="badge bg-danger">Revoked</span>
+    <span class="badge bg-danger">{% trans "Revoked" %}</span>
 {% elif result.status == "IGNORED" %}
-    <span class="badge bg-body-danger">Ignored</span>
+    <span class="badge bg-body-danger">{% trans "Ignored" %}</span>
 {% elif result.status == "REJECTED" %}
-    <span class="badge bg-body-danger">Rejected</span>
+    <span class="badge bg-body-danger">{% trans "Rejected" %}</span>
 {% elif result.status == 'PENDING' %}
-    <span class="badge bg-body-secondary border">Pending</span>
+    <span class="badge bg-body-secondary border">{% trans "Pending" %}</span>
 {% elif result.status == 'STARTED' %}
-    <span class="badge bg-warning">Running</span>
+    <span class="badge bg-warning">{% trans "Running" %}</span>
 {% elif result.status == 'SUCCESS' %}
-    <span class="badge bg-success">Completed</span>
+    <span class="badge bg-success">{% trans "Completed" %}</span>
 {% elif result.status == "RECEIVED" %}
-    <span class="badge bg-body-warning">Received</span>
+    <span class="badge bg-body-warning">{% trans "Received" %}</span>
 {% elif result.status == "RETRY" %}
-    <span class="badge bg-body-warning">Retry</span>
+    <span class="badge bg-body-warning">{% trans "Retry" %}</span>
 {% elif not result %}
     <span>{{ result | placeholder}}</span>
 {% else %}

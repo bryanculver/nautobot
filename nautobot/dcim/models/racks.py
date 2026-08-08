@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, F, Q, Sum
+from django.utils.translation import gettext, gettext_lazy as _
 
 from nautobot.core.constants import CHARFIELD_MAX_LENGTH
 from nautobot.core.models.fields import JSONArrayField, NaturalOrderingField
@@ -47,13 +48,11 @@ class RackGroup(TreeModel, OrganizationalModel):
     Racks can be grouped as subsets within a Location.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True, verbose_name=_("name"))
     location = models.ForeignKey(
-        to="dcim.Location",
-        on_delete=models.CASCADE,
-        related_name="rack_groups",
+        to="dcim.Location", on_delete=models.CASCADE, related_name="rack_groups", verbose_name=_("location")
     )
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True)
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("description"))
 
     class Meta:
         ordering = ("name",)
@@ -72,7 +71,10 @@ class RackGroup(TreeModel, OrganizationalModel):
         # Validate location
         if ContentType.objects.get_for_model(self) not in self.location.location_type.content_types.all():
             raise ValidationError(
-                {"location": f'Rack groups may not associate to locations of type "{self.location.location_type}".'}
+                {
+                    "location": gettext('Rack groups may not associate to locations of type "%(location_type)s".')
+                    % {"location_type": self.location.location_type}
+                }
             )
 
         # Parent RackGroup (if any) must belong to the same or ancestor Location
@@ -83,8 +85,10 @@ class RackGroup(TreeModel, OrganizationalModel):
         ):
             raise ValidationError(
                 {  # pylint: disable=no-member  # false positive on parent.location
-                    "location": f'Location "{self.location}" is not descended from '
-                    f'parent rack group "{self.parent}" location "{self.parent.location}".'
+                    "location": gettext(
+                        'Location "%(location)s" is not descended from parent rack group "%(parent)s" location "%(location_2)s".'
+                    )
+                    % {"location": self.location, "parent": self.parent, "location_2": self.parent.location}
                 }
             )
 
@@ -104,21 +108,19 @@ class Rack(PrimaryModel):
     Each Rack is assigned to a Location and (optionally) a RackGroup.
     """
 
-    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True)
+    name = models.CharField(max_length=CHARFIELD_MAX_LENGTH, db_index=True, verbose_name=_("name"))
     _name = NaturalOrderingField(target_field="name", max_length=CHARFIELD_MAX_LENGTH, blank=True, db_index=True)
-    status = StatusField(blank=False, null=False)
-    role = RoleField(blank=True, null=True)
+    status = StatusField(blank=False, null=False, verbose_name=_("status"))
+    role = RoleField(blank=True, null=True, verbose_name=_("role"))
     facility_id = models.CharField(  # noqa: DJ001  # django-nullable-model-string-field -- intentional, see below
         max_length=50,
         blank=True,
         null=True,  # because facility_id is optional but is part of a uniqueness constraint
-        verbose_name="Facility ID",
-        help_text="Locally-assigned identifier",
+        verbose_name=_("Facility ID"),
+        help_text=_("Locally-assigned identifier"),
     )
     location = models.ForeignKey(
-        to="dcim.Location",
-        on_delete=models.PROTECT,
-        related_name="racks",
+        to="dcim.Location", on_delete=models.PROTECT, related_name="racks", verbose_name=_("location")
     )
     rack_group = models.ForeignKey(
         to="dcim.RackGroup",
@@ -126,7 +128,8 @@ class Rack(PrimaryModel):
         related_name="racks",
         blank=True,
         null=True,
-        help_text="Assigned group",
+        help_text=_("Assigned group"),
+        verbose_name=_("rack group"),
     )
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
@@ -134,42 +137,47 @@ class Rack(PrimaryModel):
         related_name="racks",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
-    serial = models.CharField(max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name="Serial number", db_index=True)
+    serial = models.CharField(
+        max_length=CHARFIELD_MAX_LENGTH, blank=True, verbose_name=_("Serial number"), db_index=True
+    )
     asset_tag = models.CharField(
         max_length=CHARFIELD_MAX_LENGTH,
         blank=True,
         null=True,
         unique=True,
-        verbose_name="Asset tag",
-        help_text="A unique tag used to identify this rack",
+        verbose_name=_("Asset tag"),
+        help_text=_("A unique tag used to identify this rack"),
     )
-    type = models.CharField(choices=RackTypeChoices, max_length=50, blank=True, verbose_name="Type")
+    type = models.CharField(choices=RackTypeChoices, max_length=50, blank=True, verbose_name=_("Type"))
     width = models.PositiveSmallIntegerField(
         choices=RackWidthChoices,
         default=RackWidthChoices.WIDTH_19IN,
-        verbose_name="Width",
-        help_text="Rail-to-rail width",
+        verbose_name=_("Width"),
+        help_text=_("Rail-to-rail width"),
     )
     u_height = models.PositiveSmallIntegerField(
         default=RACK_U_HEIGHT_DEFAULT,
-        verbose_name="Height (U)",
+        verbose_name=_("Height (U)"),
         validators=[MinValueValidator(1), MaxValueValidator(RACK_U_HEIGHT_MAXIMUM)],
-        help_text="Height in rack units",
+        help_text=_("Height in rack units"),
     )
     desc_units = models.BooleanField(
         default=False,
-        verbose_name="Descending units",
-        help_text="Units are numbered top-to-bottom",
+        verbose_name=_("Descending units"),
+        help_text=_("Units are numbered top-to-bottom"),
     )
-    outer_width = models.PositiveSmallIntegerField(blank=True, null=True, help_text="Outer dimension of rack (width)")
-    outer_depth = models.PositiveSmallIntegerField(blank=True, null=True, help_text="Outer dimension of rack (depth)")
+    outer_width = models.PositiveSmallIntegerField(
+        blank=True, null=True, help_text=_("Outer dimension of rack (width)"), verbose_name=_("outer width")
+    )
+    outer_depth = models.PositiveSmallIntegerField(
+        blank=True, null=True, help_text=_("Outer dimension of rack (depth)"), verbose_name=_("outer depth")
+    )
     outer_unit = models.CharField(
-        max_length=50,
-        choices=RackDimensionUnitChoices,
-        blank=True,
+        max_length=50, choices=RackDimensionUnitChoices, blank=True, verbose_name=_("outer unit")
     )
-    comments = models.TextField(blank=True)
+    comments = models.TextField(blank=True, verbose_name=_("comments"))
     images = GenericRelation(to="extras.ImageAttachment")
 
     clone_fields = [
@@ -214,19 +222,24 @@ class Rack(PrimaryModel):
         ):
             raise ValidationError(
                 {
-                    "rack_group": f'The assigned rack group "{self.rack_group}" belongs to a location '
-                    f'("{self.rack_group.location}") that does not include location "{self.location}".'
+                    "rack_group": gettext(
+                        'The assigned rack group "%(rack_group)s" belongs to a location ("%(location)s") that does not include location "%(location_2)s".'
+                    )
+                    % {"rack_group": self.rack_group, "location": self.rack_group.location, "location_2": self.location}
                 }
             )
 
         if ContentType.objects.get_for_model(self) not in self.location.location_type.content_types.all():
             raise ValidationError(
-                {"location": f'Racks may not associate to locations of type "{self.location.location_type}".'}
+                {
+                    "location": gettext('Racks may not associate to locations of type "%(location_type)s".')
+                    % {"location_type": self.location.location_type}
+                }
             )
 
         # Validate outer dimensions and unit
         if (self.outer_width is not None or self.outer_depth is not None) and not self.outer_unit:
-            raise ValidationError("Must specify a unit when setting an outer width/depth")
+            raise ValidationError(_("Must specify a unit when setting an outer width/depth"))
         elif self.outer_width is None and self.outer_depth is None:
             self.outer_unit = ""
 
@@ -237,7 +250,12 @@ class Rack(PrimaryModel):
                 min_height = top_device.position + top_device.device_type.u_height - 1
                 if self.u_height < min_height:
                     raise ValidationError(
-                        {"u_height": f"Rack must be at least {min_height}U tall to house currently installed devices."}
+                        {
+                            "u_height": gettext(
+                                "Rack must be at least %(min_height)sU tall to house currently installed devices."
+                            )
+                            % {"min_height": min_height}
+                        }
                     )
 
     @property
@@ -469,17 +487,22 @@ class RackReservation(PrimaryModel):
     One or more reserved units within a Rack.
     """
 
-    rack = models.ForeignKey(to="dcim.Rack", on_delete=models.CASCADE, related_name="rack_reservations")
-    units = JSONArrayField(base_field=models.PositiveSmallIntegerField())
+    rack = models.ForeignKey(
+        to="dcim.Rack", on_delete=models.CASCADE, related_name="rack_reservations", verbose_name=_("rack")
+    )
+    units = JSONArrayField(base_field=models.PositiveSmallIntegerField(), verbose_name=_("units"))
     tenant = models.ForeignKey(
         to="tenancy.Tenant",
         on_delete=models.PROTECT,
         related_name="rack_reservations",
         blank=True,
         null=True,
+        verbose_name=_("tenant"),
     )
-    user = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="rack_reservations")
-    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH)
+    user = models.ForeignKey(
+        to=settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="rack_reservations", verbose_name=_("user")
+    )
+    description = models.CharField(max_length=CHARFIELD_MAX_LENGTH, verbose_name=_("description"))
 
     class Meta:
         ordering = ["created"]
@@ -499,7 +522,8 @@ class RackReservation(PrimaryModel):
                 error = ", ".join([str(u) for u in invalid_units])
                 raise ValidationError(
                     {
-                        "units": f"Invalid unit(s) for {self.rack.u_height}U rack: {error}",
+                        "units": gettext("Invalid unit(s) for %(u_height)sU rack: %(error)s")
+                        % {"u_height": self.rack.u_height, "error": error},
                     }
                 )
 
@@ -510,7 +534,9 @@ class RackReservation(PrimaryModel):
             conflicting_units = [u for u in self.units if u in reserved_units]
             if conflicting_units:
                 error = ", ".join([str(u) for u in conflicting_units])
-                raise ValidationError({"units": f"The following units have already been reserved: {error}"})
+                raise ValidationError(
+                    {"units": gettext("The following units have already been reserved: %(error)s") % {"error": error}}
+                )
 
     @property
     def unit_list(self):

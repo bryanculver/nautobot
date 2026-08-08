@@ -1,0 +1,63 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Nautobot\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-27 15:58+0000\n"
+"PO-Revision-Date: 2026-07-26 00:00+0000\n"
+"Last-Translator: Machine-assisted (Claude), pending native-speaker review\n"
+"Language-Team: Simplified Chinese <https://github.com/nautobot/nautobot/issues/5224>\n"
+"Language: zh-Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Translation-Source: machine-assisted (Claude), pending native review\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: nautobot/project-static/js/editor.js:290
+msgid "Editor initialization failed"
+msgstr "编辑器初始化失败"
+
+#: nautobot/ui/src/js/clipboard.js:37
+msgid "Copied!"
+msgstr "已复制！"
+
+#: nautobot/ui/src/js/collapse.js:50
+msgid "Expand All Groups"
+msgstr "展开所有分组"
+
+#: nautobot/ui/src/js/collapse.js:58
+msgid "Collapse All Groups"
+msgstr "折叠所有分组"
+
+#: nautobot/ui/src/js/modal.js:17 nautobot/ui/src/js/modal.js:22
+msgid "Loading..."
+msgstr "加载中…"
+
+#: nautobot/ui/src/js/modal.js:18
+msgid "Close"
+msgstr "关闭"
+
+#: nautobot/ui/src/js/modal.js:24
+msgid "Please wait while we fetch the content..."
+msgstr "正在获取内容，请稍候…"
+
+#: nautobot/ui/src/js/search.js:250
+msgid "Remove"
+msgstr "移除"
+
+#: nautobot/ui/src/js/search.js:256 nautobot/ui/src/js/search.js:378
+msgid "in: %(name)s"
+msgstr "在：%(name)s"
+
+#: nautobot/ui/src/js/select2.js:303
+msgid "Type something to add it as an option"
+msgstr "输入内容以将其添加为选项"
+
+#: nautobot/ui/src/js/tabs.js:58
+msgid "Toggle Dropdown"
+msgstr "切换下拉菜单"

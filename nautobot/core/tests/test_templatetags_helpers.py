@@ -6,6 +6,7 @@ from django.contrib.staticfiles import finders
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.templatetags.static import static, StaticNode
 from django.test import override_settings, tag
+from django.utils import translation
 
 from nautobot.core.choices import NautobotEditionChoices
 from nautobot.core.constants import NAUTOBOT_EDITION_URLS, NAUTOBOT_STATIC_ASSETS
@@ -199,6 +200,32 @@ class NautobotTemplatetagsHelperTest(TestCase):
         self.assertEqual(helpers.bettertitle("myTITle"), "MyTITle")
         self.assertEqual(helpers.bettertitle("mytitle"), "Mytitle")
         self.assertEqual(helpers.bettertitle("my title"), "My Title")
+
+    def test_bettertitle_only_title_cases_english(self):
+        """
+        Capitalizing every word is an English convention and mangles other languages.
+
+        French and Spanish capitalize only the first word of a heading, so title-casing a
+        translation yields "Affectations D'adresses" or "Dispositivos Asignados"; German
+        capitalizes nouns rather than every word. Outside English the filter must therefore leave
+        an already correctly-cased translation alone.
+        """
+        with self.subTest("English still gets title case"), translation.override("en"):
+            self.assertEqual(helpers.bettertitle("IP address"), "IP Address")
+
+        for language, value in (
+            ("fr", "Affectations d'adresses IP"),
+            ("es", "Dispositivos asignados"),
+            ("de", "Nicht im Rack montierte Geräte"),
+        ):
+            with self.subTest(language), translation.override(language):
+                self.assertEqual(helpers.bettertitle(value), value)
+
+        with self.subTest("first character is still capitalized"), translation.override("fr"):
+            self.assertEqual(helpers.bettertitle("préfixes enfants"), "Préfixes enfants")
+
+        with self.subTest("no letter case to change"), translation.override("zh-hans"):
+            self.assertEqual(helpers.bettertitle("已分配的设备"), "已分配的设备")
 
     def test_humanize_speed(self):
         self.assertEqual(helpers.humanize_speed(1544), "1.544 Mbps")

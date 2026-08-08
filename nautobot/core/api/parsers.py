@@ -36,6 +36,13 @@ class NautobotCSVParser(BaseParser):
         serializer = serializer_class(context={"request": parser_context.get("request", None), "depth": 0})
 
         try:
+            # Decode as utf-8-sig when the payload is UTF-8, so a leading byte-order mark is
+            # consumed rather than becoming part of the first column's header name. Excel's
+            # "CSV UTF-8" export writes one, and so does Nautobot's own UI export -- without this,
+            # exporting from the UI and importing through the API silently drops the first column,
+            # because "﻿id" matches no serializer field and is skipped with only a debug log.
+            if encoding.lower().replace("_", "-") in ("utf-8", "utf8"):
+                encoding = "utf-8-sig"
             text = stream.read().decode(encoding)
             reader = csv.DictReader(StringIO(text))
 

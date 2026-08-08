@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.urls import NoReverseMatch, reverse
+from django.utils.translation import gettext_lazy as _
 
 from nautobot.core.celery import NautobotKombuJSONEncoder
 from nautobot.core.models import BaseModel
@@ -26,8 +27,8 @@ class ChangeLoggedModel(models.Model):
     null to facilitate adding these fields to existing instances via a database migration.
     """
 
-    created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    last_updated = models.DateTimeField(auto_now=True, blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True, blank=True, null=True, verbose_name=_("created"))
+    last_updated = models.DateTimeField(auto_now=True, blank=True, null=True, verbose_name=_("last updated"))
 
     class Meta:
         abstract = True
@@ -80,12 +81,15 @@ class ObjectChange(SavedViewMixin, BaseModel):
         related_name="object_changes",
         blank=True,
         null=True,
+        verbose_name=_("user"),
     )
-    user_name = models.CharField(max_length=150, editable=False, db_index=True)
+    user_name = models.CharField(max_length=150, editable=False, db_index=True, verbose_name=_("User name"))
     request_id = models.UUIDField(editable=False, db_index=True)
-    action = models.CharField(max_length=50, choices=ObjectChangeActionChoices)
-    changed_object_type = models.ForeignKey(to=ContentType, on_delete=models.SET_NULL, null=True, related_name="+")
-    changed_object_id = models.UUIDField(db_index=True)
+    action = models.CharField(max_length=50, choices=ObjectChangeActionChoices, verbose_name=_("action"))
+    changed_object_type = models.ForeignKey(
+        to=ContentType, on_delete=models.SET_NULL, null=True, related_name="+", verbose_name=_("changed object type")
+    )
+    changed_object_id = models.UUIDField(db_index=True, verbose_name=_("changed object id"))
     changed_object = GenericForeignKey(ct_field="changed_object_type", fk_field="changed_object_id")
     change_context = models.CharField(
         max_length=50,
@@ -100,9 +104,10 @@ class ObjectChange(SavedViewMixin, BaseModel):
         related_name="+",
         blank=True,
         null=True,
+        verbose_name=_("related object type"),
     )
     # todoindex:
-    related_object_id = models.UUIDField(blank=True, null=True)
+    related_object_id = models.UUIDField(blank=True, null=True, verbose_name=_("related object id"))
     related_object = GenericForeignKey(ct_field="related_object_type", fk_field="related_object_id")
     object_repr = models.CharField(max_length=CHANGELOG_MAX_OBJECT_REPR, editable=False)
     object_data = models.JSONField(encoder=DjangoJSONEncoder, editable=False)
